@@ -1,0 +1,47 @@
+{\rtf1\ansi\ansicpg1252\cocoartf1265\cocoasubrtf210
+{\fonttbl\f0\fswiss\fcharset0 Helvetica;}
+{\colortbl;\red255\green255\blue255;}
+\paperw11900\paperh16840\margl1440\margr1440\vieww10800\viewh8400\viewkind0
+\pard\tx720\tx1440\tx2160\tx2880\tx3600\tx4320\tx5040\tx5760\tx6480\tx7200\tx7920\tx8640\pardirnatural
+
+\f0\fs24 \cf0 Updated forinv code with added functionality for horizontal transversely isotropic (HTI) symmetries.\
+\
+Leighton Watson\
+December 9 2014\
+Contact:\
+lwat054@stanford.edu\
+ \
+For details on the code see Installation and Help Guide to Fitspectra and RUS-inverse by Brian Zadler and Jerome H.L. Le Rousseau.\
+\
+Changes:\
+1) Have divided hexagonal symmetry (five cij\'92s) into two sub cases; vertical and horizontal transverse isotropy (VTI and HTI, respectively). The previous version of the code only dealt with VTI symmetries and implicitly assumed that all hexagonal samples displayed VTI symmetry. We have updated this so that a choice can be made between VTI and HTI for hexagonal symmetries.\
+\
+This involves adding a line in the param_data file. The param_data input text should be in the following form:\
+\
+Line #::\
+1 - order of the polynomial to use to estimate eigenvectors\
+2 - shape (0=sphere, 1=cylinder, 2=parallelepiped)\
+3 - number of cijs\
+\
+4 - hextype - 1=VTI, 2=HTI. Type of hexagonal symmetry (Only matters for ns=5) \
+\
+5 - dimension 1 in cm (diameter for cyl. or sphere)\
+6 - dimension 2 in cm (diameter for cyl. or sphere)\
+7 - dimension 3 in cm (height for cyl. diameter for sphere)\
+\
+8 - density in grams/cm^3\
+\
+9 - lower frequency bound for inversion in MHz (set >1 KHz lower	than your lowest measured value)\
+10 - upper frequency bound for inversion in MHz (set >5 or 10KHz higher than your highest value used for THIS particular fit as defined by Line 1 of freq_data)\
+\
+The order of cij depends on the symmetry type.\
+- Isotropic: c11, c44\
+- Cubic: c11, c12, c44\
+- Hexagonal - VTI: c33, c23, c12, c44, c66\
+- Hexagonal - HTI: c11, c33, c12, c44, c66\
+- Orthorhombic: c11, c22, c33, c23, c13, c12, c44, c55, c66\
+\
+Line 4 is the additional line that differs from what is specified in the manual from Zadler and Rousseau. It differentiates between the different types of hexagonal symmetry (1=VTI,2=HTI).\
+The value is only important for hexagonal symmetry (ns=5). However, there must be an entry there for all other symmetries as well so that the other entries are assigned to the correct parameters.\
+\
+2) added comments to improve readability of code}
