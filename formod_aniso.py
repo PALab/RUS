@@ -5,11 +5,11 @@ import scipy.linalg.lapack as lapack
 from math import sqrt
 
 def gamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, cm, shape, irk):
-	gamma = [scipy.zeros((irk[i],irk[i])) for i in xrange(8)]
+	gamma = [scipy.zeros((irk[i],irk[i])) for i in range(8)]
 	c = stiffness(cm)
-	for k in xrange(8):
+	for k in range(8):
 		irs = 0
-		for ik in xrange(k):
+		for ik in range(k):
 			irs += irk[ik]
 		irf = irs + irk[k]
 
@@ -105,8 +105,8 @@ def gamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, cm, shape, irk):
 
 def stiffness(cm):
 	c = scipy.zeros((3,3,3,3))
-	for i in xrange(3):
-		for j in xrange(3):
+	for i in range(3):
+		for j in range(3):
 			if i == 0 and j == 0:
 				a = 0
 			elif i == 1 and j == 1:
@@ -119,7 +119,7 @@ def stiffness(cm):
 				a = 4
 			else:
 				a = 5
-			for k in xrange(3):
+			for k in range(3):
 				for l in range(3):
 					if k == 0 and l == 0:
 						b = 0
@@ -137,10 +137,10 @@ def stiffness(cm):
 	return c
 
 def e_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, rho, shape, irk):
-	e = [scipy.zeros((irk[i],irk[i])) for i in xrange(8)]
+	e = [scipy.zeros((irk[i],irk[i])) for i in range(8)]
 	for k in range(8):
 		irs = 0
-		for ik in xrange(k):
+		for ik in range(k):
 			irs += irk[ik]
 		irf = irs + irk[k]
 
@@ -272,7 +272,7 @@ FC = 1663
 
 args = parser.parse_args()
 
-cm = [[0.0 for i in xrange(6)] for j in xrange(6)]
+cm = [[0.0 for i in range(6)] for j in range(6)]
 
 if args.ns == 2:
 	# isotropic
@@ -408,20 +408,20 @@ d1 = args.d1 / 2.0
 d2 = args.d2 / 2.0
 d3 = args.d3 / 2.0
 
-itab = [0 for i in xrange(r)]
-ltab = [0 for i in xrange(r)]
-mtab = [0 for i in xrange(r)]
-ntab = [0 for i in xrange(r)]
+itab = [0 for i in range(int(r))]
+ltab = [0 for i in range(int(r))]
+mtab = [0 for i in range(int(r))]
+ntab = [0 for i in range(int(r))]
 
-irk = [0 for i in xrange(8)]
+irk = [0 for i in range(8)]
 
 ir = 0
 
 # k == 0
 for i in range(3):
-	for l in xrange(d+1):
-		for m in xrange(d-l+1):
-			for n in xrange(d-l-m+1):
+	for l in range(d+1):
+		for m in range(d-l+1):
+			for n in range(d-l-m+1):
 				if i == 0:
 					if l % 2 == 0 and m % 2 == 0 and n % 2 == 0:
 						itab[ir] = i
@@ -450,9 +450,9 @@ print("irk[0]=" + str(irk[0]))
 
 # k == 1
 for i in range(3):
-	for l in xrange(d+1):
-		for m in xrange(d-l+1):
-			for n in xrange(d-l-m+1):
+	for l in range(d+1):
+		for m in range(d-l+1):
+			for n in range(d-l-m+1):
 				if i == 0:
 					if l % 2 == 0:
 						if m % 2 == 0:
@@ -487,9 +487,9 @@ print("irk[1]=" + str(irk[1]))
 
 # k == 2
 for i in range(3):
-	for l in xrange(d+1):
-		for m in xrange(d-l+1):
-			for n in xrange(d-l-m+1):
+	for l in range(d+1):
+		for m in range(d-l+1):
+			for n in range(d-l-m+1):
 				if i == 0:
 					if l % 2 == 0:
 						if m % 2 == 1:
@@ -524,9 +524,9 @@ print("irk[2]=" + str(irk[2]))
 
 # k == 3
 for i in range(3):
-	for l in xrange(d+1):
-		for m in xrange(d-l+1):
-			for n in xrange(d-l-m+1):
+	for l in range(d+1):
+		for m in range(d-l+1):
+			for n in range(d-l-m+1):
 				if i == 0:
 					if l % 2 == 0:
 						if m % 2 == 1:
@@ -561,9 +561,9 @@ print("irk[3]=" + str(irk[3]))
 
 # k == 4
 for i in range(3):
-	for l in xrange(d+1):
-		for m in xrange(d-l+1):
-			for n in xrange(d-l-m+1):
+	for l in range(d+1):
+		for m in range(d-l+1):
+			for n in range(d-l-m+1):
 				if i == 0:
 					if l % 2 == 1:
 						if m % 2 == 0:
@@ -598,9 +598,9 @@ print("irk[4]=" + str(irk[4]))
 
 # k == 5
 for i in range(3):
-	for l in xrange(d+1):
-		for m in xrange(d-l+1):
-			for n in xrange(d-l-m+1):
+	for l in range(d+1):
+		for m in range(d-l+1):
+			for n in range(d-l-m+1):
 				if i == 0:
 					if l % 2 == 1:
 						if m % 2 == 0:
@@ -635,9 +635,9 @@ print("irk[5]=" + str(irk[5]))
 
 # k == 6
 for i in range(3):
-	for l in xrange(d+1):
-		for m in xrange(d-l+1):
-			for n in xrange(d-l-m+1):
+	for l in range(d+1):
+		for m in range(d-l+1):
+			for n in range(d-l-m+1):
 				if i == 0:
 					if l % 2 == 1:
 						if m % 2 == 1:
@@ -672,9 +672,9 @@ print("irk[6]=" + str(irk[6]))
 
 # k == 7
 for i in range(3):
-	for l in xrange(d+1):
-		for m in xrange(d-l+1):
-			for n in xrange(d-l-m+1):
+	for l in range(d+1):
+		for m in range(d-l+1):
+			for n in range(d-l-m+1):
 				if i == 0:
 					if l % 2 == 1:
 						if m % 2 == 1:
@@ -717,15 +717,15 @@ else:
 	jobz = 'V'
 
 w = []
-for k in xrange(8):
+for k in range(8):
 	# lapack routine
 	a, w_temp, info = lapack.dsygv(gamma[k], e[k], itype=1, jobz=jobz, uplo='U');  
 	w.append(w_temp)
 
 wsort = scipy.zeros(r)
 i = 0
-for k in xrange(8):
-	for ir1 in xrange(irk[k]):
+for k in range(8):
+	for ir1 in range(irk[k]):
 		wsort[i] = w[k][ir1]
 		i += 1
 wsort.sort()
