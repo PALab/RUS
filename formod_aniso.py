@@ -231,7 +231,7 @@ parser.add_argument(
 	nargs=1,
 	type=int,
 	choices=[1,2],
-	help='type of hexagonal symmetry: 1=VTT, 2=HTI (only required if ns=5)')
+	help='type of hexagonal symmetry: 1=VTI, 2=HTI (only required if ns=5)')
 parser.add_argument('--c11', nargs=1, type=float)
 parser.add_argument('--c12', nargs=1, type=float)
 parser.add_argument('--c13', nargs=1, type=float)
