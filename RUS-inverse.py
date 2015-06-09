@@ -15,7 +15,7 @@
 
 import argparse
 import sys
-import scipy
+import numpy
 import rus
 
 NSTACK = 50	# maximum sort length is 2^NSTACK
@@ -142,58 +142,42 @@ if len(freq) != nfreq:
 
 # relationship between ir and l,m,n - filling tables
 itab, ltab, mtab, ntab, irk = rus.index_relationship(d, r)
+
+ifr1 = rus.xindex(freq, args.freqmin, 0)
+ifr2 = rus.xindex(freq, args.freqmax, nfreq)
+# add one to ifr2 so the subtraction ifr2 - ifr1 gives the number of frequencies ndata
+ifr2 += 1
+# ndata = number of frequencies used for inversion - first line from freq_data
+ndata = ifr2 - ifr1
+print('ndata=' + str(ndata))
+
+y   = [0.0 for i in range(ndata)]
+sig = [0.0 for i in range(ndata)]
+ia  = [1   for i in range(ndata)]
+
+i = 0
+for ifr in range(ifr1, ifr2):
+	# set y equal to freq_data values. Therefore, y is an array of length ndata
+	y[i] = freq[ifr]
+	# set sig equal to the weightings from the second column of freq_data. Is an array of length ndata
+	sig[i] = weight[ifr]
+	i += 1
+	# sig is not a true 'error' but the weighting from freq_data
+	# is multipled by the difference in the misfit function/chisq so modes with a zero weighting are ignored
+  
+covar  = numpy.identity(args.ns)
+alpha  = numpy.identity(args.ns)
+chisq  =  0.0
+alamda = -1.0
+niter  =  100 # set number of iterations
+for i in range(niter):
+	mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,guess,ia,ns,covar,alpha,&chisq,hextype, formod,&alamda);
+	print('iter #' + str(iter))
+    for is_1 in range(ns): # ns = dimension of symmetry
+		print(str(100 * guess[is_1]) # print estimated cij values
+
+return 1
 other = """
-# ifr1 = 0 and ifr2 = ndata, number of frequencies used for inversion
-  xindex(nfreq, freq, freqmin, &ifr1);
-  xindex(nfreq, freq, freqmax, &ifr2);
-  ifr2++; /* add one to ifr2 so the subtraction ifr2 - ifr1 gives the number of frequencies ndata*/
-  ndata=ifr2-ifr1; /* ndata = number of frequencies used for inversion - first line from freq_data */
-  fprintf(stderr,"ndata=%d\n",ndata);
-  y=ealloc1double(ndata);
-  for (i=0, ifr=ifr1; ifr<ifr2; ++ifr, ++i){
-    y[i]=freq[ifr]; /* set y equal to freq_data values. Therefore, y is an array of length ndata */
-  }
-  sig=ealloc1double(ndata);
-  for (i=0, ifr=ifr1; ifr<ifr2; ++ifr, ++i)
-    sig[i]=weight[ifr]; /* set sig equal to the weightings from the second column of freq_data. Is an array of length ndata */
-  /* sig is not a true 'error' but the weighting from freq_data */
-  /* is multipled by the difference in the misfit function/chisq so modes with a zero weighting are ignored */
-  
-  
-  ia=ealloc1int(ndata);
-  for (i=0;i<ndata;++i)
-    ia[i]=1.0; /* creates a array of length ndata with entries of 1 */
-  /* was having issues with this before. The issues were with determining the size of ia due to incorrect use sizeof*/
-  /* ia is specified as a pointer. Cannot determine length of a pointer to an array */
-  
-  covar=ealloc2double(ns,ns);
-  for (is1=0;is1<ns;++is1)
-    for (is2=0;is2<ns;++is2)
-      covar[is1][is2]=delta(is1,is2); /* identity matrix. Size of ns/number of cijs */
-     
-  alpha=ealloc2double(ns,ns);
-  for (is1=0;is1<ns;++is1)
-    for (is2=0;is2<ns;++is2)
-      alpha[is1][is2]=delta(is1,is2); /* identity matrix. Size of ns/number of cijs */
-  chisq=0.0;
-  alamda=-1.0;
-
-  niter=100; /* set number of iterations */
-  for (iter=0;iter<niter;++iter){
-    mrqmin(d,r,itab,ltab,mtab,ntab,
-	   irk,d1,d2,d3,rho,shape,freqmin,
-	   y,sig,ndata,guess,ia,ns,covar,alpha,&chisq, hextype, formod,&alamda);
-    fprintf(stderr,"iter #%i\n",iter); /* print iteration number */
-    for (is_1=0; is_1<ns;++is_1) /* ns = dimension of symmetry */
-      /*fprintf(stderr,"guess=%f\n",100*guess[is_1]); */
-      fprintf(stderr,"%f\n",100*guess[is_1]); /* print estimated cij values*/
-    
-  }
-    
- /* end of main */
-
-  return EXIT_SUCCESS;
-}
 
 void formod(int d,int r,int *itab,int *ltab,int *mtab,int *ntab, 
 	    int *irk,double d1,double d2,double d3, 
@@ -339,7 +323,7 @@ int info, itype, lda, ldb, lwork, order; /* variables for lapack function */
     
   /* filling matrix gamma  */
   for (k=0; k<8; ++k)
-    gamma_fill(gamma[k], itab, ltab, mtab, 
+    rus.gamma_fill(gamma[k], itab, ltab, mtab, 
 	       ntab, r, d1, d2, d3, c, shape, k, irk);
       
   
@@ -415,7 +399,7 @@ int info, itype, lda, ldb, lwork, order; /* variables for lapack function */
     else wsort[ir1]=0.0;
   
   /* output */
-  dxindex(r, wsort, freqmin, &ifw);
+  ifw = rus.xindex(wsort, freqmin, ifw);
   ++ifw;
   for (i=0, iw=ifw; i<ndata; ++i, ++iw){
     y[i]=wsort[iw];
@@ -964,12 +948,6 @@ void compute_dyda(double **dyda,int ns, int hextype, int r,int *itab,int *ltab,
 }
 
 
-int delta(int i, int j){
-if (i==j) return 1; 
-else return 0;
-}
-
-
 double doublefact(int n){
 
   if(n==-1) return 1;
@@ -1418,116 +1396,6 @@ void dstiff_orth_c66(double ****c){
 
 
 
-void gamma_fill(double *gamma, int *itab, int *ltab, int *mtab, int *ntab, 
-		int r, double d1, double  d2, double d3, double ****c, 
-		int shape, int k, int *irk)
-{
-  int ir1, ir2, i1, i2, l1, l2, m1, m2, n1, n2, irs, irf, ik, irv, irh;
-  int j1, j2;
-  int l, m, n;
-  irs=0;
-  
-  for (ik=0; ik<k; ++ik)
-    irs+=irk[ik];
-
-  irf= irs+irk[k];
-
-  for (irv=0, ir1=irs; ir1<irf; ++ir1, ++irv){
-    for (irh=0, ir2=irs; ir2<irf; ++ir2, ++irh){
-      i1=itab[ir1];
-      i2=itab[ir2];
-      l1=ltab[ir1];
-      l2=ltab[ir2];
-      m1=mtab[ir1];
-      m2=mtab[ir2];
-      n1=ntab[ir1];
-      n2=ntab[ir2];
-      /* initialize the value of gamma to 0 */
-      gamma[irv*irk[k]+irh]=0.0;
-      if (l1>0) {
-	j1=0;
-	if (l2>0) {
-	 j2=0;
-	  l=l1+l2-2;
-	  m=m1+m2;
-	  n=n1+n2;
-	  gamma[irv*irk[k]+irh] +=c[i1][j1][i2][j2]*l1*l2*
-	    volintegral(d1, d2, d3, l, m, n, shape);
-	}
-	if (m2>0) {
-	  j2=1;
-	  l=l1+l2-1;
-	  m=m1+m2-1;
-	  n=n1+n2;
-	  gamma[irv*irk[k]+irh] +=c[i1][j1][i2][j2]*l1*m2*
-	    volintegral(d1, d2, d3, l, m, n, shape);
-	}
-	if (n2>0) {
-	  j2=2;
-	  l=l1+l2-1;
-	  m=m1+m2;
-	  n=n1+n2-1;
-	  gamma[irv*irk[k]+irh] +=c[i1][j1][i2][j2]*l1*n2*
-	    volintegral(d1, d2, d3, l, m, n, shape);
-	}
-      }
-      if (m1>0) {
-	j1=1;
-	if (l2>0) {
-	 j2=0;
-	  l=l1+l2-1;
-	  m=m1+m2-1;
-	  n=n1+n2;
-	  gamma[irv*irk[k]+irh] +=c[i1][j1][i2][j2]*m1*l2*
-	    volintegral(d1, d2, d3, l, m, n, shape);
-	}
-	if (m2>0) {
-	  j2=1;
-	  l=l1+l2;
-	  m=m1+m2-2;
-	  n=n1+n2; 
-	  gamma[irv*irk[k]+irh] +=c[i1][j1][i2][j2]*m1*m2*
-	    volintegral(d1, d2, d3, l, m, n, shape);
-	}
-	if (n2>0) {
-	  j2=2;
-	  l=l1+l2;
-	  m=m1+m2-1;
-	  n=n1+n2-1;
-	  gamma[irv*irk[k]+irh] +=c[i1][j1][i2][j2]*m1*n2*
-	    volintegral(d1, d2, d3, l, m, n, shape);
-	}
-      }
-      if (n1>0) {
-	j1=2;
-	if (l2>0) {
-	 j2=0;
-	  l=l1+l2-1;
-	  m=m1+m2;
-	  n=n1+n2-1;
-	  gamma[irv*irk[k]+irh] +=c[i1][j1][i2][j2]*n1*l2*
-	    volintegral(d1, d2, d3, l, m, n, shape);
-	}
-	if (m2>0) {
-	  j2=1;
-	  l=l1+l2;
-	  m=m1+m2-1;
-	  n=n1+n2-1;
-	  gamma[irv*irk[k]+irh] +=c[i1][j1][i2][j2]*n1*m2*
-	    volintegral(d1, d2, d3, l, m, n, shape);
-	}
-	if (n2>0) {
-	  j2=2;
-	  l=l1+l2;
-	  m=m1+m2;
-	  n=n1+n2-2;
-	  gamma[irv*irk[k]+irh] +=c[i1][j1][i2][j2]*n1*n2*
-	    volintegral(d1, d2, d3, l, m, n, shape);
-	}
-      }
-    }
-  }
-}
 
 void dgamma_fill(double **dgamma, int *itab, int *ltab, int *mtab, int *ntab, 
 	   int r, double d1, double  d2, double d3, double ****dc, int shape)
@@ -1658,438 +1526,6 @@ double  scalarproduct(double *a, double *b, int n)
 }
 
 
-void dxindex (int nx, double ax[], double x, int *index)
-/*****************************************************************************
-determine index of x with respect to an array of x values
-******************************************************************************
-Input:
-nx		number of x values in array ax
-ax		array[nx] of monotonically increasing or decreasing x values
-x		the value for which index is to be determined
-index		index determined previously (used to begin search)
-
-Output:
-index		for monotonically increasing ax values, the largest index
-		for which ax[index]<=x, except index=0 if ax[0]>x;
-		for monotonically decreasing ax values, the largest index
-		for which ax[index]>=x, except index=0 if ax[0]<x
-******************************************************************************
-Notes:
-This function is designed to be particularly efficient when called
-repeatedly for slightly changing x values; in such cases, the index 
-returned from one call should be used in the next.
-******************************************************************************
-Author:  Dave Hale, Colorado School of Mines, 12/25/89
-*****************************************************************************/
-{
-	int lower,upper,middle,step;
-
-	/* initialize lower and upper indices and step */
-	lower = *index;
-	if (lower<0) lower = 0;
-	if (lower>=nx) lower = nx-1;
-	upper = lower+1;
-	step = 1;
-
-	/* if x values increasing */
-	if (ax[nx-1]>ax[0]) {
-
-		/* find indices such that ax[lower] <= x < ax[upper] */
-		while (lower>0 && ax[lower]>x) {
-			upper = lower;
-			lower -= step;
-			step += step;
-		}
-		if (lower<0) lower = 0;
-		while (upper<nx && ax[upper]<=x) {
-			lower = upper;
-			upper += step;
-			step += step;
-		}
-		if (upper>nx) upper = nx;
-
-		/* find index via bisection */
-		while ((middle=(lower+upper)>>1)!=lower) {
-			if (x>=ax[middle])
-				lower = middle;
-			else
-				upper = middle;
-		}
-
-	/* else, if not increasing */
-	} else {
-
-		/* find indices such that ax[lower] >= x > ax[upper] */
-		while (lower>0 && ax[lower]<x) {
-			upper = lower;
-			lower -= step;
-			step += step;
-		}
-		if (lower<0) lower = 0;
-		while (upper<nx && ax[upper]>=x) {
-			lower = upper;
-			upper += step;
-			step += step;
-		}
-		if (upper>nx) upper = nx;
-
-		/* find index via bisection */
-		while ((middle=(lower+upper)>>1)!=lower) {
-			if (x<=ax[middle])
-				lower = middle;
-			else
-				upper = middle;
-		}
-	}
-
-	/* return lower index */
-	*index = lower;
-}
-void index_relationship(int *itab, int *ltab, int *mtab, int *ntab,
-			int d, int *irk)
-{
-  int ir, i, l, m, n;
-  ir=0;
-  
-  /* k=0 */
-  irk[0]=0;
-  for (i=0; i<3; ++i)
-    for (l=0; l<=d; ++l)
-      for (m=0; m+l<=d; ++m)
-	for (n=0; n+l+m<=d; ++n){
-	  if (i==0)
-	    if (l%2==0)
-	      if (m%2==0)
-		if(n%2==0){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[0];
-		}
-	  if (i==1)
-	    if (l%2==1)
-	      if (m%2==1)
-		if(n%2==0){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[0];
-		} 
-	  if (i==2)
-	    if (l%2==1)
-	      if (m%2==0)
-		if(n%2==1){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[0];
-		}
-	}
-  fprintf(stderr, "irk[0]=%d\n", irk[0]);
-  
-  /* k=1 */
-  irk[1]=0;
-  for (i=0; i<3; ++i)
-    for (l=0; l<=d; ++l)
-      for (m=0; m+l<=d; ++m)
-	for (n=0; n+l+m<=d; ++n){
-	  if (i==0)
-	    if (l%2==0)
-	      if (m%2==0)
-		if(n%2==1){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[1];
-		}
-	  if (i==1)
-	    if (l%2==1)
-	      if (m%2==1)
-		if(n%2==1){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[1];
-		} 
-	  if (i==2)
-	    if (l%2==1)
-	      if (m%2==0)
-		if(n%2==0){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[1];
-		}
-	}
-  fprintf(stderr, "irk[1]=%d\n", irk[1]);
-  
-  /* k=2 */
-  irk[2]=0;
-  for (i=0; i<3; ++i)
-    for (l=0; l<=d; ++l)
-      for (m=0; m+l<=d; ++m)
-	for (n=0; n+l+m<=d; ++n){
-	  if (i==0)
-	    if (l%2==0)
-	      if (m%2==1)
-		if(n%2==0){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[2];
-		}
-	  if (i==1)
-	    if (l%2==1)
-	      if (m%2==0)
-		if(n%2==0){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[2];
-		} 
-	  if (i==2)
-	    if (l%2==1)
-	      if (m%2==1)
-		if(n%2==1){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[2];
-		}
-	}
-  fprintf(stderr, "irk[2]=%d\n", irk[2]);
-  
-  /* k=3 */
-  irk[3]=0;
-  for (i=0; i<3; ++i)
-    for (l=0; l<=d; ++l)
-      for (m=0; m+l<=d; ++m)
-	for (n=0; n+l+m<=d; ++n){
-	  if (i==0)
-	    if (l%2==0)
-	      if (m%2==1)
-		if(n%2==1){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[3];
-		}
-	  if (i==1)
-	    if (l%2==1)
-	      if (m%2==0)
-		if(n%2==1){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[3];
-		} 
-	  if (i==2)
-	    if (l%2==1)
-	      if (m%2==1)
-		if(n%2==0){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[3];
-		}
-	}
-  fprintf(stderr, "irk[3]=%d\n", irk[3]);
-  
-  /* k=4 */
-  irk[4]=0;
-  for (i=0; i<3; ++i)
-    for (l=0; l<=d; ++l)
-      for (m=0; m+l<=d; ++m)
-	for (n=0; n+l+m<=d; ++n){
-	  if (i==0)
-	    if (l%2==1)
-	      if (m%2==0)
-		if(n%2==0){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[4];
-		}
-	  if (i==1)
-	    if (l%2==0)
-	      if (m%2==1)
-		if(n%2==0){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[4];
-		}
-		 
-	  if (i==2)
-	    if (l%2==0)
-	      if (m%2==0)
-		if(n%2==1){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[4];
-		}	
-	}
-  fprintf(stderr, "irk[4]=%d\n", irk[4]);
-  
- /* k=5 */
-  irk[5]=0;
-  for (i=0; i<3; ++i)
-    for (l=0; l<=d; ++l)
-      for (m=0; m+l<=d; ++m)
-	for (n=0; n+l+m<=d; ++n){
-	  if (i==0)
-	    if (l%2==1)
-	      if (m%2==0)
-		if(n%2==1){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[5];
-		}
-	  
-	  if (i==1)
-	    if (l%2==0)
-	      if (m%2==1)
-		if(n%2==1){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[5];
-		} 
-	  if (i==2)
-	    if (l%2==0)
-	      if (m%2==0)
-		if(n%2==0){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[5];
-		}
-	}
-  fprintf(stderr, "irk[5]=%d\n", irk[5]);
-  
-   /* k=6 */
-  irk[6]=0;
-  for (i=0; i<3; ++i)
-    for (l=0; l<=d; ++l)
-      for (m=0; m+l<=d; ++m)
-	for (n=0; n+l+m<=d; ++n){
-	  if (i==0)
-	    if (l%2==1)
-	      if (m%2==1)
-		if(n%2==0){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[6];
-		}
-	  if (i==1)
-	    if (l%2==0)
-	      if (m%2==0)
-		if(n%2==0){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[6];
-		} 
-	  if (i==2)
-	    if (l%2==0)
-	      if (m%2==1)
-		if(n%2==1){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[6];
-		}
-	}
-  fprintf(stderr, "irk[6]=%d\n", irk[6]);
-  
-   /* k=7 */
-  irk[7]=0;
-  for (i=0; i<3; ++i)
-    for (l=0; l<=d; ++l)
-      for (m=0; m+l<=d; ++m)
-	for (n=0; n+l+m<=d; ++n){
-	  if (i==0)
-	    if (l%2==1)
-	      if (m%2==1)
-		if(n%2==1){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[7];
-		}
-	  if (i==1)
-	    if (l%2==0)
-	      if (m%2==0)
-		if(n%2==1){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[7];
-		} 
-	  if (i==2)
-	    if (l%2==0)
-	      if (m%2==1)
-		if(n%2==0){
-		  itab[ir]=i; 
-		  ltab[ir]=l;
-		  mtab[ir]=m;
-		  ntab[ir]=n;
-		  ++ir;
-		  ++irk[7];
-		}
-	}
-  fprintf(stderr, "irk[7]=%d\n", irk[7]);
-  
-}
 void dqkpart (double a[], int p, int q, int *j, int *k)
 {
 	int pivot,left,right;

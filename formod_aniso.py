@@ -5,105 +5,6 @@ import scipy.linalg.lapack as lapack
 from math import sqrt
 import rus
 
-def gamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, cm, shape, irk):
-	gamma = [scipy.zeros((irk[i],irk[i])) for i in range(8)]
-	c = stiffness(cm)
-	for k in range(8):
-		irs = 0
-		for ik in range(k):
-			irs += irk[ik]
-		irf = irs + irk[k]
-
-		irv = 0
-		ir1 = irs
-		while ir1 < irf:
-			irh = 0
-			ir2 = irs
-			while ir2 < irf:
-				i1 = itab[ir1]
-				i2 = itab[ir2]
-				l1 = ltab[ir1]
-				l2 = ltab[ir2]
-				m1 = mtab[ir1]
-				m2 = mtab[ir2]
-				n1 = ntab[ir1]
-				n2 = ntab[ir2]
-				gamma[k][irv][irh] = 0.0;
-				if l1 > 0:
-					j1 = 0
-					if l2 > 0:
-						j2 = 0
-						l = l1 + l2 - 2
-						m = m1 + m2
-						n = n1 + n2
-						v = volintegral(d1, d2, d3, l, m, n, shape)
-						gamma[k][irv][irh] += c[i1][j1][i2][j2] * l1 * l2 * v
-					if m2 > 0:
-						j2 = 1
-						l = l1 + l2 - 1
-						m = m1 + m2 - 1
-						n = n1 + n2
-						v = volintegral(d1, d2, d3, l, m, n, shape)
-						gamma[k][irv][irh] += c[i1][j1][i2][j2] * l1 * m2 * v
-					if n2 > 0:
-						j2 = 2
-						l = l1 + l2 - 1
-						m = m1 + m2
-						n = n1 + n2 - 1
-						v = volintegral(d1, d2, d3, l, m, n, shape)
-						gamma[k][irv][irh] += c[i1][j1][i2][j2] * l1 * n2 * v
-				if m1 > 0:
-					j1 = 1
-					if l2 > 0:
-						j2 = 0
-						l = l1 + l2 - 1
-						m = m1 + m2 - 1
-						n = n1 + n2
-						v = volintegral(d1, d2, d3, l, m, n, shape)
-						gamma[k][irv][irh] += c[i1][j1][i2][j2] * m1 * l2 * v
-					if m2 > 0:
-						j2 = 1
-						l = l1 + l2
-						m = m1 + m2 - 2
-						n = n1 + n2
-						v = volintegral(d1, d2, d3, l, m, n, shape)
-						gamma[k][irv][irh] += c[i1][j1][i2][j2] * m1 * m2 * v
-					if n2 > 0:
-						j2 = 2
-						l = l1 + l2
-						m = m1 + m2 - 1
-						n = n1 + n2 - 1
-						v = volintegral(d1, d2, d3, l, m, n, shape)
-						gamma[k][irv][irh] += c[i1][j1][i2][j2] * m1 * n2 * v
-				if n1 > 0:
-					j1 = 2
-					if l2 > 0:
-						j2 = 0
-						l = l1 + l2 - 1
-						m = m1 + m2
-						n = n1 + n2 - 1
-						v = volintegral(d1, d2, d3, l, m, n, shape)
-						gamma[k][irv][irh] += c[i1][j1][i2][j2] * n1 * l2 * v
-					if m2 > 0:
-						j2 = 1
-						l = l1 + l2
-						m = m1 + m2 - 1
-						n = n1 + n2 - 1
-						v = volintegral(d1, d2, d3, l, m, n, shape)
-						gamma[k][irv][irh] += c[i1][j1][i2][j2] * n1 * m2 * v
-					if n2 > 0:
-						j2 = 2
-						l = l1 + l2
-						m = m1 + m2
-						n = n1 + n2 - 2
-						v = volintegral(d1, d2, d3, l, m, n, shape)
-						gamma[k][irv][irh] += c[i1][j1][i2][j2] * n1 * n2 * v
-				ir2 += 1
-				irh += 1
-			ir1 += 1
-			irv += 1
-	return gamma
-
 def stiffness(cm):
 	c = scipy.zeros((3,3,3,3))
 	for i in range(3):
@@ -405,7 +306,7 @@ d3 = args.d3 / 2.0
 
 itab, ltab, mtab, ntab, irk = rus.index_relationship(d, r)
 e = e_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, args.rho, args.shape, irk)
-gamma = gamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, cm, args.shape, irk)
+gamma = rus.gamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, cm, args.shape, irk)
 print("done preparing matrices")
 
 if args.outeigen == None:
