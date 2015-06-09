@@ -16,6 +16,7 @@
 import argparse
 import sys
 import scipy
+import rus
 
 NSTACK = 50	# maximum sort length is 2^NSTACK
 NSMALL = 7	# size of array for which insertion sort is fast
@@ -139,17 +140,10 @@ if len(freq) != nfreq:
 	print('Expected ' + str(nfreq) + ' but read ' + str(len(freq)))
 	sys.exit(-1)
 
+# relationship between ir and l,m,n - filling tables
+itab, ltab, mtab, ntab, irk = rus.index_relationship(d, r)
 other = """
-  /* alloc work space*/
-  itab=alloc1int(r);
-  ltab=alloc1int(r);
-  mtab=alloc1int(r);
-  ntab=alloc1int(r);
-
-  /* relationship between ir and l,m,n - filling tables */
-  irk=alloc1int(8);
-  index_relationship(itab, ltab, mtab, ntab, d, irk); 
-  /* ifr1 = 0 and ifr2 = ndata, number of frequencies used for inversion */
+# ifr1 = 0 and ifr2 = ndata, number of frequencies used for inversion
   xindex(nfreq, freq, freqmin, &ifr1);
   xindex(nfreq, freq, freqmax, &ifr2);
   ifr2++; /* add one to ifr2 so the subtraction ifr2 - ifr1 gives the number of frequencies ndata*/
