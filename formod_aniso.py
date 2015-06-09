@@ -264,12 +264,6 @@ parser.add_argument(
 	choices=[0,1,2],
 	help='0=rectangle, 1=ellipsoidal cylinder, 2=spheroid')
 
-NSTACK = 50
-NSMALL = 7
-FM = 7875
-FA = 211
-FC = 1663
-
 args = parser.parse_args()
 
 cm = [[0.0 for i in range(6)] for j in range(6)]
