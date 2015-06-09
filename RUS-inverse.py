@@ -25,7 +25,7 @@ FC = 1663
 
 parser = argparse.ArgumentParser(description='Inverse Algorithm')
 parser.add_argument(
-	'--d',
+	'-d',
 	type=int,
 	required=True,
 	help='order of polynomials used to estimate the eigenvectors')
@@ -50,61 +50,66 @@ parser.add_argument(
 	choices=[1,2],
 	help='hextype - 1=VTI, 2=HTI. Type of hexagonal symetry (Only matters for ns=5)')
 parser.add_argument(
-	'--d1f',
+	'--d1',
 	type=float,
 	required=True,
 	help='dimension 1 in cm (diameter for cyl. or sphere)')
 parser.add_argument(
-	'--d2f',
+	'--d2',
 	type=float,
 	required=True,
 	help='dimension 2 in cm (diameter for cyl. or sphere)')
 parser.add_argument(
-	'--d3f',
+	'--d3',
 	type=float,
 	required=True,
 	help='dimension 3 in cm (height for cyl. diameter for sphere)')
 parser.add_argument(
-	'--rhof',
+	'--rho',
 	type=float,
 	required=True,
 	help='density in grams/cm^3')
 parser.add_argument(
 	'--freqmin',
 	type=float,
-	required=True
+	required=True,
 	help='lower frequency bound for inversion in MHz (set >1 KHz lower than your lowest measured value)')
 parser.add_argument(
 	'--freqmax',
 	type=float,
-	required=True
+	required=True,
 	help='upper frequency bound for inversion in MHz (set >5 or 10KHz higher than your highest value used for THIS particular fit as defined by Line 1 of freq_data)')
-#parser.add_argument('--c11', nargs=1, type=float)
-#parser.add_argument('--c12', nargs=1, type=float)
-#parser.add_argument('--c13', nargs=1, type=float)
-#parser.add_argument('--c22', nargs=1, type=float)
-#parser.add_argument('--c23', nargs=1, type=float)
-#parser.add_argument('--c33', nargs=1, type=float)
-#parser.add_argument('--c44', nargs=1, type=float)
-#parser.add_argument('--c55', nargs=1, type=float)
-#parser.add_argument('--c66', nargs=1, type=float)
+parser.add_argument(
+	'--cij',
+	action='append',
+	type=float,
+	required=True,
+	help='The order of cij depends on the symmetry type.- Isotropic: c11, c44- Cubic: c11, c12, c44- Hexagonal - VTI: c33, c23, c12, c44, c66- Hexagonal - HTI: c11, c33, c12, c44, c66- Orthorhombic: c11, c22, c33, c23, c13, c12, c44, c55, c66',
+	dest='guessf')
 
 args = parser.parse_args()
+if args.ns == 2 and len(args.guessf) != 2:
+	parser.error('please provide cij values for c11 and c44')
+if args.ns == 3 and len(args.guessf) != 3:
+	parser.error('please provide cij values for c11, c12, and c44')
+if args.ns == 5 and not args.hextype:
+	parser.error('please provide hextype')
+if args.ns == 5 and len(args.guessf) != 5 and args.hextype == 1:
+	parser.error('please provide cij values for c33, c23, c12, c44, and c66')
+if args.ns == 5 and len(args.guessf) != 5 and args.hextype == 2:
+	parser.error('please provide cij values for c11, c33, c12, c44, and c66')
+if args.ns == 9 and len(args.guessf) != 9:
+	parser.error('please provide cij values for c11, c22, c33, c23, c13, c12, c44, c55, and c66')
 
 # matrices of the eigenvalue problem and for the function gradiant
 measurement = "freq_data"  # CHANGE THIS LINE TO APPROPRIATE DIRECTORY
      
-guessf = scipy.zeros((args.ns))
+# print out initial guess
+for is_1 in args.guessf:
+	print(is_1)
+	is_1 = is_1 / 100
 
-  /* print out initial guess */
-  for (is=0;is<ns;++is){
-    fscanf(parameterfile, "%f",&guessf[is]); 
-   /*  fprintf(stderr, "GUESS #1=%f GPa\n",guessf[is]);*/
-    fprintf(stderr, "%f\n",guessf[is]);
-    guessf[is]=guessf[is]/100;
-  }
-  fclose (parameterfile);
-  
+other = """
   d1=d1f;
   d2=d2f;
   d3=d3f;
@@ -118,8 +123,8 @@ guessf = scipy.zeros((args.ns))
   d3=d3/2.0; 
   
   guess=ealloc1double(ns);
-  for (is=0;is<ns;++is)
-    guess[is]=guessf[is];
+  for (is_1=0;is_1<ns;++is_1)
+    guess[is_1]=guessf[is_1];
   free1float(guessf);
 
   /* get measured frequencies from file */
@@ -191,9 +196,9 @@ guessf = scipy.zeros((args.ns))
 	   irk,d1,d2,d3,rho,shape,freqmin,
 	   y,sig,ndata,guess,ia,ns,covar,alpha,&chisq, hextype, formod,&alamda);
     fprintf(stderr,"iter #%i\n",iter); /* print iteration number */
-    for (is=0; is<ns;++is) /* ns = dimension of symmetry */
-      /*fprintf(stderr,"guess=%f\n",100*guess[is]); */
-      fprintf(stderr,"%f\n",100*guess[is]); /* print estimated cij values*/
+    for (is_1=0; is_1<ns;++is_1) /* ns = dimension of symmetry */
+      /*fprintf(stderr,"guess=%f\n",100*guess[is_1]); */
+      fprintf(stderr,"%f\n",100*guess[is_1]); /* print estimated cij values*/
     
   }
     
@@ -2744,4 +2749,4 @@ char error_text[];
 	fprintf(stderr,"%s\n",error_text);
 	fprintf(stderr,"...now exiting to system...\n");
 	_exit(1);
-}
+}"""
