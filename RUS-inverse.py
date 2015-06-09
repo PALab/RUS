@@ -25,7 +25,7 @@ FC = 1663
 
 parser = argparse.ArgumentParser(description='Inverse Algorithm')
 parser.add_argument(
-	'-d',
+	'--d',
 	type=int,
 	required=True,
 	help='order of polynomials used to estimate the eigenvectors')
@@ -84,68 +84,62 @@ parser.add_argument(
 	action='append',
 	type=float,
 	required=True,
-	help='The order of cij depends on the symmetry type.- Isotropic: c11, c44- Cubic: c11, c12, c44- Hexagonal - VTI: c33, c23, c12, c44, c66- Hexagonal - HTI: c11, c33, c12, c44, c66- Orthorhombic: c11, c22, c33, c23, c13, c12, c44, c55, c66',
-	dest='guessf')
+	help='The order of cij depends on the symmetry type. Isotropic: c11, c44. Cubic: c11, c12, c44. Hexagonal VTI: c33, c23, c12, c44, c66. Hexagonal HTI: c11, c33, c12, c44, c66. Orthorhombic: c11, c22, c33, c23, c13, c12, c44, c55, c66.',
+	dest='guess')
 
 args = parser.parse_args()
-if args.ns == 2 and len(args.guessf) != 2:
+if args.ns == 2 and len(args.guess) != 2:
 	parser.error('please provide cij values for c11 and c44')
-if args.ns == 3 and len(args.guessf) != 3:
+if args.ns == 3 and len(args.guess) != 3:
 	parser.error('please provide cij values for c11, c12, and c44')
 if args.ns == 5 and not args.hextype:
 	parser.error('please provide hextype')
-if args.ns == 5 and len(args.guessf) != 5 and args.hextype == 1:
+if args.ns == 5 and len(args.guess) != 5 and args.hextype == 1:
 	parser.error('please provide cij values for c33, c23, c12, c44, and c66')
-if args.ns == 5 and len(args.guessf) != 5 and args.hextype == 2:
+if args.ns == 5 and len(args.guess) != 5 and args.hextype == 2:
 	parser.error('please provide cij values for c11, c33, c12, c44, and c66')
-if args.ns == 9 and len(args.guessf) != 9:
+if args.ns == 9 and len(args.guess) != 9:
 	parser.error('please provide cij values for c11, c22, c33, c23, c13, c12, c44, c55, and c66')
+
+# print out initial guess
+for is_1 in args.guess:
+	print(is_1)
+	is_1 = is_1 / 100
+
+d  = args.d
+d1 = args.d1 / 2.0  # half sample dimensions are used in calculations
+d2 = args.d2 / 2.0
+d3 = args.d3 / 2.0 
+  
+# dimension of the problem
+r = 3 *(d + 1) * (d + 2) * (d + 3) / 6;
 
 # matrices of the eigenvalue problem and for the function gradiant
 measurement = "freq_data"  # CHANGE THIS LINE TO APPROPRIATE DIRECTORY
      
-# print out initial guess
-for is_1 in args.guessf:
-	print(is_1)
-	is_1 = is_1 / 100
+# get measured frequencies from file
+f = open(measurement, "rU")
+nfreq = int(f.readline())
+print('nfreq = ' + str(nfreq));
+freq   = []
+weight = []
+for i in range(nfreq):
+	line = f.readline()
+	nums = line.split(None, 1)
+	if len(nums) != 2:
+		print('Could not parse some lines in the frequency file: ' + measurement)
+		f.close()
+		sys.exit(-1)
+	freq.append(float(nums[0]))
+	weight.append(float(nums[1]))
+	print('freq = ' + str(freq[-1]));
+f.close()
+if len(freq) != nfreq:
+	print('Unexpected number of frequencies.')
+	print('Expected ' + str(nfreq) + ' but read ' + str(len(freq)))
+	sys.exit(-1)
 
 other = """
-  d1=d1f;
-  d2=d2f;
-  d3=d3f;
-  rho=rhof;
-  
-  /* dimension of the problem */
-  r= 3*(d+1)*(d+2)*(d+3)/6;
-
-  d1=d1/2.0; /* half sample dimensions are used in calculations */
-  d2=d2/2.0;
-  d3=d3/2.0; 
-  
-  guess=ealloc1double(ns);
-  for (is_1=0;is_1<ns;++is_1)
-    guess[is_1]=guessf[is_1];
-  free1float(guessf);
-
-  /* get measured frequencies from file */
-  measurementfile = fopen(measurement, "r");
-  fscanf(measurementfile, "%d", &nfreq);
-  fprintf(stderr, "nfreq=%d\n ", nfreq);
-  freq=alloc1float(nfreq);
-  weight=alloc1float(nfreq);
-  for(ifreq=0; ifreq<nfreq; ++ifreq){
-    fscanf(measurementfile, "%f", &freq[ifreq]);
-    /* scale freqs back to MHz from Hz*/
-    /* freq[ifreq]=freq[ifreq]/1000; */ 
-    fprintf(stderr, "freq=%f\n ", freq[ifreq]);
-    fscanf(measurementfile, "%f", &weight[ifreq]);
-  }
-  fclose(measurementfile); 
-
-  
-  
-
-
   /* alloc work space*/
   itab=alloc1int(r);
   ltab=alloc1int(r);
