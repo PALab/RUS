@@ -13,111 +13,37 @@
 # Computer Science Department
 # University of Auckland, Auckland, 1010, New Zealand
 
-import argparse
 import sys
 import numpy
 import rus
+import rus_parser as p
 
-NSTACK = 50	# maximum sort length is 2^NSTACK
-NSMALL = 7	# size of array for which insertion sort is fast
-FM = 7875	# constants used to generate random pivots
+NSTACK = 50     # maximum sort length is 2^NSTACK
+NSMALL = 7      # size of array for which insertion sort is fast
+FM = 7875       # constants used to generate random pivots
 FA = 211
 FC = 1663
 
-parser = argparse.ArgumentParser(description='Inverse Algorithm')
-parser.add_argument(
-	'--d',
-	type=int,
-	required=True,
-	help='order of polynomials used to estimate the eigenvectors')
-parser.add_argument(
-	'--shape',
-	nargs='?',
-	const='1',
-	default='1',
-	type=int,
-	choices=[0,1,2],
-	help='0=sphere, 1=cylinder, 2=parallelepiped')
-parser.add_argument(
-	'--ns',
-	type=int,
-	required=True,
-	choices=[2,3,5,6,9],
-	help='number of cijs')
-parser.add_argument(
-	'--hextype',
-	nargs=1,
-	type=int,
-	choices=[1,2],
-	help='hextype - 1=VTI, 2=HTI. Type of hexagonal symetry (Only matters for ns=5)')
-parser.add_argument(
-	'--d1',
-	type=float,
-	required=True,
-	help='dimension 1 in cm (diameter for cyl. or sphere)')
-parser.add_argument(
-	'--d2',
-	type=float,
-	required=True,
-	help='dimension 2 in cm (diameter for cyl. or sphere)')
-parser.add_argument(
-	'--d3',
-	type=float,
-	required=True,
-	help='dimension 3 in cm (height for cyl. diameter for sphere)')
-parser.add_argument(
-	'--rho',
-	type=float,
-	required=True,
-	help='density in grams/cm^3')
-parser.add_argument(
-	'--freqmin',
-	type=float,
-	required=True,
-	help='lower frequency bound for inversion in MHz (set >1 KHz lower than your lowest measured value)')
-parser.add_argument(
-	'--freqmax',
-	type=float,
-	required=True,
-	help='upper frequency bound for inversion in MHz (set >5 or 10KHz higher than your highest value used for THIS particular fit as defined by Line 1 of freq_data)')
-parser.add_argument(
-	'--cij',
-	action='append',
-	type=float,
-	required=True,
-	help='The order of cij depends on the symmetry type. Isotropic: c11, c44. Cubic: c11, c12, c44. Hexagonal VTI: c33, c23, c12, c44, c66. Hexagonal HTI: c11, c33, c12, c44, c66. Orthorhombic: c11, c22, c33, c23, c13, c12, c44, c55, c66.',
-	dest='guess')
-
-args = parser.parse_args()
-if args.ns == 2 and len(args.guess) != 2:
-	parser.error('please provide cij values for c11 and c44')
-if args.ns == 3 and len(args.guess) != 3:
-	parser.error('please provide cij values for c11, c12, and c44')
-if args.ns == 5 and not args.hextype:
-	parser.error('please provide hextype')
-if args.ns == 5 and len(args.guess) != 5 and args.hextype == 1:
-	parser.error('please provide cij values for c33, c23, c12, c44, and c66')
-if args.ns == 5 and len(args.guess) != 5 and args.hextype == 2:
-	parser.error('please provide cij values for c11, c33, c12, c44, and c66')
-if args.ns == 9 and len(args.guess) != 9:
-	parser.error('please provide cij values for c11, c22, c33, c23, c13, c12, c44, c55, and c66')
+# send to parser
+args = p.inverse_parser(sys.argv)
 
 # print out initial guess
-for is_1 in args.guess:
-	print(is_1)
-	is_1 = is_1 / 100
+guess = args.cxxs[:]
+for is_1 in guess:
+    print(is_1)
+    is_1 = is_1 / 100
 
-d  = args.d
+d  = args.order
 d1 = args.d1 / 2.0  # half sample dimensions are used in calculations
 d2 = args.d2 / 2.0
 d3 = args.d3 / 2.0 
-  
+
 # dimension of the problem
 r = 3 *(d + 1) * (d + 2) * (d + 3) / 6;
 
 # matrices of the eigenvalue problem and for the function gradiant
 measurement = "freq_data"  # CHANGE THIS LINE TO APPROPRIATE DIRECTORY
-     
+
 # get measured frequencies from file
 f = open(measurement, "rU")
 nfreq = int(f.readline())
@@ -125,20 +51,21 @@ print('nfreq = ' + str(nfreq));
 freq   = []
 weight = []
 for i in range(nfreq):
-	line = f.readline()
-	nums = line.split(None, 1)
-	if len(nums) != 2:
-		print('Could not parse some lines in the frequency file: ' + measurement)
-		f.close()
-		sys.exit(-1)
-	freq.append(float(nums[0]))
-	weight.append(float(nums[1]))
-	print('freq = ' + str(freq[-1]));
+    line = f.readline()
+    nums = line.split(None, 1)
+    if len(nums) != 2:
+        print('Could not parse some lines in the frequency file: ' + measurement)
+        f.close()
+        sys.exit(-1)
+    freq.append(float(nums[0]))
+    weight.append(float(nums[1]))
+    print('freq = ' + str(freq[-1]));
 f.close()
+
 if len(freq) != nfreq:
-	print('Unexpected number of frequencies.')
-	print('Expected ' + str(nfreq) + ' but read ' + str(len(freq)))
-	sys.exit(-1)
+    print('Unexpected number of frequencies.')
+    print('Expected ' + str(nfreq) + ' but read ' + str(len(freq)))
+    sys.exit(-1)
 
 # relationship between ir and l,m,n - filling tables
 itab, ltab, mtab, ntab, irk = rus.index_relationship(d, r)
@@ -157,200 +84,159 @@ ia  = [1   for i in range(ndata)]
 
 i = 0
 for ifr in range(ifr1, ifr2):
-	# set y equal to freq_data values. Therefore, y is an array of length ndata
-	y[i] = freq[ifr]
-	# set sig equal to the weightings from the second column of freq_data. Is an array of length ndata
-	sig[i] = weight[ifr]
-	i += 1
-	# sig is not a true 'error' but the weighting from freq_data
-	# is multipled by the difference in the misfit function/chisq so modes with a zero weighting are ignored
-  
+    # set y equal to freq_data values. Therefore, y is an array of length ndata
+    y[i] = freq[ifr]
+    # set sig equal to the weightings from the second column of freq_data. Is an array of length ndata
+    sig[i] = weight[ifr]
+    i += 1
+    # sig is not a true 'error' but the weighting from freq_data
+    # is multipled by the difference in the misfit function/chisq so modes with a zero weighting are ignored
+
 covar  = numpy.identity(args.ns)
 alpha  = numpy.identity(args.ns)
 chisq  =  0.0
 alamda = -1.0
 niter  =  100 # set number of iterations
 for i in range(niter):
-	mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,guess,ia,ns,covar,alpha,&chisq,hextype, formod,&alamda);
-	print('iter #' + str(iter))
-    for is_1 in range(ns): # ns = dimension of symmetry
-		print(str(100 * guess[is_1]) # print estimated cij values
+    mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,guess,ia,ns,covar,alpha,&chisq,hextype,formod,alamda)
+    print('iter #' + str(iter))
+    for is_1 in range(args.ns): # ns = dimension of symmetry
+        print(str(100 * guess[is_1])) # print estimated cij values
 
-return 1
-other = """
+print()
+print('This calculation can be executed again with the following command:')
+print('python {} --order {} --shape {} --ns {} --hextype {} --d1 {} --d2 {} --d3 {} --rho {} --freqmin {} --freqmax {} --cxxs {}'.format(sys.argv[0], args.order, args.shape, args.ns, args.hextype, args.d1, args.d2, args.d3, args.rho, args.freqmin, args.freqmax, ' '.join(str(s) for s in args.cxxs)))
 
-void formod(int d,int r,int *itab,int *ltab,int *mtab,int *ntab, 
-	    int *irk,double d1,double d2,double d3, 
-	    double rho,int shape,float freqmin,int ndata,
-	    double *a, double *y, double **dyda, int ns, int hextype)
-{
-int info, itype, lda, ldb, lwork, order; /* variables for lapack function */
-  char jobz, uplo; /* variables for lapack function */
-  int i,j; /* indices */
-  int ir1, ir2, irf;
-  int ifw, iw; 
-  int k;
+def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,y,dyda,ns,hextype):
 
-  double **cm;
-  double ****c; /* stiffness tensor and derivatives*/
-  double **e, **gamma, *work, **w,  **z; 
-  double *wsort;
-  double *wnosort;
-  int *indice;
-  char freqs[]="/home/paul/RUS/example/predictedf"; /*CHANGE THIS LINE TO APPROPRIATE DIRECTORY*/
-  FILE *freqfile;
+    freqs = 'predictedf' # CHANGE THIS LINE TO APPROPRIATE DIRECTORY
   
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  if (ns==2) {
-    /* isotropic */
+    cm = [[0.0 for i in range(6)] for j in range(6)]
+    if ns == 2:
+    # isotropic
     
-    cm[0][0]=a[0];
-    cm[3][3]=a[1];
+        cm[0][0] = a[0];
+        cm[3][3] = a[1];
     
-    cm[1][1]=cm[2][2]=cm[0][0];
-    cm[4][4]=cm[5][5]=cm[3][3];	
-    cm[0][1]=cm[0][2]=cm[1][2]=cm[0][0]-2.0*cm[3][3];
-    cm[1][0]=cm[2][0]=cm[2][1]=cm[0][0]-2.0*cm[3][3];
+        cm[1][1] = cm[2][2] = cm[0][0]
+        cm[4][4] = cm[5][5] = cm[3][3]
+        cm[0][1] = cm[0][2] = cm[1][2] = cm[0][0] - 2.0 * cm[3][3]
+        cm[1][0] = cm[2][0] = cm[2][1] = cm[0][0] - 2.0 * cm[3][3]
 
-  } else if (ns==3) {
-    /* cubic */
+    elif ns == 3:
+    # cubic
 	
-    cm[0][0]=a[0];
-    cm[0][1]=a[1];
-    cm[3][3]=a[2];
-	
-    cm[1][1]=cm[2][2]=cm[0][0];	
-    cm[4][4]=cm[5][5]=cm[3][3];	
-    cm[0][2]=cm[1][2]=cm[0][1];
-    cm[2][0]=cm[2][1]=cm[1][0]=cm[0][1];
+        cm[0][0] = a[0]
+        cm[0][1] = a[1]
+        cm[3][3] = a[2]
+            
+        cm[1][1] = cm[2][2] = cm[0][0]
+        cm[4][4] = cm[5][5] = cm[3][3]
+        cm[0][2] = cm[1][2] = cm[0][1]
+        cm[2][0] = cm[2][1] = cm[1][0] = cm[0][1]
 
-   } else if (ns==5) {
-    /* hexagonal */
+    elif ns == 5:
+    # hexagonal
      
-    if (hextype == 1) {
-      /* VTI */
-      fprintf(stderr, "vertical transverse isotropy\n");
+        if hextype == 1:
+        # VTI
+            print('vertical transverse isotropy')
 
-      cm[2][2]=a[0];
-      cm[1][2]=a[1];
-      cm[0][1]=a[2];
-      cm[3][3]=a[3];
-      cm[5][5]=a[4];
+            cm[2][2]=a[0]
+            cm[1][2]=a[1]
+            cm[0][1]=a[2]
+            cm[3][3]=a[3]
+            cm[5][5]=a[4]
 
-      cm[0][0]=cm[1][1]=2.0*cm[5][5] + cm[0][1];
-      cm[0][2]=cm[2][0]=cm[2][1]=cm[1][2];
-      cm[1][0]=cm[0][1];
-      cm[4][4]=cm[3][3];
-    }
+            cm[0][0]=cm[1][1]=2.0*cm[5][5] + cm[0][1]
+            cm[0][2]=cm[2][0]=cm[2][1]=cm[1][2]
+            cm[1][0]=cm[0][1]
+            cm[4][4]=cm[3][3]
 
-    else if (hextype == 2) {
-      /* HTI */
-      fprintf(stderr, "horizontal transverse isotropy\n");
+        elif (hextype == 2) {
+        # HTI
+            print('horizontal transverse isotropy')
 
-      cm[0][0]=a[0];
-      cm[2][2]=a[1];
-      cm[0][1]=a[2];
-      cm[5][5]=a[3];
-      cm[3][3]=a[4];
+            cm[0][0]=a[0]
+            cm[2][2]=a[1]
+            cm[0][1]=a[2]
+            cm[5][5]=a[3]
+            cm[3][3]=a[4]
 
-      cm[1][2]=cm[2][1]=cm[2][2] - 2.0*cm[3][3];
-      cm[0][2]=cm[1][0]=cm[2][0]=cm[0][1];
-      cm[1][1]=cm[2][2];
-      cm[4][4]=cm[5][5];
+            cm[1][2]=cm[2][1]=cm[2][2] - 2.0*cm[3][3]
+            cm[0][2]=cm[1][0]=cm[2][0]=cm[0][1]
+            cm[1][1]=cm[2][2]
+            cm[4][4]=cm[5][5]
 
-    }
-  }
+    elif ns == 6:
+    # tetragonal
+        cm[0][0]=a[0]
+        cm[2][2]=a[1]
+        cm[1][2]=a[2]
+        cm[0][1]=a[3]
+        cm[3][3]=a[4]
+        cm[5][5]=a[5]
 
-    else if (ns==6){
-      /* tetragonal */
-      cm[0][0]=a[0];
-      cm[2][2]=a[1];
-      cm[1][2]=a[2];
-      cm[0][1]=a[3];
-      cm[3][3]=a[4];
-      cm[5][5]=a[5];
+        cm[1][1]=cm[0][0]
+        cm[0][2]=cm[2][0]=cm[1][2]
+        cm[1][0]=cm[0][1]
+        cm[2][1]=cm[1][2]
+        cm[4][4]=cm[3][3]
 
-      cm[1][1]=cm[0][0];
-      cm[0][2]=cm[2][0]=cm[1][2];
-      cm[1][0]=cm[0][1];
-      cm[2][1]=cm[1][2];
-      cm[4][4]=cm[3][3];
-  
-  } 
-  
-    else if (ns==9){
-      /* orthorhombic */
-      cm[0][0]=a[0];
-      cm[1][1]=a[1];
-      cm[2][2]=a[2];
-      cm[1][2]=a[3];
-      cm[0][2]=a[4];
-      cm[0][1]=a[5];
-      cm[3][3]=a[6];
-      cm[4][4]=a[7];
-      cm[5][5]=a[8];
+    elif ns == 9:
+    # orthorhombic
+        cm[0][0]=a[0]
+        cm[1][1]=a[1]
+        cm[2][2]=a[2]
+        cm[1][2]=a[3]
+        cm[0][2]=a[4]
+        cm[0][1]=a[5]
+        cm[3][3]=a[6]
+        cm[4][4]=a[7]
+        cm[5][5]=a[8]
 
-      cm[2][0]=cm[0][2];
-      cm[1][0]=cm[0][1];
-      cm[2][1]=cm[1][2];
-  } 
-    else {
-    err("given elatic moduli does not fit given ns");
-  }
+        cm[2][0]=cm[0][2]
+        cm[1][0]=cm[0][1]
+        cm[2][1]=cm[1][2]
 
-  /* stiffness tensor calculation */
-  c= (double ****) malloc(sizeof(double ***)*3);
-  for (i=0; i<3; ++i)
-    c[i]=alloc3double(3,3,3);
-  stiffness (c,  cm);
-       
-  /* alloc workspace to solve for eigenvalues and eigenfunctions */
-  e= (double **) malloc(8*sizeof(double *));
-  for (k=0;  k<8; ++k)
-    e[k] = alloc1double(irk[k]*irk[k]);
-  
-  gamma= (double **) malloc(8*sizeof(double *));
-  for (k=0;  k<8; ++k)
-    gamma[k] = alloc1double(irk[k]*irk[k]);
-      
-  /* filling matrix e */
-  for (k=0; k<8; ++k)
-    e_fill(e[k], itab, ltab, mtab, ntab, 
-	   r, d1, d2, d3, rho, shape, k, irk);
-    
-  /* filling matrix gamma  */
-  for (k=0; k<8; ++k)
-    rus.gamma_fill(gamma[k], itab, ltab, mtab, 
-	       ntab, r, d1, d2, d3, c, shape, k, irk);
+    else:
+        print('given elatic moduli does not fit given ns')
+
+    e = rus.e_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, args.rho, args.shape, irk)
+    gamma = rus.gamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, cm, args.shape, irk)
       
   
-  fprintf(stderr, "starting eigenvalues calculation\n"); 
-  /*-------------------------------------------------------------*/
-  /*--------- solve the generalized eigenvalue problem ----------*/
-  /*-------------------------------------------------------------*/  
-  w= (double **) malloc(sizeof(double *)*8);
-  itype=1;
-  jobz='V';
-  uplo='U';
-  for (k=0; k<8; ++k){
-    w[k] =alloc1double(irk[k]);
-    lda=ldb=irk[k]; 
-    order=irk[k];  
-    lwork=MAX(1, 3*order-1);
-    work=alloc1double(lwork);
-    /* lapack routine */
-    dsygv_(&itype, &jobz, &uplo, &order, gamma[k], &lda, e[k], &ldb, 
-	   w[k], work, &lwork, &info);
-    free1double(work);
-  }
-  /*-------------------------------------------------------------*/  
-  /*-------------------------------------------------------------*/
-  /*-------------------------------------------------------------*/
-  /* eigen vectors */
-  z=alloc2double(r,r);
+    print('starting eigenvalues calculation')
+    #/*-------------------------------------------------------------*/
+    #/*--------- solve the generalized eigenvalue problem ----------*/
+    #/*-------------------------------------------------------------*/  
+    w = []
+    for k in range(8):
+        # lapack routine
+        a, w_temp, info = lapack.dsygv(gamma[k], e[k], itype=1, jobz='V', uplo='U');  
+        w.append(w_temp)
+
+    wsort = scipy.zeros(r)
+    i = 0
+    for k in range(8):
+        for ir1 in range(irk[k]):
+            wsort[i] = w[k][ir1]
+            i += 1
+    wsort.sort()
+
+    i = 0
+    ir1 = 0
+    while ir1 < args.nfreq:
+        if ((wsort[i]>0) and ((sqrt(wsort[i])/(2.0*scipy.pi))>0.00001)):
+            ir1 += 1
+            print(" f%d = %f" % (ir1, 1000000*sqrt(wsort[i])/(2.0*scipy.pi)))
+        i += 1
+
+    #/*-------------------------------------------------------------*/  
+    #/*-------------------------------------------------------------*/
+    #/*-------------------------------------------------------------*/
+    #/* eigen vectors */
+    z=alloc2double(r,r);
   irf=0;
   for (k=0; k<8; ++k){
     for (ir1=0;ir1<irf;++ir1)
@@ -359,24 +245,13 @@ int info, itype, lda, ldb, lwork, order; /* variables for lapack function */
     for (ir1=irf; ir1<irf+irk[k]; ++ir1)
       for (ir2=irf; ir2<irf+irk[k]; ++ir2)
 	z[ir2][ir1]=gamma[k][(ir2-irf)*irk[k]+ir1-irf]; 
-    /* change the order of the array at the same time since we go
-       from fortran array to C array */
+    #/* change the order of the array at the same time since we go
+    #   from fortran array to C array */
     for (ir1=irk[k]+irf;ir1<r;++ir1)
       for (ir2=irf; ir2<irf+irk[k]; ++ir2)
 	z[ir2][ir1]=0.0;
     irf+=irk[k];
   }
-  /* free workspace */
-  for (k=0; k<8; ++k){
-    free1double(gamma[k]);
-    free1double(e[k]);
-  }
-  free(gamma);
-  free(e);
-  for (i=0; i<3; ++i)
-    free3double(c[i]);
-  free(c);
-  /*fprintf(stderr, "eigenvalues calculation done\n");*/
   /* sort eigenfrequencies */
   wsort=alloc1double(r);
   wnosort=alloc1double(r);
@@ -948,88 +823,6 @@ void compute_dyda(double **dyda,int ns, int hextype, int r,int *itab,int *ltab,
 }
 
 
-double doublefact(int n){
-
-  if(n==-1) return 1;
-  else if (n==0) return 1; 
-  else if (n==1) return 1;  
-  else return n*doublefact(n-2);
-}
-
-double  volintegral (double d1, double d2, double d3, int l, int m, int n, int shape)
-{
-  if ((l%2==1) || (m%2==1) || (n%2==1)) return 0.0; 
-  else 
-    switch (shape) {
-      /* ell. cylinder shape */
-    case 1: return 4.0*PI*pow(d1, l+1)*pow(d2, m+1)*pow(d3, n+1)/(double)(n+1)
-	      *doublefact(l-1)*doublefact(m-1)/doublefact(l+m+2);
-    /* spheroid shape */
-    case 2:  return 4.0*PI*pow(d1, l+1)*pow(d2, m+1)*pow(d3, n+1)
-	       *doublefact(l-1)*doublefact(m-1)*doublefact(n-1)/doublefact(l+m+n+3);
-    /* rp shape */
-    default: return 8.0/((l+1)*(m+1)*(n+1))*pow(d1, l+1)*pow(d2,m+1)*pow(d3, n+1);
-    }
-}
-
-void e_fill(double *e, int *itab, int *ltab, int *mtab, int *ntab, 
-	    int r, double d1, double d2, double d3, double rho, 
-	    int shape, int k, int *irk)
-{
-  int ir1, ir2, i1, i2, l1, l2, m1, m2, n1, n2, irs, irf, ik, irv, irh;
-  int l, m, n;
-  
-  irs=0;
-  for (ik=0; ik<k; ++ik)
-    irs+=irk[ik];
-
-  irf= irs+irk[k];
-    
-  for (irv=0, ir1=irs; ir1<irf; ++ir1, ++irv){
-    for (irh=0, ir2=irs; ir2<irf; ++ir2, ++irh){
-      i1=itab[ir1];
-      i2=itab[ir2];
-      l1=ltab[ir1];
-      l2=ltab[ir2];
-      m1=mtab[ir1];
-      m2=mtab[ir2];
-      n1=ntab[ir1];
-      n2=ntab[ir2];
-
-      l=l1+l2;
-      m=m1+m2;
-      n=n1+n2;
-      if (i1!=i2) e[irv*irk[k]+irh]=0.0;
-      else e[irv*irk[k]+irh]= rho* volintegral(d1, d2, d3, l, m, n, shape);
-    }
-  }
-}
-
-void stiffness (double ****c, double **cm)
-{
-  int i, j, k, l;
-  int a, b;
-  
-  for (i=0; i<3; ++i)
-    for (j=0; j<3; ++j){
-      if ((i==0)&&(j==0)) a=0;
-      else if ((i==1)&&(j==1)) a=1;
-      else if ((i==2)&&(j==2)) a=2;
-      else if (((i==1)&&(j==2))||((i==2)&&(j==1))) a=3;
-      else if (((i==0)&&(j==2))||((i==2)&&(j==0))) a=4 ;
-      else a=5 ;
-      for (k=0; k<3; ++k)
-	for (l=0; l<3; ++l){
-	  if ((k==0)&&(l==0)) b=0;
-	  else if ((k==1)&&(l==1)) b=1;
-	  else if ((k==2)&&(l==2)) b=2;
-	  else if (((k==1)&&(l==2))||((k==2)&&(l==1))) b=3;
-	  else if (((k==0)&&(l==2))||((k==2)&&(l==0))) b=4 ;
-	  else b=5 ;
-	  c[i][j][k][l]=cm[a][b];
-	}
-    }
-} 
 /* isotropic */
 void dstiff_iso_c11(double ****c){
   double **cm;
@@ -1508,8 +1301,8 @@ double  dfdp(double f, double **dgammadp, double **z, int ie, int n)
   p=alloc1double(n);
   
   for (i=0; i<n; ++i)
-    p[i]= scalarproduct(dgammadp[i], z[ie], n); /* we use dgammadp's 
-						   symmetry here*/
+    p[i]= scalarproduct(dgammadp[i], z[ie], n); #/* we use dgammadp's 
+						   #symmetry here*/
  
   return scalarproduct(z[ie], p, n)/(8.0*PI*PI*f); 
   free1double(p);
@@ -1532,51 +1325,51 @@ void dqkpart (double a[], int p, int q, int *j, int *k)
 	double apivot,temp;
 	static long int seed=0L;
  
-	/* choose random pivot element between p and q, inclusive */
+	#/* choose random pivot element between p and q, inclusive */
 	seed = (seed*FA+FC)%FM;
 	pivot = p+(q-p)*(double)seed/(double)FM;
 	if (pivot<p) pivot = p;
 	if (pivot>q) pivot = q;
 	apivot = a[pivot];
 
-	/* initialize left and right pointers and loop until break */
+	#/* initialize left and right pointers and loop until break */
 	for (left=p,right=q;;) {
-		/*
-		 * increment left pointer until either
-		 * (1) an element greater than the pivot element is found, or
-		 * (2) the upper bound of the input subarray is reached
-		 */
+		#/*
+		# * increment left pointer until either
+		# * (1) an element greater than the pivot element is found, or
+		# * (2) the upper bound of the input subarray is reached
+		# */
 		while (a[left]<=apivot && left<q) left++;
  
-		/*
-		 * decrement right pointer until either
-		 * (1) an element less than the pivot element is found, or
-		 * (2) the lower bound of the input subarray is reached
-		 */
+		#/*
+		# * decrement right pointer until either
+		# * (1) an element less than the pivot element is found, or
+		# * (2) the lower bound of the input subarray is reached
+		# */
 		while (a[right]>=apivot && right>p) right--;
  
-		/* if left pointer is still to the left of right pointer */
+		#/* if left pointer is still to the left of right pointer */
 		if (left<right) {
-			/* exchange left and right elements */
+			#/* exchange left and right elements */
 			temp = a[left];
 			a[left++] = a[right];
 			a[right--] = temp;
 		} 
-		/* else, if pointers are equal or have crossed, break */
+		#/* else, if pointers are equal or have crossed, break */
 		else break;
 	}
-	/* if left pointer has not crossed pivot */
+	#/* if left pointer has not crossed pivot */
 	if (left<pivot) {
 
-		/* exchange elements at left and pivot */
+		#/* exchange elements at left and pivot */
 		temp = a[left];
 		a[left++] = a[pivot];
 		a[pivot] = temp;
 	}
-	/* else, if right pointer has not crossed pivot */
+	#/* else, if right pointer has not crossed pivot */
 	else if (pivot<right) {
 
-		/* exchange elements at pivot and right */
+		#/* exchange elements at pivot and right */
 		temp = a[right];
 		a[right--] = a[pivot];
 		a[pivot] = temp;
@@ -1821,148 +1614,136 @@ Author:  Dave Hale, Colorado School of Mines, 01/13/89
 
 
 
+#/* ----------------------------------------------------------- */
+#/* ----------------------------------------------------------- */
+#/* ----------------  Optimization routines  ------------------ */
+#/* ----------------------------------------------------------- */
+#/* ----------------------------------------------------------- */
+#
+#
+#/* ------------------------------------------------------------------- */
+#/* ---------------------------- MRQMIN ------------------------------- */
+#/* ------------------------------------------------------------------- */
+#/* ------------------------- Description from: ----------------------- */
+#/* -------- Numerical Recipes: the art of scientific computing ------- */
+#/* --W. H. Press, B. P. Flannery, S. A. Teukolsky, W. T, Vetterling -- */
+#/* ------------------------------------------------------------------- */
+#
+#/* ------------------------------------------------------------------- */
+#/* Subroutine MRQMIN(X, Y, SIG, NDATA, A, MA, LISTA, MFIT,
+# * COVAR, ALPHA, NCA, CHISQ, FUNCS, ALAMDA)
+# * Levenberg-Marquardt method, attemping to reduce the value of chisq of a
+# * fit between a set of NDATA points X(I), Y(I) with individual standard 
+# * deviations SIG(I), and a nonlinear function dependent of MA coefficients
+# * A. The array LISTA numbers the parameters A such that the first MFIT 
+# * correspond to values actually being adjusted; the remaining MA-MFIT
+# * parameters are held fixed at their input value. The program returns
+# * current best-fit values for the MA fit parameters A and CHISQ. The 
+# * arrays COVAR(NCA, NCA) and ALPHA(NCA, NCA) with physical dimension NCA
+# * are used as working space during most iterations. Supply a subroutine
+# * FUNCS(X, A, YFIT, DYDA, MA) that evaluates the fitting function YFIT,
+# * and its derivative DYDA with respect to the fittng parameters A at X.
+# * On the first call provide an initial guess for the parameters A, and 
+# * set ALAMDA<0 for initialization (which then sets ALAMDA=0.001). If the
+# * step succedds CHISQ becomes smaller and ALAMDA decreases by a factor 
+# * of 10. If the step fails ALAMDA grows by a factor of 10. You must call
+# * this routine repeatedly until convergence is achieved. Then, make one
+# * final call with ALAMDA=0, so that COVAR(I,J) returns the covariance
+# * matrix, and ALPHA(I, J) the curvature matrix. */
+#/* ------------------------------------------------------------------- */ 
+#
+#/* This is the optimisation routine which is called by MAIN once every iteration */
+#/* mrqmin(d,r,itab,ltab,mtab,ntab,
+#	   irk,d1,d2,d3,rho,shape,freqmin,
+#	   y,sig,ndata,guess,ia,ns,covar,alpha,&chisq, hextype, formod,&alamda) */
+#
+#/* ------ */
+#/* Inputs */
+#/* ------ */
+#
+#/* d  = order of polynomial fit eg) 8, 10 or 12*/
+#/* r = dimension of problem. Related to d by  r= 3*(d+1)*(d+2)*(d+3)/6 */
+#
+#/* *itab, *ltab, *mtab, *ntab = 1D array's of type int. Related to r. _tab=alloc1int(r) */
+#/* *irk = 1D array on int. irk = alloc1int(8)*/
+#/* --------------------------------------- */
+#/* the * in front of the variable is a pointer */
+#/* char *p declares p to be a pointer to char */
+#/* *p = 0 means "put a zero in the byte which p points to" */
+#/* --------------------------------------- */
+#
+#/* d1, d2, d3 = dimensions of sample, diameter, height */
+#/* rho = density in g/cm^3 */
+#/* shape = cylinder, sphere or rectangular parallelepiped */
+#/* freqmin = minimum frequency, from param_data */
+#
+#/* y = 1D array of measured frequency data*/
+#/* sig = 1D array of weightings - should be individual standard deviations for each freq? Is this an issue? */
+#/* ndata = number of data points - frequencies used from freq_data */
+#/* a = initial guess of parameter (cij) values. From param_data. Same size as ns */
+#
+#/* ia = 1D array of length ndata with entries = 1. This numbers the parameters such that the first MFIT parameters are adjusted and the remaining parameters are held constant */
+#/* */
+#
+#/* ma = number of coefficients. Is equivalent to ns */
+#/* covar = covariance matrix. Of size ns by ns (number of cijs). Initialised as identity matrix */
+#/* alpha = curvature matrix. Of size ns by ns (number of cijs). Initialised as identity matrix */
+#/* chisq = the difference between measured and predicted frequencies. Is not a "traditional" chisq */
+#/* hextype = differentiates between VTI and HTI symmetry in the hexagonal case */
+#/* (*funcs) = forward model. Calculates the frequencies based on cij values */
+#/* alamda = parameter from conjugate-gradient method. Starts as <0 to initialise the routine and is changed in subsequent iterations */
+#
+def mrqmin(d, r, itab, ltab, mtab, ntab, irk, d1, d2, d3, rho, shape, freqmin, y, sig, ndata, a, ia, ma, covar, alpha, chisq, hextype, funcs, alamda):
+    # static int mfit; /* number of cijs that are adjusted. The remaining (ma = ns) - mfit cij values are left unchanged */
+    # static double ochisq,*atry,*beta,*da,**oneda;
+    # /* IF loop is called if almada <0. This initializes the routine and almada = -1.0 is set in main before calling MRQMIN */
+    if alamda < 0.0:
+        # create 1D arrays the size of ma = ns = number of cijs
+        atry = numpy.zeros(ma)
+        beta = numpy.zeros(ma)
+        da   = numpy.zeros(ma)
 
-/* ----------------------------------------------------------- */
-/* ----------------------------------------------------------- */
-/* ----------------  Optimization routines  ------------------ */
-/* ----------------------------------------------------------- */
-/* ----------------------------------------------------------- */
+        #set mfit = 0. Times looped through = number of independent cijs
+        mfit = 0
+        for j in range(ma):
+            if ia[j] > 0:
+                mfit += 1
+
+        # WHAT GOES ON HERE? Why is mfit=4 sometimes and mfit=5 sometimes? Why does it change? What changes ia?
 
 
-/* ------------------------------------------------------------------- */
-/* ---------------------------- MRQMIN ------------------------------- */
-/* ------------------------------------------------------------------- */
-/* ------------------------- Description from: ----------------------- */
-/* -------- Numerical Recipes: the art of scientific computing ------- */
-/* --W. H. Press, B. P. Flannery, S. A. Teukolsky, W. T, Vetterling -- */
-/* ------------------------------------------------------------------- */
+        # mfit is changed to ns regardless of the number of frequencies used (at least for isotropic sample)
+        # shouldn't mfit only be 1 for the first freq - so only one cij is changed
 
-/* ------------------------------------------------------------------- */
-/* Subroutine MRQMIN(X, Y, SIG, NDATA, A, MA, LISTA, MFIT,
- * COVAR, ALPHA, NCA, CHISQ, FUNCS, ALAMDA)
- * Levenberg-Marquardt method, attemping to reduce the value of chisq of a
- * fit between a set of NDATA points X(I), Y(I) with individual standard 
- * deviations SIG(I), and a nonlinear function dependent of MA coefficients
- * A. The array LISTA numbers the parameters A such that the first MFIT 
- * correspond to values actually being adjusted; the remaining MA-MFIT
- * parameters are held fixed at their input value. The program returns
- * current best-fit values for the MA fit parameters A and CHISQ. The 
- * arrays COVAR(NCA, NCA) and ALPHA(NCA, NCA) with physical dimension NCA
- * are used as working space during most iterations. Supply a subroutine
- * FUNCS(X, A, YFIT, DYDA, MA) that evaluates the fitting function YFIT,
- * and its derivative DYDA with respect to the fittng parameters A at X.
- * On the first call provide an initial guess for the parameters A, and 
- * set ALAMDA<0 for initialization (which then sets ALAMDA=0.001). If the
- * step succedds CHISQ becomes smaller and ALAMDA decreases by a factor 
- * of 10. If the step fails ALAMDA grows by a factor of 10. You must call
- * this routine repeatedly until convergence is achieved. Then, make one
- * final call with ALAMDA=0, so that COVAR(I,J) returns the covariance
- * matrix, and ALPHA(I, J) the curvature matrix. */
-/* ------------------------------------------------------------------- */ 
+        # for hexagonal symmetry mfit starts out being four and is increased to five when more freqs are added
+        # this is what is consistent with what we see in the inverse process
 
-/* This is the optimisation routine which is called by MAIN once every iteration */
-/* mrqmin(d,r,itab,ltab,mtab,ntab,
-	   irk,d1,d2,d3,rho,shape,freqmin,
-	   y,sig,ndata,guess,ia,ns,covar,alpha,&chisq, hextype, formod,&alamda) */
 
-/* ------ */
-/* Inputs */
-/* ------ */
+        # allocate a 2-d array of doubles - row vector the size of mfit?
+        oneda = numpy.zeros((1,mfit))
 
-/* d  = order of polynomial fit eg) 8, 10 or 12*/
-/* r = dimension of problem. Related to d by  r= 3*(d+1)*(d+2)*(d+3)/6 */
+        #set alamda to a small positive value (0.001) after the routine has been initialized by the negative value
+        alamda = 0.001
 
-/* *itab, *ltab, *mtab, *ntab = 1D array's of type int. Related to r. _tab=alloc1int(r) */
-/* *irk = 1D array on int. irk = alloc1int(8)*/
-/* --------------------------------------- */
-/* the * in front of the variable is a pointer */
-/* char *p declares p to be a pointer to char */
-/* *p = 0 means "put a zero in the byte which p points to" */
-/* --------------------------------------- */
+        # compute "chisq" - need to update to formal chisq
+        mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,alpha,beta,chisq,hextype,funcs)
+        ochisq=(*chisq); #/* update chisq value */
+        for (j=0;j<ma;++j)
+            atry[j]=a[j]; #/* set atry[j] equal to the inital guess of the cij value a[j]*/
 
-/* d1, d2, d3 = dimensions of sample, diameter, height */
-/* rho = density in g/cm^3 */
-/* shape = cylinder, sphere or rectangular parallelepiped */
-/* freqmin = minimum frequency, from param_data */
-
-/* y = 1D array of measured frequency data*/
-/* sig = 1D array of weightings - should be individual standard deviations for each freq? Is this an issue? */
-/* ndata = number of data points - frequencies used from freq_data */
-/* a = initial guess of parameter (cij) values. From param_data. Same size as ns */
-
-/* ia = 1D array of length ndata with entries = 1. This numbers the parameters such that the first MFIT parameters are adjusted and the remaining parameters are held constant */
-/* */
-
-/* ma = number of coefficients. Is equivalent to ns */
-/* covar = covariance matrix. Of size ns by ns (number of cijs). Initialised as identity matrix */
-/* alpha = curvature matrix. Of size ns by ns (number of cijs). Initialised as identity matrix */
-/* chisq = the difference between measured and predicted frequencies. Is not a "traditional" chisq */
-/* hextype = differentiates between VTI and HTI symmetry in the hexagonal case */
-/* (*funcs) = forward model. Calculates the frequencies based on cij values */
-/* alamda = parameter from conjugate-gradient method. Starts as <0 to initialise the routine and is changed in subsequent iterations */
-
-void mrqmin(int d,int r,int *itab,int *ltab,int *mtab,int *ntab, 
-	    int *irk,double d1,double d2,double d3, 
-	    double rho,int shape,float freqmin,
-	    double y[],double sig[],int ndata,double a[],int ia[],
-	    int ma,double **covar,double **alpha,double *chisq, int hextype, 
-	    void (*funcs)(int,int,int *,int *,int *,int *, 
-			   int *,double,double,double, 
-			   double,int,float,int,
-			  double *, double *, double **, int, int)
-	    ,double *alamda)
-{
-
-  int j,k,l; /* counting measures for FOR loops */
-  static int mfit; /* number of cijs that are adjusted. The remaining (ma = ns) - mfit cij values are left unchanged */
-  static double ochisq,*atry,*beta,*da,**oneda;
+#/* end of IF loop - for initialization of optimization routine */
   
   
-  /* IF loop is called if almada <0. This initializes the routine and almada = -1.0 is set in main before calling MRQMIN */
-  if (*alamda <0.0) {
-    atry=alloc1double(ma); /* create 1D arrays the size of ma = ns = number of cijs*/
-    beta=alloc1double(ma);
-    da=alloc1double(ma);
-    /* are arrays of size ma (number of cijs) with entries = 0 */
-    
-    for (mfit=0, j=0;j<ma;++j) /* set mfit = 0. Times looped through = number of independent cijs*/
-      if (ia[j]) mfit++; /* if (ia[j]) is the same as if (ia[j] > 0) */
-    /* WHAT GOES ON HERE? Why is mfit=4 sometimes and mfit=5 sometimes? Why does it change? What changes ia? */
-    
-    
-    /* mfit is changed to ns regardless of the number of frequencies used (at least for isotropic sample) */
-    /* shouldn't mfit only be 1 for the first freq - so only one cij is changed */
-    
-    /* for hexagonal symmetry mfit starts out being four and is increased to five when more freqs are added */
-    /* this is what is consistent with what we see in the inverse process */
-    
-    
-    
-    oneda=alloc2double(1,mfit); /* allocate a 2-d array of doubles - row vector the size of mfit? */
-    
-    /* set alamda to a small positive value (0.001) after the routine has been initialized by the negative value */
-    *alamda=0.001;
-    
-    /* compute "chisq" - need to update to formal chisq*/
-    mrqcof(d,r,itab,ltab,mtab,ntab,
-	   irk,d1,d2,d3, 
-	   rho,shape,freqmin,y,sig,ndata,a,ia,ma,alpha,beta,chisq,hextype, funcs);
-    ochisq=(*chisq); /* update chisq value */
-    for (j=0;j<ma;++j) atry[j]=a[j]; /* set atry[j] equal to the inital guess of the cij value a[j]*/
-  }
-  /* end of IF loop - for initialization of optimization routine */
-  
-  
-  for (j=0;j<mfit;++j) {/* mfit started = 0 and then increased in the prior IF loop, but mfit <= ns */
-    for (k=0;k<mfit;++k) covar[j][k]=alpha[j][k]; /* set components in covariance matrix as equal to curvature matrix. covar and alpha started as identity matrices. Must be changed in mrqcof otherwise this line woudln't do anything*/
-    covar[j][j]=alpha[j][j]*(1.0+(*alamda)); /* change the main diagonals */
-    oneda[j][0]=beta[j]; /* update oneda values by beta - which is changed (?) by mrqcof*/
+  for (j=0;j<mfit;++j) {#/* mfit started = 0 and then increased in the prior IF loop, but mfit <= ns */
+    for (k=0;k<mfit;++k) covar[j][k]=alpha[j][k]; #/* set components in covariance matrix as equal to curvature matrix. covar and alpha started as identity matrices. Must be changed in mrqcof otherwise this line woudln't do anything*/
+    covar[j][j]=alpha[j][j]*(1.0+(*alamda)); #/* change the main diagonals */
+    oneda[j][0]=beta[j]; #/* update oneda values by beta - which is changed (?) by mrqcof*/
   }
   
   gaussj(covar,mfit,oneda,1); 
   for (j=0; j<mfit; ++j) da[j]=oneda[j][0];
   
-  if (*alamda==0.0) { /* this is the stopping criteria - but how do we get alamda = 0?*/
+  if (*alamda==0.0) { #/* this is the stopping criteria - but how do we get alamda = 0?*/
     covsrt(covar,ma,ia,mfit);
     covsrt(alpha,ma,ia,mfit);
     free2double(oneda);
@@ -1974,26 +1755,25 @@ void mrqmin(int d,int r,int *itab,int *ltab,int *mtab,int *ntab,
   
   for (j=-1,l=0;l<ma;++l)
     if (ia[l]) atry[l]=a[l]+da[++j];
-  /* compute "chisq" - need to update to formal chisq*/
+  #/* compute "chisq" - need to update to formal chisq*/
   mrqcof(d,r,itab,ltab,mtab,ntab, 
 	   irk,d1,d2,d3, 
 	 rho,shape,freqmin,y,sig,ndata,atry,ia,ma,covar,da,chisq, hextype, funcs);
   
-  if (*chisq < ochisq) {/* if step succeeds value of chisq decreases: ochisq < chisq */
-    *alamda *= 0.1; /* decrease alamda by a factor of ten */
-    ochisq=(*chisq); /* update chisq with the new, reduced, value */
+  if (*chisq < ochisq) {#/* if step succeeds value of chisq decreases: ochisq < chisq */
+    *alamda *= 0.1; #/* decrease alamda by a factor of ten */
+    ochisq=(*chisq); #/* update chisq with the new, reduced, value */
     for (j=0;j<mfit;++j){
       for (k=0; k<mfit;++k) alpha[j][k]=covar[j][k];
       beta[j]=da[j];
     }
     for (l=0;l<ma;++l) a[l]=atry[l];
-  } else {/* else step does not succeed and chisq increases*/
-    *alamda *=10.0; /* increase alamda by a factor of ten, and then loop back and try again*/
+  } else {#/* else step does not succeed and chisq increases*/
+    *alamda *=10.0; #/* increase alamda by a factor of ten, and then loop back and try again*/
     *chisq=ochisq;
     
   }
 }
-
 
 # -------------------------------------------------------------------
 # ---------------------------- COVSRT -------------------------------
@@ -2024,83 +1804,74 @@ def covsrt(covar, ma, ia, mfit):
 
 
 
-/* ------------------------------------------------------------------- */
-/* ---------------------------- MRQCOF ------------------------------- */
-/* ------------------------------------------------------------------- */
-/* ------------------------- Description from: ----------------------- */
-/* -------- Numerical Recipes: the art of scientific computing ------- */
-/* --W. H. Press, B. P. Flannery, S. A. Teukolsky, W. T, Vetterling -- */
-/* ------------------------------------------------------------------- */
+# -------------------------------------------------------------------
+# ---------------------------- MRQCOF -------------------------------
+# -------------------------------------------------------------------
+# ------------------------- Description from: -----------------------
+# -------- Numerical Recipes: the art of scientific computing -------
+# --W. H. Press, B. P. Flannery, S. A. Teukolsky, W. T, Vetterling --
+# -------------------------------------------------------------------
 
-/* Subroutine MRQCOF(X, Y, SIG, NDATA, A, MA, LISTA, MFIT, ALPHA, BETA,
- * NALP, CHISQ, FUNCS)
- * Used by MRQMIN to evaluate the linearized fitting matrix ALPHA, and 
- * vector BETA from (14.4.8) */ 
+# Subroutine MRQCOF(X, Y, SIG, NDATA, A, MA, LISTA, MFIT, ALPHA, BETA,
+# NALP, CHISQ, FUNCS)
+# Used by MRQMIN to evaluate the linearized fitting matrix ALPHA, and 
+# vector BETA from (14.4.8) 
 
-/* called by mrqmin each iteration. Computes "chisq" */
-void mrqcof(int d,int r,int *itab,int *ltab,int *mtab,int *ntab, 
-	    int *irk,double d1,double d2,double d3, 
-	    double rho,int shape,float freqmin,
-	    double y[],double sig[],int ndata,double a[],
-	    int ia[],int ma,double **alpha,double beta[],double *chisq, int hextype,
-	    void (*funcs)(int,int,int *,int *,int *,int *, 
-			   int *,double,double,double, 
-			   double,int,float,int,
-			  double *, double *, double **, int, int))
-{
-  int i,j,k,l,m,mfit=0;
-  double *ymod,wt,sig2i,dy,**dyda;
+# called by mrqmin each iteration. Computes "chisq"
+def mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,alpha,beta,chisq,hextype,funcs):
+
+    mfit = 0
+    dyda = numpy.zeros((ndata,ma))
+    ymod = numpy.zeros(ndata)
+    for j in range(ma):
+        if ia[j] != 0:
+            mfit += 1
+    for j in range(mfit):
+        for k in range(j):
+            alpha[j][k] = 0.0
+        beta[j] = 0.0
+
+    chisq = 0.0
+    funcs(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,ymod,dyda,ma,hextype)
+    for i in range(ndata):
+        sig2i = sig[i] * sig[i]
+        dy = y[i] - ymod[i]
+        j = -1
+        for l in range(ma):
+            if ia[l] != 0:
+	        wt = dyda[l][i] * sig2i
+                j += 1
+                k = -1
+                for m in range(l):
+                    if ia[m] != 0:
+                        k += 1
+                        alpha[j][k] += wt * dyda[m][i]
+	        beta[j] += dy * wt
+ 
+        chisq += dy * dy * sig2i
   
-  dyda=alloc2double(ndata,ma); /* creates a 2D array of type double and size ndata and ma*/
-  ymod=alloc1double(ndata);
-  for (j=0;j<ma;++j)
-    if (ia[j]) mfit++;
-  for (j=0;j<mfit;++j) {
-    for (k=0;k<j;++k) alpha[j][k]=0.0;
-    beta[j]=0.0;
-  }
-  *chisq=0.0;
-  (*funcs)(d,r,itab,ltab,mtab,ntab, 
-	   irk,d1,d2,d3, 
-	   rho,shape,freqmin,ndata,a,ymod,dyda,ma, hextype); 
-  for (i=0; i<ndata; ++i) {
-    sig2i=(sig[i]*sig[i]);
-    dy=y[i]-ymod[i];
-    for (j=-1,l=0; l<ma; ++l) {
-      if (ia[l]) {
-	wt=dyda[l][i]*sig2i;
-	for (j++,k=-1,m=0;m<l;m++)
-	  if (ia[m]) alpha[j][++k] += wt*dyda[m][i];
-	beta[j] +=dy*wt;
-      }
-    }
-    *chisq +=dy*dy*sig2i;
-  }
-  
-  /* chisq prints from here */
-  fprintf(stderr,"chisq=%f\n\n",100.0*(*chisq));
-  for (j=1;j<mfit; ++j)
-    for (k=0; k<(j-1); ++k) alpha[k][j]=alpha[j][k];
-  free2double(dyda);
-  free1double(ymod);
-}
+    # chisq prints from here
+    print('chisq={}'.format(100.0 * chisq))
+    for j in range(1,mfit):
+        for k in range(j-1):
+            alpha[k][j] = alpha[j][k]
 
 
-/* ------------------------------------------------------------------- */
-/* ---------------------------- GAUSSJ ------------------------------- */
-/* ------------------------------------------------------------------- */
-/* ------------------------- Description from: ----------------------- */
-/* -------- Numerical Recipes: the art of scientific computing ------- */
-/* --W. H. Press, B. P. Flannery, S. A. Teukolsky, W. T, Vetterling -- */
-/* ------------------------------------------------------------------- */
+#/* ------------------------------------------------------------------- */
+#/* ---------------------------- GAUSSJ ------------------------------- */
+#/* ------------------------------------------------------------------- */
+#/* ------------------------- Description from: ----------------------- */
+#/* -------- Numerical Recipes: the art of scientific computing ------- */
+#/* --W. H. Press, B. P. Flannery, S. A. Teukolsky, W. T, Vetterling -- */
+#/* ------------------------------------------------------------------- */
 
-/* Subroutine GAUSSJ(A, N, NP, B, M, MP)
- * Linear equation solution by Gauss-Jordan elimination, equation (2.1.1)
- * above. A is an input matrix of N by N elements, stored in an array of
- * physical dimensions NP by NP. B is an input matrix of N by N containing
- * the M right-hand side vectors, stored in an array of physical 
- * dimensions Np by MP. On output, A is replaced by its matrix inverse,
- * and B is replaced by the corresponding set of solution vectors. */
+#/* Subroutine GAUSSJ(A, N, NP, B, M, MP)
+# * Linear equation solution by Gauss-Jordan elimination, equation (2.1.1)
+# * above. A is an input matrix of N by N elements, stored in an array of
+# * physical dimensions NP by NP. B is an input matrix of N by N containing
+# * the M right-hand side vectors, stored in an array of physical 
+# * dimensions Np by MP. On output, A is replaced by its matrix inverse,
+# * and B is replaced by the corresponding set of solution vectors. */
 
 void gaussj(double **a,int n,double **b,int m)
 {
@@ -2173,4 +1944,4 @@ char error_text[];
 	fprintf(stderr,"%s\n",error_text);
 	fprintf(stderr,"...now exiting to system...\n");
 	_exit(1);
-}"""
+}
