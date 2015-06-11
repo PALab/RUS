@@ -1,3 +1,92 @@
+import scipy
+
+def volintegral(d1, d2, d3, l, m, n, shape):
+    if l % 2 == 1 or m % 2 == 1 or n % 2 == 1:
+        return 0.0
+    # ell. cylinder shape
+    if shape == 1:
+        return 4.0 * scipy.pi * d1**(l+1) * d2**(m+1) * d3**(n+1) / (n+1) * doublefact(l-1) * doublefact(m-1) / doublefact(l + m + 2)
+    # spheroid shape
+    if shape == 2:
+        return 4.0 * scipy.pi * d1**(l+1) * d2**(m+1) * d3**(n+1) * doublefact(l-1) * doublefact(m-1) * doublefact(n-1) / doublefact(l + m + n + 3)
+    # rp shape
+    return 8.0 / ((l+1) * (m+1) * (n+1)) * d1**(l+1) * d2**(m+1) * d3**(n+1)
+
+def doublefact(n):
+    if n ==  -1: return 1
+    elif n == 0: return 1
+    elif n == 1: return 1
+    else: return n * doublefact(n-2)
+
+def e_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, rho, shape, irk):
+	e = [scipy.zeros((irk[i],irk[i])) for i in range(8)]
+	for k in range(8):
+		irs = 0
+		for ik in range(k):
+			irs += irk[ik]
+		irf = irs + irk[k]
+
+		irv = 0
+		ir1 = irs
+		while ir1 < irf:
+			irh = 0
+			ir2 = irs
+			while ir2 < irf:
+				i1 = itab[ir1]
+				i2 = itab[ir2]
+				l1 = ltab[ir1]
+				l2 = ltab[ir2]
+				m1 = mtab[ir1]
+				m2 = mtab[ir2]
+				n1 = ntab[ir1]
+				n2 = ntab[ir2]
+
+				l = l1 + l2
+				m = m1 + m2
+				n = n1 + n2
+				if i1 != i2:
+					e[k][irv][irh] = 0.0
+				else:
+					e[k][irv][irh] = rho * volintegral(d1, d2, d3, l, m, n, shape);
+				ir2 += 1
+				irh += 1
+			ir1 += 1
+			irv += 1
+	return e
+
+def stiffness(cm):
+	c = scipy.zeros((3,3,3,3))
+	for i in range(3):
+		for j in range(3):
+			if i == 0 and j == 0:
+				a = 0
+			elif i == 1 and j == 1:
+				a = 1
+			elif i == 2 and j == 2:
+				a = 2
+			elif (i == 1 and j == 2) or (i == 2 and j == 1):
+				a = 3
+			elif (i == 0 and j == 2) or (i == 2 and j == 0):
+				a = 4
+			else:
+				a = 5
+			for k in range(3):
+				for l in range(3):
+					if k == 0 and l == 0:
+						b = 0
+					elif k == 1 and l == 1:
+						b = 1
+					elif k == 2 and l == 2:
+						b = 2
+					elif (k == 1 and l == 2) or (k == 2 and l == 1):
+						b = 3
+					elif (k == 0 and l == 2) or (k == 2 and l == 0):
+						b = 4
+					else:
+						b = 5
+					c[i][j][k][l] = cm[a][b]
+	return c
+
 def gamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, cm, shape, irk):
 	gamma = [scipy.zeros((irk[i],irk[i])) for i in range(8)]
 	c = stiffness(cm)
