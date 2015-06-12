@@ -17,6 +17,7 @@ import sys
 import numpy
 import rus
 import rus_parser as p
+from math import fabs
 
 NSTACK = 50     # maximum sort length is 2^NSTACK
 NSMALL = 7      # size of array for which insertion sort is fast
@@ -28,8 +29,7 @@ FC = 1663
 args = p.inverse_parser(sys.argv)
 
 # print out initial guess
-guess = args.cxxs[:]
-for is_1 in guess:
+for is_1 in args.a:
     print(is_1)
     is_1 = is_1 / 100
 
@@ -98,110 +98,22 @@ chisq  =  0.0
 alamda = -1.0
 niter  =  100 # set number of iterations
 for i in range(niter):
-    mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,guess,ia,ns,covar,alpha,&chisq,hextype,formod,alamda)
+    mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,args.a,ia,ns,covar,alpha,&chisq,hextype,formod,alamda)
     print('iter #' + str(iter))
     for is_1 in range(args.ns): # ns = dimension of symmetry
         print(str(100 * guess[is_1])) # print estimated cij values
 
 print()
 print('This calculation can be executed again with the following command:')
-print('python {} --order {} --shape {} --ns {} --hextype {} --d1 {} --d2 {} --d3 {} --rho {} --freqmin {} --freqmax {} --cxxs {}'.format(sys.argv[0], args.order, args.shape, args.ns, args.hextype, args.d1, args.d2, args.d3, args.rho, args.freqmin, args.freqmax, ' '.join(str(s) for s in args.cxxs)))
+print('python {} --order {} --shape {} --ns {} --hextype {} --d1 {} --d2 {} --d3 {} --rho {} --freqmin {} --freqmax {} {}'.format(sys.argv[0], args.order, args.shape, args.ns, args.hextype, args.d1, args.d2, args.d3, args.rho, args.freqmin, args.freqmax, ' '.join(('--' + s + ' ' + str(v)) for k,v in args.a.iteritems())))
+
+
 
 def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,y,dyda,ns,hextype):
 
     freqs = 'predictedf' # CHANGE THIS LINE TO APPROPRIATE DIRECTORY
-  
-    cm = [[0.0 for i in range(6)] for j in range(6)]
-    if ns == 2:
-    # isotropic
-    
-        cm[0][0] = a[0];
-        cm[3][3] = a[1];
-    
-        cm[1][1] = cm[2][2] = cm[0][0]
-        cm[4][4] = cm[5][5] = cm[3][3]
-        cm[0][1] = cm[0][2] = cm[1][2] = cm[0][0] - 2.0 * cm[3][3]
-        cm[1][0] = cm[2][0] = cm[2][1] = cm[0][0] - 2.0 * cm[3][3]
 
-    elif ns == 3:
-    # cubic
-	
-        cm[0][0] = a[0]
-        cm[0][1] = a[1]
-        cm[3][3] = a[2]
-            
-        cm[1][1] = cm[2][2] = cm[0][0]
-        cm[4][4] = cm[5][5] = cm[3][3]
-        cm[0][2] = cm[1][2] = cm[0][1]
-        cm[2][0] = cm[2][1] = cm[1][0] = cm[0][1]
-
-    elif ns == 5:
-    # hexagonal
-     
-        if hextype == 1:
-        # VTI
-            print('vertical transverse isotropy')
-
-            cm[2][2]=a[0]
-            cm[1][2]=a[1]
-            cm[0][1]=a[2]
-            cm[3][3]=a[3]
-            cm[5][5]=a[4]
-
-            cm[0][0]=cm[1][1]=2.0*cm[5][5] + cm[0][1]
-            cm[0][2]=cm[2][0]=cm[2][1]=cm[1][2]
-            cm[1][0]=cm[0][1]
-            cm[4][4]=cm[3][3]
-
-        elif (hextype == 2) {
-        # HTI
-            print('horizontal transverse isotropy')
-
-            cm[0][0]=a[0]
-            cm[2][2]=a[1]
-            cm[0][1]=a[2]
-            cm[5][5]=a[3]
-            cm[3][3]=a[4]
-
-            cm[1][2]=cm[2][1]=cm[2][2] - 2.0*cm[3][3]
-            cm[0][2]=cm[1][0]=cm[2][0]=cm[0][1]
-            cm[1][1]=cm[2][2]
-            cm[4][4]=cm[5][5]
-
-    elif ns == 6:
-    # tetragonal
-        cm[0][0]=a[0]
-        cm[2][2]=a[1]
-        cm[1][2]=a[2]
-        cm[0][1]=a[3]
-        cm[3][3]=a[4]
-        cm[5][5]=a[5]
-
-        cm[1][1]=cm[0][0]
-        cm[0][2]=cm[2][0]=cm[1][2]
-        cm[1][0]=cm[0][1]
-        cm[2][1]=cm[1][2]
-        cm[4][4]=cm[3][3]
-
-    elif ns == 9:
-    # orthorhombic
-        cm[0][0]=a[0]
-        cm[1][1]=a[1]
-        cm[2][2]=a[2]
-        cm[1][2]=a[3]
-        cm[0][2]=a[4]
-        cm[0][1]=a[5]
-        cm[3][3]=a[6]
-        cm[4][4]=a[7]
-        cm[5][5]=a[8]
-
-        cm[2][0]=cm[0][2]
-        cm[1][0]=cm[0][1]
-        cm[2][1]=cm[1][2]
-
-    else:
-        print('given elatic moduli does not fit given ns')
-
+    cm = rus.make_cm(a,hextype)
     e = rus.e_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, args.rho, args.shape, irk)
     gamma = rus.gamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, cm, args.shape, irk)
       
@@ -1693,87 +1605,92 @@ Author:  Dave Hale, Colorado School of Mines, 01/13/89
 #/* (*funcs) = forward model. Calculates the frequencies based on cij values */
 #/* alamda = parameter from conjugate-gradient method. Starts as <0 to initialise the routine and is changed in subsequent iterations */
 #
-def mrqmin(d, r, itab, ltab, mtab, ntab, irk, d1, d2, d3, rho, shape, freqmin, y, sig, ndata, a, ia, ma, covar, alpha, chisq, hextype, funcs, alamda):
-    # static int mfit; /* number of cijs that are adjusted. The remaining (ma = ns) - mfit cij values are left unchanged */
-    # static double ochisq,*atry,*beta,*da,**oneda;
-    # /* IF loop is called if almada <0. This initializes the routine and almada = -1.0 is set in main before calling MRQMIN */
+def mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,covar,alpha,chisq,hextype,funcs,alamda):
+    # Loop is called if almada <0.
+    # This initializes the routine.
+    # Sets almada = -1.0 in main before calling MRQMIN.
     if alamda < 0.0:
         # create 1D arrays the size of ma = ns = number of cijs
         atry = numpy.zeros(ma)
         beta = numpy.zeros(ma)
         da   = numpy.zeros(ma)
 
-        #set mfit = 0. Times looped through = number of independent cijs
+        # mfit is the number of cijs that are adjusted.
+        # The remaining (ma = ns) - mfit cij values are left unchanged.
+        # Set mfit = 0. Times looped through = number of independent cijs.
         mfit = 0
         for j in range(ma):
             if ia[j] > 0:
                 mfit += 1
 
-        # WHAT GOES ON HERE? Why is mfit=4 sometimes and mfit=5 sometimes? Why does it change? What changes ia?
-
-
-        # mfit is changed to ns regardless of the number of frequencies used (at least for isotropic sample)
-        # shouldn't mfit only be 1 for the first freq - so only one cij is changed
-
-        # for hexagonal symmetry mfit starts out being four and is increased to five when more freqs are added
-        # this is what is consistent with what we see in the inverse process
-
-
         # allocate a 2-d array of doubles - row vector the size of mfit?
         oneda = numpy.zeros((1,mfit))
 
-        #set alamda to a small positive value (0.001) after the routine has been initialized by the negative value
+        # Set alamda to a small positive value (0.001)
+        # after the routine has been initialized by the negative value
         alamda = 0.001
 
-        # compute "chisq" - need to update to formal chisq
+        # Compute "chisq" - need to update to formal chisq.
         mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,alpha,beta,chisq,hextype,funcs)
-        ochisq=(*chisq); #/* update chisq value */
-        for (j=0;j<ma;++j)
-            atry[j]=a[j]; #/* set atry[j] equal to the inital guess of the cij value a[j]*/
 
-#/* end of IF loop - for initialization of optimization routine */
+        # update chisq value
+        ochisq = chisq
+        for j in range(ma):
+            # set atry[j] equal to the inital guess of the cij value a[j]
+            atry[j] = a[j]
   
+    # mfit started = 0 and then increased in the prior if loop, but mfit <= ns
+    for j in range(mfit):
+        # Set components in covariance matrix as equal to curvature matrix.
+        # covar and alpha started as identity matrices.
+        # Must be changed in mrqcof() otherwise this line would not do anything.
+        for k in range(mfit):
+            covar[j][k] = alpha[j][k]
+        # change the main diagonals
+        covar[j][j] = alpha[j][j] * (1.0 + alamda)
+        # update oneda values by beta - which is changed (?) by mrqcof()
+        oneda[j][0] = beta[j]
   
-  for (j=0;j<mfit;++j) {#/* mfit started = 0 and then increased in the prior IF loop, but mfit <= ns */
-    for (k=0;k<mfit;++k) covar[j][k]=alpha[j][k]; #/* set components in covariance matrix as equal to curvature matrix. covar and alpha started as identity matrices. Must be changed in mrqcof otherwise this line woudln't do anything*/
-    covar[j][j]=alpha[j][j]*(1.0+(*alamda)); #/* change the main diagonals */
-    oneda[j][0]=beta[j]; #/* update oneda values by beta - which is changed (?) by mrqcof*/
-  }
-  
-  gaussj(covar,mfit,oneda,1); 
-  for (j=0; j<mfit; ++j) da[j]=oneda[j][0];
-  
-  if (*alamda==0.0) { #/* this is the stopping criteria - but how do we get alamda = 0?*/
-    covsrt(covar,ma,ia,mfit);
-    covsrt(alpha,ma,ia,mfit);
-    free2double(oneda);
-    free1double(da);
-    free1double(beta);
-    free1double(atry);
-    return;
-  }
-  
-  for (j=-1,l=0;l<ma;++l)
-    if (ia[l]) atry[l]=a[l]+da[++j];
-  #/* compute "chisq" - need to update to formal chisq*/
-  mrqcof(d,r,itab,ltab,mtab,ntab, 
-	   irk,d1,d2,d3, 
-	 rho,shape,freqmin,y,sig,ndata,atry,ia,ma,covar,da,chisq, hextype, funcs);
-  
-  if (*chisq < ochisq) {#/* if step succeeds value of chisq decreases: ochisq < chisq */
-    *alamda *= 0.1; #/* decrease alamda by a factor of ten */
-    ochisq=(*chisq); #/* update chisq with the new, reduced, value */
-    for (j=0;j<mfit;++j){
-      for (k=0; k<mfit;++k) alpha[j][k]=covar[j][k];
-      beta[j]=da[j];
-    }
-    for (l=0;l<ma;++l) a[l]=atry[l];
-  } else {#/* else step does not succeed and chisq increases*/
-    *alamda *=10.0; #/* increase alamda by a factor of ten, and then loop back and try again*/
-    *chisq=ochisq;
-    
-  }
-}
+    gaussj(covar,mfit,oneda,1)
+    for j in range(mfit):
+        da[j] = oneda[j][0]
+
+    # This is the stopping criteria - but how do we get alamda = 0.0?
+    if alamda == 0.0:
+        covsrt(covar,ma,ia,mfit)
+        covsrt(alpha,ma,ia,mfit)
+        return
+
+    j = -1
+    for l in range(ma):
+        if ia[l] != 0:
+            j += 1
+            atry[l] = a[l] + da[j]
+
+    # Compute "chisq" - need to update to formal chisq
+    mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,atry,ia,ma,covar,da,chisq,hextype,funcs)
+
+    # if step succeeds value of chisq decreases: ochisq < chisq
+    if chisq < ochisq:
+        # decrease alamda by a factor of ten
+        alamda *= 0.1
+        # update chisq with the new, reduced, value
+        ochisq = chisq 
+        for j in range(mfit):
+            for k in range(mfit):
+                alpha[j][k] = covar[j][k]
+            beta[j] = da[j]
+        for l in range(ma):
+            a[l] = atry[l]
+
+    # else step does not succeed and chisq increases
+    else:
+        # Increase alamda by a factor of ten
+        # and then loop back and try again
+        alamda *= 10.0
+        chisq = ochisq
+
+
 
 # -------------------------------------------------------------------
 # ---------------------------- COVSRT -------------------------------
@@ -1872,76 +1789,50 @@ def mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
 # * the M right-hand side vectors, stored in an array of physical 
 # * dimensions Np by MP. On output, A is replaced by its matrix inverse,
 # * and B is replaced by the corresponding set of solution vectors. */
+def gaussj(a, n, b, m):
+    indxc = []
+    indxr = []
+    ipiv  = []
+    for j in range(n):
+        ipiv.append(0)
+    for i in range(n):
+        big = 0.0
+        for j in range(n):
+            if ipiv[j] != 1:
+                for k in range(n):
+                    if ipiv[k] == 0:
+                        if math.fabs(a[j][k]) >= big:
+                            big = math.fabs(a[j][k])
+                            irow = j
+                            icol = k
+                    elif ipiv[k] > 1:
+                        raise RuntimeError('GAUSSJ: Singular Matrix-1')
+        ++(ipiv[icol]);
+        if irow != icol:
+            for l in range(n):
+                a[irow][l], a[icol][l] = a[icol][l], a[irow][l]
+            for l in range(m):
+                b[irow][l], b[icol][l] = b[icol][l], b[irow][l]
+        indxr.append(irow)
+        indxc.append(icol)
+        if a[icol][icol] == 0.0:
+            raise RuntimeError('GAUSSJ: Singular Matrix-2')
+        pivinv = 1.0 / a[icol][icol]
+        a[icol][icol] = 1.0
+        for l in range(n):
+            a[icol][l] *= pivinv
+        for l in range(m):
+            b[icol][l] *= pivinv
+        for ll in range(n):
+            if ll != icol:
+                dum = a[ll][icol];
+                a[ll][icol] = 0.0
+                for l in range(n):
+                    a[ll][l] -= a[icol][l] * dum
+                for l in range(m):
+                    b[ll][l] -= b[icol][l] * dum
+    for l in range(n-1,-1,-1):
+        if indxr[l] != indxc[l]:
+            for k in range(n):
+                a[k][indxr[l]], a[k][indxc[l]] = a[k][indxc[l]], a[k][indxr[l]]
 
-void gaussj(double **a,int n,double **b,int m)
-{
-	int *indxc,*indxr,*ipiv;
-	int i,icol,irow,j,k,l,ll,*ivector();
-	double big,dum,pivinv,swap;
-	void nrerror();
-
-	indxc=alloc1int(n);
-	indxr=alloc1int(n);
-	ipiv=alloc1int(n);
-	for (j=0;j<n;j++) ipiv[j]=0;
-	for (i=0;i<n;i++) {
-		big=0.0;
-		for (j=0;j<n;j++)
-			if (ipiv[j] != 1)
-				for (k=0;k<n;k++) {
-					if (ipiv[k] == 0) {
-						if (fabs(a[j][k]) >= big) {
-							big=fabs(a[j][k]);
-							irow=j;
-							icol=k;
-						}
-					} else if (ipiv[k] > 1) nrerror("GAUSSJ: Singular Matrix-1");
-				}
-		++(ipiv[icol]);
-		if (irow != icol) {
-			for (l=0;l<n;l++):
-				a[irow][l], a[icol][l] = a[icol][l], a[irow][l]
-			for (l=0;l<m;l++):
-				b[irow][l], b[icol][l] = b[icol][l], b[irow][l]
-		}
-		indxr[i]=irow;
-		indxc[i]=icol;
-		if (a[icol][icol] == 0.0) nrerror("GAUSSJ: Singular Matrix-2");
-		pivinv=1.0/a[icol][icol];
-		a[icol][icol]=1.0;
-		for (l=0;l<n;l++) a[icol][l] *= pivinv;
-		for (l=0;l<m;l++) b[icol][l] *= pivinv;
-		for (ll=0;ll<n;ll++)
-			if (ll != icol) {
-				dum=a[ll][icol];
-				a[ll][icol]=0.0;
-				for (l=0;l<n;l++) a[ll][l] -= a[icol][l]*dum;
-				for (l=0;l<m;l++) b[ll][l] -= b[icol][l]*dum;
-			}
-	}
-	for (l=n-1;l>=0;l--) {
-		if (indxr[l] != indxc[l])
-			for (k=0;k<n;k++):
-				a[k][indxr[l]], a[k][indxc[l]] = a[k][indxc[l]], a[k][indxr[l]]
-	}
-	free1int(ipiv);
-	free1int(indxr);
-	free1int(indxc);
-}
-
-
-
-
-
-
-void nrerror(error_text)
-char error_text[];
-/* Numerical Recipes standard error handler */
-{
-	void _exit();
-
-	fprintf(stderr,"Numerical Recipes run-time error...\n");
-	fprintf(stderr,"%s\n",error_text);
-	fprintf(stderr,"...now exiting to system...\n");
-	_exit(1);
-}
