@@ -1,22 +1,164 @@
 import scipy
 
+def make_cm(a, hextype=None):
+    num_values = len(a)
+
+    if num_values == 2: return __make_cm_isotropic(a)
+    if num_values == 3: return __make_cm_cubic(a)
+    if num_values == 5:
+        if hextype == 1: return __make_cm_hexagonal_vti(a)
+        if hextype == 2: return __make_cm_hexagonal_hti(a)
+        raise ValueError('hextype value must be 1 or 2')
+    if num_values == 6: return __make_cm_tetragonal(a)
+    if num_values == 9: return __make_cm_orthohombic(a)
+    raise ValueError('passed list of incorrect length')
+
+
+
+def __make_cm_isotropic(a):
+    cm = [[0.0 for i in range(6)] for j in range(6)]
+    try:
+        cm[0][0] = a['c11'];
+        cm[3][3] = a['c44'];
+    except KeyError:
+        raise
+    else:
+        cm[1][1] = cm[2][2] = cm[0][0]
+        cm[4][4] = cm[5][5] = cm[3][3]
+        cm[0][1] = cm[0][2] = cm[1][2] = cm[0][0] - 2.0 * cm[3][3]
+        cm[1][0] = cm[2][0] = cm[2][1] = cm[0][0] - 2.0 * cm[3][3]
+        return cm
+
+
+
+def __make_cm_cubic(a):
+    cm = [[0.0 for i in range(6)] for j in range(6)]
+    try:
+        cm[0][0] = a['c11']
+        cm[0][1] = a['c12']
+        cm[3][3] = a['c44']
+    except KeyError:
+        raise
+    else:
+        cm[1][1] = cm[2][2] = cm[0][0]
+        cm[4][4] = cm[5][5] = cm[3][3]
+        cm[0][2] = cm[1][2] = cm[0][1]
+        cm[2][0] = cm[2][1] = cm[1][0] = cm[0][1]
+        return cm
+
+
+
+def __make_cm_hexagonal_vti(a):
+    cm = [[0.0 for i in range(6)] for j in range(6)]
+    try:
+        cm[2][2] = a['c33']
+        cm[1][2] = a['c23']
+        cm[0][1] = a['c12']
+        cm[3][3] = a['c44']
+        cm[5][5] = a['c66']
+    except KeyError:
+        raise
+    else:
+        cm[0][0] = cm[1][1] = 2.0 * cm[5][5] + cm[0][1]
+        cm[0][2] = cm[2][0] = cm[2][1] = cm[1][2]
+        cm[1][0] = cm[0][1]
+        cm[4][4] = cm[3][3]
+        return cm
+
+
+
+def __make_cm_hexagonal_hti(a):
+    cm = [[0.0 for i in range(6)] for j in range(6)]
+    try:
+        cm[0][0] = a['c11']
+        cm[2][2] = a['c33']
+        cm[0][1] = a['c12']
+        cm[5][5] = a['c66']
+        cm[3][3] = a['c44']
+    except KeyError:
+        raise
+    else:
+        cm[1][2] = cm[2][1] = cm[2][2] - 2.0 * cm[3][3]
+        cm[0][2] = cm[1][0] = cm[2][0] = cm[0][1]
+        cm[1][1] = cm[2][2]
+        cm[4][4] = cm[5][5]
+        return cm
+
+
+
+def __make_cm_tetragonal(a):
+    cm = [[0.0 for i in range(6)] for j in range(6)]
+    try:
+        cm[0][0] = a['c11']
+        cm[2][2] = a['c33']
+        cm[1][2] = a['c23']
+        cm[0][1] = a['c12']
+        cm[3][3] = a['c44']
+        cm[5][5] = a['c66']
+    except KeyError:
+        raise
+    else:
+        cm[1][1] = cm[0][0]
+        cm[0][2] = cm[2][0] = cm[1][2]
+        cm[1][0] = cm[0][1]
+        cm[2][1] = cm[1][2]
+        cm[4][4] = cm[3][3]
+        return cm
+
+
+
+def __make_cm_orthorhombic(a):
+    cm = [[0.0 for i in range(6)] for j in range(6)]
+    try:
+        cm[0][0] = a['c11']
+        cm[1][1] = a['c22']
+        cm[2][2] = a['c33']
+        cm[1][2] = a['c23']
+        cm[0][2] = a['c13']
+        cm[0][1] = a['c12']
+        cm[3][3] = a['c44']
+        cm[4][4] = a['c55']
+        cm[5][5] = a['c66']
+    except KeyError:
+        raise
+    else:
+        cm[2][0] = cm[0][2]
+        cm[1][0] = cm[0][1]
+        cm[2][1] = cm[1][2]
+        return cm
+
+
+
 def volintegral(d1, d2, d3, l, m, n, shape):
+
     if l % 2 == 1 or m % 2 == 1 or n % 2 == 1:
         return 0.0
+
     # ell. cylinder shape
     if shape == 1:
-        return 4.0 * scipy.pi * d1**(l+1) * d2**(m+1) * d3**(n+1) / (n+1) * doublefact(l-1) * doublefact(m-1) / doublefact(l + m + 2)
+        ds = d1**(l+1) * d2**(m+1) * d3**(n+1)
+        df_lm = doublefact(l-1) * doublefact(m-1)
+        return 4.0 * scipy.pi * ds / (n+1) * df_lm / doublefact(l+m+2)
+
     # spheroid shape
     if shape == 2:
-        return 4.0 * scipy.pi * d1**(l+1) * d2**(m+1) * d3**(n+1) * doublefact(l-1) * doublefact(m-1) * doublefact(n-1) / doublefact(l + m + n + 3)
+        ds = d1**(l+1) * d2**(m+1) * d3**(n+1)
+        df_lm = doublefact(l-1) * doublefact(m-1)
+        df_all = doublefact(l+m+n+3)
+        return 4.0 * scipy.pi * ds * df_lm * doublefact(n-1) / df_all
+
     # rp shape
-    return 8.0 / ((l+1) * (m+1) * (n+1)) * d1**(l+1) * d2**(m+1) * d3**(n+1)
+    return 8.0 / ((l+1) * (m+1) * (n+1)) * ds
+
+
 
 def doublefact(n):
-    if n ==  -1: return 1
-    elif n == 0: return 1
-    elif n == 1: return 1
-    else: return n * doublefact(n-2)
+    if n == -1 or n == 0 or n == 1:
+        return 1
+    else:
+        return n * doublefact(n-2)
+
+
 
 def e_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, rho, shape, irk):
 	e = [scipy.zeros((irk[i],irk[i])) for i in range(8)]
