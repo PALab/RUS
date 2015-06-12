@@ -12,7 +12,6 @@ def inverse_parser(params):
     r_help  = 'density in grams/cm^3 (Default: 2.713)'
     l_help  = 'lower frequency bound for inversion in MHz (set >1 KHz lower than your lowest measured value) (Default: 0.020)'
     u_help  = 'upper frequency bound for inversion in MHz (set >5 or 10KHz higher than your highest value used for THIS particular fit as defined by Line 1 of freq_data) (Default: 0.110)'
-    c_help  = 'The order of cxxs depends on the symmetry type. Isotropic: c11, c44. Cubic: c11, c12, c44. Hexagonal VTI: c33, c23, c12, c44, c66. Hexagonal HTI: c11, c33, c12, c44, c66. Orthorhombic: c11, c22, c33, c23, c13, c12, c44, c55, c66. (Default: [110.0, 26.0])'
 
     parser = argparse.ArgumentParser(description='Inverse Algorithm')
 
@@ -79,24 +78,27 @@ def inverse_parser(params):
         default = 0.110,
         help = u_help)
 
-    parser.add_argument(
-        '-c', '--cxxs',
-        type = float,
-        nargs = '+',
-        default = [110.0, 26.0],
-        help = c_help)
+    parser.add_argument('--c11', type = float)
+    parser.add_argument('--c12', type = float)
+    parser.add_argument('--c13', type = float)
+    parser.add_argument('--c22', type = float)
+    parser.add_argument('--c23', type = float)
+    parser.add_argument('--c33', type = float)
+    parser.add_argument('--c44', type = float)
+    parser.add_argument('--c55', type = float)
+    parser.add_argument('--c66', type = float)
 
     args = parser.parse_args(params[1:])
 
-    if args.ns == 2 and len(args.cxxs) != 2:
-        parser.error('Please provide cxx values for c11 and c44')
-    if args.ns == 3 and len(args.cxxs) != 3:
-        parser.error('Please provide cxx values for c11, c12, and c44')
-    if args.ns == 5 and len(args.cxxs) != 5 and args.hextype == 1:
-        parser.error('Please provide cxx values for c33, c23, c12, c44, and c66')
-    if args.ns == 5 and len(args.cxxs) != 5 and args.hextype == 2:
-        parser.error('Please provide cxx values for c11, c33, c12, c44, and c66')
-    if args.ns == 9 and len(args.cxxs) != 9:
-        parser.error('Please provide cxx values for c11, c22, c33, c23, c13, c12, c44, c55, and c66')
-
+    args.a = dict()
+    if args.c11: args.a['c11'] = args.c11
+    if args.c12: args.a['c12'] = args.c12
+    if args.c13: args.a['c13'] = args.c13
+    if args.c22: args.a['c22'] = args.c22
+    if args.c23: args.a['c23'] = args.c23
+    if args.c33: args.a['c33'] = args.c33
+    if args.c44: args.a['c44'] = args.c44
+    if args.c55: args.a['c55'] = args.c55
+    if args.c66: args.a['c66'] = args.c66
+    
     return args
