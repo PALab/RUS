@@ -25,6 +25,9 @@ FM = 7875       # constants used to generate random pivots
 FA = 211
 FC = 1663
 
+# global variable
+_dqkpart_seed = 0
+
 # send to parser
 args = p.inverse_parser(sys.argv)
 
@@ -39,7 +42,7 @@ d2 = args.d2 / 2.0
 d3 = args.d3 / 2.0 
 
 # dimension of the problem
-r = 3 *(d + 1) * (d + 2) * (d + 3) / 6;
+r = 3 *(d + 1) * (d + 2) * (d + 3) / 6
 
 # matrices of the eigenvalue problem and for the function gradiant
 measurement = "freq_data"  # CHANGE THIS LINE TO APPROPRIATE DIRECTORY
@@ -47,7 +50,7 @@ measurement = "freq_data"  # CHANGE THIS LINE TO APPROPRIATE DIRECTORY
 # get measured frequencies from file
 f = open(measurement, "rU")
 nfreq = int(f.readline())
-print('nfreq = ' + str(nfreq));
+print('nfreq = ' + str(nfreq))
 freq   = []
 weight = []
 for i in range(nfreq):
@@ -59,7 +62,7 @@ for i in range(nfreq):
         sys.exit(-1)
     freq.append(float(nums[0]))
     weight.append(float(nums[1]))
-    print('freq = ' + str(freq[-1]));
+    print('freq = ' + str(freq[-1]))
 f.close()
 
 if len(freq) != nfreq:
@@ -125,7 +128,7 @@ def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,y,dyda
     w = []
     for k in range(8):
         # lapack routine
-        a, w_temp, info = lapack.dsygv(gamma[k], e[k], itype=1, jobz='V', uplo='U');  
+        a, w_temp, info = lapack.dsygv(gamma[k], e[k], itype=1, jobz='V', uplo='U')  
         w.append(w_temp)
 
     #/*-------------------------------------------------------------*/  
@@ -412,7 +415,7 @@ def dstiff_hti_c11():
 
 def dstiff_hti_c33():
     cm = numpy.zeros((6,6))
-    cm[2][2] = 10.0;
+    cm[2][2] = 10.0
     cm[1][1] = cm[2][2]
     return rus.stiffness(cm)
 
@@ -605,305 +608,75 @@ def dfdp(f, dgammadp, z, ie, n):
 
 
 def scalarproduct(a, b, n):
-    sp = 0.0; 
+    sp = 0.0 
     for i in range(n):
         sp += a[i] * b[i]
     return sp
 
 
 
-void dqkpart (double a[], int p, int q, int *j, int *k)
-{
-	int pivot,left,right;
-	double apivot,temp;
-	static long int seed=0L;
- 
-	#/* choose random pivot element between p and q, inclusive */
-	seed = (seed*FA+FC)%FM;
-	pivot = p+(q-p)*(double)seed/(double)FM;
-	if (pivot<p) pivot = p;
-	if (pivot>q) pivot = q;
-	apivot = a[pivot];
+def dqkpart(a,p,q,j,k):
+    # choose random pivot element between p and q, inclusive
+    gobal _dqkpart_seed = (_dqkpart_seed * FA + FC) % FM
+    pivot = p + (q - p) * _dqkpart_seed / FM
+    if pivot < p:
+        pivot = p
+    if (pivot>q):
+        pivot = q
+    apivot = a[pivot]
 
-	#/* initialize left and right pointers and loop until break */
-	for (left=p,right=q;;) {
-		#/*
-		# * increment left pointer until either
-		# * (1) an element greater than the pivot element is found, or
-		# * (2) the upper bound of the input subarray is reached
-		# */
-		while (a[left]<=apivot && left<q) left++;
- 
-		#/*
-		# * decrement right pointer until either
-		# * (1) an element less than the pivot element is found, or
-		# * (2) the lower bound of the input subarray is reached
-		# */
-		while (a[right]>=apivot && right>p) right--;
- 
-		#/* if left pointer is still to the left of right pointer */
-		if (left<right) {
-			#/* exchange left and right elements */
-			temp = a[left];
-			a[left++] = a[right];
-			a[right--] = temp;
-		} 
-		#/* else, if pointers are equal or have crossed, break */
-		else break;
-	}
-	#/* if left pointer has not crossed pivot */
-	if (left<pivot) {
+    # initialize left and right pointers and loop until break
+    left = p
+    right = q
+    while True:
+        # increment left pointer until either
+        # (1) an element greater than the pivot element is found, or
+        # (2) the upper bound of the input subarray is reached
+        while a[left] <= apivot and left < q:
+            left += 1
 
-		#/* exchange elements at left and pivot */
-		temp = a[left];
-		a[left++] = a[pivot];
-		a[pivot] = temp;
-	}
-	#/* else, if right pointer has not crossed pivot */
-	else if (pivot<right) {
+        # decrement right pointer until either
+        # (1) an element less than the pivot element is found, or
+        # (2) the lower bound of the input subarray is reached
+        while a[right] >= apivot and right > p:
+            right -= 1
 
-		#/* exchange elements at pivot and right */
-		temp = a[right];
-		a[right--] = a[pivot];
-		a[pivot] = temp;
-	}
-	/* left and right pointers have now crossed; set output bounds */
-	*j = right;
-	*k = left;
-}
+        # if left pointer is still to the left of right pointer
+        if left < right:
+            # exchange left and right elements
+            a[left], a[right] = a[right], a[left]
+            left += 1
+            right -= 1
+        # else, if pointers are equal or have crossed, break
+        else:
+            break
 
-void dqkinss (double a[], int p, int q)
-{
-	int i,j;
-	double ai;
+        # if left pointer has not crossed pivot
+        if left < pivot:
+            # exchange elements at left and pivot
+            a[left], a[pivot] = a[pivot], a[left]
+            left += 1
 
-	for (i=p+1; i<=q; i++) {
-		for (ai=a[i],j=i; j>p && a[j-1]>ai; j--)
-			a[j] = a[j-1];
-		a[j] = ai;
-	}
-}
+        # else, if right pointer has not crossed pivot
+        elif pivot < right:
+            # exchange elements at pivot and right
+            a[right], a[pivot] = a[pivot], a[right]
+            right -= 1
 
-void dqksort (int n, double a[]){
-	int pstack[NSTACK],qstack[NSTACK],j,k,p,q,top=0;
+        # left and right pointers have now crossed; set output bounds
+        j = right
+        k = left
 
-	/* initialize subarray lower and upper bounds to entire array */
-	pstack[top] = 0;
-	qstack[top++] = n-1;
 
-	/* while subarrays remain to be sorted */
-	while(top!=0) {
 
-		/* get a subarray off the stack */
-		p = pstack[--top];
-		q = qstack[top];
-
-		/* while subarray can be partitioned efficiently */
-		while(q-p>NSMALL) {
-
-			/* partition subarray into two subarrays */
-			dqkpart(a,p,q,&j,&k);
-
-			/* save larger of the two subarrays on stack */
-			if (j-p<q-k) {
-				pstack[top] = k;
-				qstack[top++] = q;
-				q = j;
-			} else {
-				pstack[top] = p;
-				qstack[top++] = j;
-				p = k;
-			}
-		}
-		/* use insertion sort to finish sorting small subarray */
-		dqkinss(a,p,q);
-	}
-}
-
-void
-dqkipart (double a[], int i[], int p, int q, int *j, int *k)
-/*****************************************************************************
-quicksort partition (FOR INTERNAL USE ONLY):
-take the value x of a random element from the subarray a[p:q] of
-a[0:n-1] and rearrange indices in the subarray i[p:q] in such a way
-that there exist integers j and k with the following properties:
-  p <= j < k <= q, provided that p < q
-  a[i[l]] <= x,  for p <= l <= j
-  a[i[l]] == x,  for j < l < k
-  a[i[l]] >= x,  for k <= l <= q
-note that this effectively partitions the subarray with bounds
-[p:q] into lower and upper subarrays with bounds [p:j] and [k:q]
-******************************************************************************
-Input:
-a		array[p:q]
-i		array[p:q] of indices to be rearranged
-p		lower bound of subarray; must be less than q
-q		upper bound of subarray; must be greater then p
-
-Output:
-i		array[p:q] of indices rearranged
-j		upper bound of lower output subarray
-k		lower bound of upper output subarray
-******************************************************************************
-Notes:
-This function is adapted from procedure partition by
-Hoare, C.A.R., 1961, Communications of the ACM, v. 4, p. 321.
-******************************************************************************
-Author:  Dave Hale, Colorado School of Mines, 01/13/89
-*****************************************************************************/
-{
-	int pivot,left,right,temp;
-	double apivot;
-	static long int seed=0L;
- 
-	/* choose random pivot element between p and q, inclusive */
-	seed = (seed*FA+FC)%FM;
-	pivot = p+(q-p)*(double)seed/(double)FM;
-	if (pivot<p) pivot = p;
-	if (pivot>q) pivot = q;
-	apivot = a[i[pivot]];
-
-	/* initialize left and right pointers and loop until break */
-	for (left=p,right=q;;) {
-		/*
-		 * increment left pointer until either
-		 * (1) an element greater than the pivot element is found, or
-		 * (2) the upper bound of the input subarray is reached
-		 */
-		while (a[i[left]]<=apivot && left<q) left++;
- 
-		/*
-		 * decrement right pointer until either
-		 * (1) an element less than the pivot element is found, or
-		 * (2) the lower bound of the input subarray is reached
-		 */
-		while (a[i[right]]>=apivot && right>p) right--;
- 
-		/* if left pointer is still to the left of right pointer */
-		if (left<right) {
-
-			/* exchange left and right indices */
-			temp = i[left];
-			i[left++] = i[right];
-			i[right--] = temp;
-		} 
-		/* else, if pointers are equal or have crossed, break */
-		else break;
-	}
-	/* if left pointer has not crossed pivot */
-	if (left<pivot) {
-
-		/* exchange indices at left and pivot */
-		temp = i[left];
-		i[left++] = i[pivot];
-		i[pivot] = temp;
-	}
-	/* else, if right pointer has not crossed pivot */
-	else if (pivot<right) {
-
-		/* exchange indices at pivot and right */
-		temp = i[right];
-		i[right--] = i[pivot];
-		i[pivot] = temp;
-	}
-	/* left and right pointers have now crossed; set output bounds */
-	*j = right;
-	*k = left;
-}
-
-void
-dqkiinss (double a[], int i[], int p, int q)
-/*****************************************************************************
-quicksort insertion sort (FOR INTERNAL USE ONLY):
-Sort a subarray of indices bounded by p and q so that
-a[i[p]] <= a[i[p+1]] <= ... <= a[i[q]]
-******************************************************************************
-Input:
-a		subarray[p:q] containing elements
-i		subarray[p:q] containing indices to be sorted
-p		lower bound of subarray; must be less than q
-q		upper bound of subarray; must be greater then p
-
-Output:
-i		subarray[p:q] of indices sorted
-******************************************************************************
-Notes:
-Adapted from Sedgewick, R., 1983, Algorithms, Addison Wesley, p. 96.
-******************************************************************************
-Author:  Dave Hale, Colorado School of Mines, 01/13/89
-*****************************************************************************/
-{
-	int j,k,ij;
-	double aij;
-
-	for (j=p+1; j<=q; j++) {
-		for (ij=i[j],aij=a[ij],k=j; k>p && a[i[k-1]]>aij; k--)
-			i[k] = i[k-1];
-		i[k] = ij;
-	}
-}
-
-void
-dqkisort (int n, double a[], int i[])
-/*****************************************************************************
-Sort an array of indices i[] so that 
-a[i[0]] <= a[i[1]] <= ... <= a[i[n-1]]
-******************************************************************************
-Input:
-n		number of elements in array a
-a		array[n] elements
-i		array[n] indices to be sorted
-
-Output:
-i		array[n] indices sorted
-******************************************************************************
-Notes:
-n must be less than 2^NSTACK, where NSTACK is defined above.
-
-This function is adapted from procedure quicksort by
-Hoare, C.A.R., 1961, Communications of the ACM, v. 4, p. 321;
-the main difference is that recursion is accomplished
-explicitly via a stack array for efficiency; also, a simple
-insertion sort is used to sort subarrays too small to be
-partitioned efficiently.
-******************************************************************************
-Author:  Dave Hale, Colorado School of Mines, 01/13/89
-*****************************************************************************/
-{
-	int pstack[NSTACK],qstack[NSTACK],j,k,p,q,top=0;
-
-	/* initialize subarray lower and upper bounds to entire array */
-	pstack[top] = 0;
-	qstack[top++] = n-1;
-
-	/* while subarrays remain to be sorted */
-	while(top!=0) {
-
-		/* get a subarray off the stack */
-		p = pstack[--top];
-		q = qstack[top];
-
-		/* while subarray can be partitioned efficiently */
-		while(q-p>NSMALL) {
-
-			/* partition subarray into two subarrays */
-			dqkipart(a,i,p,q,&j,&k);
-
-			/* save larger of the two subarrays on stack */
-			if (j-p<q-k) {
-				pstack[top] = k;
-				qstack[top++] = q;
-				q = j;
-			} else {
-				pstack[top] = p;
-				qstack[top++] = j;
-				p = k;
-			}
-		}
-		/* use insertion sort to finish sorting small subarray */
-		dqkiinss(a,i,p,q);
-	}
-}
+def dqkinss(a, p, q):
+    for i in range(p+1,q+1):
+        ai = a[i]
+        j = i
+        while j > p and a[j-1] > ai:
+            a[j] = a[j-1]
+            j -= 1
+        a[j] = ai
 
 
 
@@ -947,8 +720,8 @@ Author:  Dave Hale, Colorado School of Mines, 01/13/89
 #
 #/* This is the optimisation routine which is called by MAIN once every iteration */
 #/* mrqmin(d,r,itab,ltab,mtab,ntab,
-#	   irk,d1,d2,d3,rho,shape,freqmin,
-#	   y,sig,ndata,guess,ia,ns,covar,alpha,&chisq, hextype, formod,&alamda) */
+#      irk,d1,d2,d3,rho,shape,freqmin,
+#      y,sig,ndata,guess,ia,ns,covar,alpha,&chisq, hextype, formod,&alamda) */
 #
 #/* ------ */
 #/* Inputs */
@@ -1088,17 +861,17 @@ def mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
 # parameters will be zero. NCVM is the physical dimension of COVAR
 
 def covsrt(covar, ma, ia, mfit):
-	for i in range(mfit, ma):
-		for j in range(i):
-			covar[i][j] = covar[j][i] = 0.0
-	k = mfit - 1;
-	for j in range(ma-1, -1, -1):
-		if ia[j]:
-			for i in range(ma):
-				covar[i][k], covar[i][j] = covar[i][j], covar[i][k]
-			for i in range(ma):
-				covar[k][i], covar[j][i] = covar[j][i], covar[k][i]
-		k -= 1;
+    for i in range(mfit, ma):
+        for j in range(i):
+            covar[i][j] = covar[j][i] = 0.0
+    k = mfit - 1
+    for j in range(ma-1, -1, -1):
+        if ia[j]:
+            for i in range(ma):
+                covar[i][k], covar[i][j] = covar[i][j], covar[i][k]
+            for i in range(ma):
+                covar[k][i], covar[j][i] = covar[j][i], covar[k][i]
+        k -= 1
 
 
 
@@ -1137,14 +910,14 @@ def mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
         j = -1
         for l in range(ma):
             if ia[l] != 0:
-	        wt = dyda[l][i] * sig2i
+                wt = dyda[l][i] * sig2i
                 j += 1
                 k = -1
                 for m in range(l):
                     if ia[m] != 0:
                         k += 1
                         alpha[j][k] += wt * dyda[m][i]
-	        beta[j] += dy * wt
+                beta[j] += dy * wt
  
         chisq += dy * dy * sig2i
   
@@ -1188,7 +961,7 @@ def gaussj(a, n, b, m):
                             icol = k
                     elif ipiv[k] > 1:
                         raise RuntimeError('GAUSSJ: Singular Matrix-1')
-        ++(ipiv[icol]);
+        ++(ipiv[icol])
         if irow != icol:
             for l in range(n):
                 a[irow][l], a[icol][l] = a[icol][l], a[irow][l]
@@ -1206,7 +979,7 @@ def gaussj(a, n, b, m):
             b[icol][l] *= pivinv
         for ll in range(n):
             if ll != icol:
-                dum = a[ll][icol];
+                dum = a[ll][icol]
                 a[ll][icol] = 0.0
                 for l in range(n):
                     a[ll][l] -= a[icol][l] * dum
