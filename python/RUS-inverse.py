@@ -128,6 +128,27 @@ def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,y,dyda
         a, w_temp, info = lapack.dsygv(gamma[k], e[k], itype=1, jobz='V', uplo='U');  
         w.append(w_temp)
 
+    #/*-------------------------------------------------------------*/  
+    #/*-------------------------------------------------------------*/
+    #/*-------------------------------------------------------------*/
+    #/* eigen vectors */
+    z = numpy.zeros((r,r))
+    irf = 0
+    for k in range(8):
+        for ir1 in range(irf):
+            for ir2 in range(irf,irf+irk[k]):
+                z[ir2][ir1] = 0.0
+        for ir1 in range(irf,irf+irk[k])
+            for ir2 in range(irf, ir2<irf+irk[k]):
+                z[ir2][ir1] = gamma[k][(ir2-irf)*irk[k]+ir1-irf]
+        #/* change the order of the array at the same time since we go
+        #   from fortran array to C array */
+        for ir1 in range(irk[k]+irf,r):
+            for ir2 in range(irf,irf+irk[k]):
+                z[ir2][ir1] = 0.0
+        irf += irk[k]
+
+    #/* sort eigenfrequencies */
     wsort = scipy.zeros(r)
     i = 0
     for k in range(8):
@@ -136,1099 +157,459 @@ def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,y,dyda
             i += 1
     wsort.sort()
 
-    i = 0
-    ir1 = 0
-    while ir1 < args.nfreq:
-        if ((wsort[i]>0) and ((sqrt(wsort[i])/(2.0*scipy.pi))>0.00001)):
-            ir1 += 1
-            print(" f%d = %f" % (ir1, 1000000*sqrt(wsort[i])/(2.0*scipy.pi)))
-        i += 1
-
-    #/*-------------------------------------------------------------*/  
-    #/*-------------------------------------------------------------*/
-    #/*-------------------------------------------------------------*/
-    #/* eigen vectors */
-    z=alloc2double(r,r);
-  irf=0;
-  for (k=0; k<8; ++k){
-    for (ir1=0;ir1<irf;++ir1)
-      for (ir2=irf;ir2<irf+irk[k];++ir2)
-	z[ir2][ir1]=0.0;
-    for (ir1=irf; ir1<irf+irk[k]; ++ir1)
-      for (ir2=irf; ir2<irf+irk[k]; ++ir2)
-	z[ir2][ir1]=gamma[k][(ir2-irf)*irk[k]+ir1-irf]; 
-    #/* change the order of the array at the same time since we go
-    #   from fortran array to C array */
-    for (ir1=irk[k]+irf;ir1<r;++ir1)
-      for (ir2=irf; ir2<irf+irk[k]; ++ir2)
-	z[ir2][ir1]=0.0;
-    irf+=irk[k];
-  }
-  /* sort eigenfrequencies */
-  wsort=alloc1double(r);
-  wnosort=alloc1double(r);
-  indice=alloc1int(r);
-  for (ir1=0;ir1<r; ++ir1)
-    indice[ir1]=ir1;
-  for (i=0, k=0; k<8; ++k){
-    for (ir1=0;ir1<irk[k];++ir1,++i){
-      wsort[i]=w[k][ir1];
-      wnosort[i]=w[k][ir1];
-    }
-  }
-  dqksort(r,wsort);
-  dqkisort(r,wnosort,indice);
-  /* frequencies in MegaHertz */
-  irf=-1;
-  for (ir1=0; (ir1<r) ; ++ir1)
-    if ((wsort[ir1]>0) && ((sqrt(wsort[ir1])/(2.0*PI))>0.00001))
-      wsort[ir1]=sqrt(wsort[ir1])/(2.0*PI);
-    else wsort[ir1]=0.0;
+    for w in wsort:
+        if w > 0 and (sqrt(w) / (2.0 * scipy.pi)) > 0.00001:
+            w = sqrt(w / (2.0 * scipy.pi)
+        else:
+            w = 0.0
   
-  /* output */
-  ifw = rus.xindex(wsort, freqmin, ifw);
-  ++ifw;
-  for (i=0, iw=ifw; i<ndata; ++i, ++iw){
-    y[i]=wsort[iw];
-     /* fprintf(stderr,"f%d=%i\n",i+1, (double)(y[i])); */
-    fprintf(stderr,"f%d=%f\n",i+1,y[i]); 
-  }
+    # output
+    ifw = rus.xindex(wsort, freqmin, ifw)
+    ifw += 1
+    iw = ifw
+    for i in range(ndata):
+        y[i] = wsort[iw]
+        print('f{}={}'.format(i + 1, y[i]))
+        iw += 1
 
-  /* write predicted frequencies to file predictedf */
-  freqfile = fopen(freqs,"w");
-  for (i=0, iw=ifw; i<ndata; ++i, ++iw){
-    y[i]=wsort[iw];
-    fprintf(freqfile,"%f\n",y[i]);
-  }
-  fclose(freqfile);
+    # write predicted frequencies to file predictedf */
+    freqfile = open(freqs, 'wU')
+    iw = ifw
+    for i in range(ndata):
+        y[i] = wsort[iw]
+        print(freqfile, '{}', y[i])
+        iw += 1
+    freqfile.close()
 
-
-  /* compute dyda */
-  compute_dyda(dyda,ns,hextype,r,itab,ltab,mtab,ntab,d1,d2,d3,shape,ifw,
-		      ndata,z,wsort,indice);
-  
-  /* print out gradient of objective function */
-  /* print_stuff(ns,dyda,ndata);*/
-      
-  /* clean workspace */
-  for (i=0, k=0; k<8; ++k)
-    free1double(w[k]);
-  free(w);
-}
-
-/*void print_stuff(int ns, double **dyda, int ndata){*/
-/*  int k,i;*/
-/*  fprintf(stderr,"\nns=%d\n",ns);*/
-/*  for (k=0; k<ns;k++){*/
-/*    for (i=0; i<ndata; ++i){*/
-/*      fprintf(stderr,"dyda[%d][%d]=%f\n",k,i,dyda[k][i]);*/
-/*    }*/
-/*    fprintf(stderr,"\n");*/
-/*  }*/
-/*}*/
-
-void compute_dyda(double **dyda,int ns, int hextype, int r,int *itab,int *ltab,
-		  int *mtab,int *ntab,double d1,double d2,double d3,
-		  int shape,int ifw,int ndata,double **z,double *wsort,
-		  int *indice){
-  int i;
-  int iw;
-
-  double ****dc_c11;
-  double ****dc_c22;
-  double ****dc_c12;
-  double ****dc_c13;
-  double ****dc_c44;
-  double ****dc_c55;
-  double ****dc_c33;
-  double ****dc_c23;
-  double ****dc_c66;
-  double **dgamma_c11;
-  double **dgamma_c22;
-  double **dgamma_c12;
-  double **dgamma_c13;
-  double **dgamma_c44;
-  double **dgamma_c55;
-  double **dgamma_c33;
-  double **dgamma_c23;
-  double **dgamma_c66;
-  
-  /* isotropic case */  
-  if (ns==2) {
-    dc_c11= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c11[i]=alloc3double(3,3,3);
-    dstiff_iso_c11 (dc_c11);
-  
-    dc_c44= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c44[i]=alloc3double(3,3,3);
-    dstiff_iso_c44 (dc_c44);
-    
-    /* fill dgamma_c11 */
-    dgamma_c11=alloc2double(r, r);
-    dgamma_fill(dgamma_c11,itab,ltab,mtab,ntab,r,d1,d2,d3,dc_c11,shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c11[i]);
-    free(dc_c11);
-    
-    /* fill dgamma_c44 */
-    dgamma_c44=alloc2double(r, r);
-    dgamma_fill(dgamma_c44,itab,ltab,mtab,ntab,r,d1,d2,d3,dc_c44,shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c44[i]);
-    free(dc_c44);
-
-    /* gradiant of the objective function */
-    for (iw=ifw,i=0; i<ndata; ++i, ++iw){
-      dyda[0][i]=dfdp(wsort[iw], dgamma_c11, z, indice[iw], r);
-      dyda[1][i]=dfdp(wsort[iw], dgamma_c44, z, indice[iw], r);
-    }
-    free2double(dgamma_c11);
-    free2double(dgamma_c44);
-  } 
-
-    /* cubic */
-    else if (ns==3) {
-      
-    dc_c11= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c11[i]=alloc3double(3,3,3);
-    dstiff_cub_c11 (dc_c11);
-  
-    dc_c12= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c12[i]=alloc3double(3,3,3);
-    dstiff_cub_c12 (dc_c12);
-  
-    dc_c44= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c44[i]=alloc3double(3,3,3);
-    dstiff_cub_c44 (dc_c44);
-    
-    /* fill dgamma_c11 */
-    dgamma_c11=alloc2double(r, r);
-    dgamma_fill(dgamma_c11,itab,ltab,mtab,ntab,r,d1,d2,d3,dc_c11,shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c11[i]);
-    free(dc_c11);
-    
-    /* fill dgamma_c12 */
-    dgamma_c12=alloc2double(r, r);
-    dgamma_fill(dgamma_c12, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c12, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c12[i]);
-    free(dc_c12);
-    
-    /* fill dgamma_c44 */
-    dgamma_c44=alloc2double(r, r);
-    dgamma_fill(dgamma_c44, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c44, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c44[i]);
-    free(dc_c44);
-
-    /* gradiant of the objective function */
-    for (iw=ifw,i=0; i<ndata; ++i, ++iw){
-      dyda[0][i]=dfdp(wsort[iw], dgamma_c11, z, indice[iw], r);
-      dyda[1][i]=dfdp(wsort[iw], dgamma_c12, z, indice[iw], r);
-      dyda[2][i]=dfdp(wsort[iw], dgamma_c44, z, indice[iw], r);
-    }
-    free2double(dgamma_c11);
-    free2double(dgamma_c12);
-    free2double(dgamma_c44);
-
- 
-  } 
-
-    else if (ns==5) {
-      /* hexagonal */
-
-    if (hextype == 1){
-      /* VTI */
-    fprintf(stderr, "hextype=%d\n", hextype);
+    # compute dyda
+    compute_dyda(dyda,ns,hextype,r,itab,ltab,mtab,ntab,d1,d2,d3,shape,ifw,ndata,z,wsort,indice)
   
 
-    dc_c33= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c33[i]=alloc3double(3,3,3);
-    dstiff_vti_c33 (dc_c33);
-  
-    dc_c23= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c23[i]=alloc3double(3,3,3);
-    dstiff_vti_c23 (dc_c23);
-  
-    dc_c12= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c12[i]=alloc3double(3,3,3);
-    dstiff_vti_c12 (dc_c12);
-    
-    dc_c44= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c44[i]=alloc3double(3,3,3);
-    dstiff_vti_c44 (dc_c44);
-    
-    dc_c66= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c66[i]=alloc3double(3,3,3);
-    dstiff_vti_c66 (dc_c66);
-    
-    /* fill dgamma_c33 */
-    dgamma_c33=alloc2double(r, r);
-    dgamma_fill(dgamma_c33, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c33, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c33[i]);
-    free(dc_c33);
-    
-    /* fill dgamma_c23 */
-    dgamma_c23=alloc2double(r, r);
-    dgamma_fill(dgamma_c23, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c23, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c23[i]);
-    free(dc_c23);
-    
-    /* fill dgamma_c12 */
-    dgamma_c12=alloc2double(r, r);
-    dgamma_fill(dgamma_c12, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c12, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c12[i]);
-    free(dc_c12);
-    
-    /* fill dgamma_c44 */
-    dgamma_c44=alloc2double(r, r);
-    dgamma_fill(dgamma_c44, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c44, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c44[i]);
-    free(dc_c44);
 
-    /* fill dgamma_c66 */
-    dgamma_c66=alloc2double(r, r);
-    dgamma_fill(dgamma_c66, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c66, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c66[i]);
-    free(dc_c66);
+def compute_dyda(dyda,ns,hextype,r,itab,ltab,mtab,ntab,d1,d2,d3,shape,ifw,ndata,z,wsort,indice):
+    # isotropic case
+    if ns == 2:
+        dc_c11 = dstiff_iso_c11()
+        dc_c44 = dstiff_iso_c44()
+        
+        dgamma_c11 = dgamma_fill(itab,ltab,mtab,ntab,r,d1,d2,d3,dc_c11,shape)
+        dgamma_c44 = dgamma_fill(itab,ltab,mtab,ntab,r,d1,d2,d3,dc_c44,shape)
+
+        # gradiant of the objective function
+        iw = ifw
+        for i in range(ndata):
+            dyda[0][i]=dfdp(wsort[iw], dgamma_c11, z, indice[iw], r)
+            dyda[1][i]=dfdp(wsort[iw], dgamma_c44, z, indice[iw], r)
+            iw += 1
+
+    # cubic
+    elif ns == 3:
+        dc_c11 = dstiff_cub_c11()
+        dc_c12 = dstiff_cub_c12()
+        dc_c44 = dstiff_cub_c44()
     
-    /* gradiant of the objective function */
-    for (iw=ifw,i=0; i<ndata; ++i, ++iw){
-      dyda[0][i]=dfdp(wsort[iw], dgamma_c33, z, indice[iw], r);
-      dyda[1][i]=dfdp(wsort[iw], dgamma_c23, z, indice[iw], r);
-      dyda[2][i]=dfdp(wsort[iw], dgamma_c12, z, indice[iw], r);
-      dyda[3][i]=dfdp(wsort[iw], dgamma_c44, z, indice[iw], r);
-      dyda[4][i]=dfdp(wsort[iw], dgamma_c66, z, indice[iw], r);
-      
+        dgamma_c11 = dgamma_fill(itab,ltab,mtab,ntab,r,d1,d2,d3,dc_c11,shape)
+        dgamma_c12 = dgamma_fill(itab,ltab,mtab,ntab,r,d1,d2,d3,dc_c12,shape)
+        dgamma_c44 = dgamma_fill(itab,ltab,mtab,ntab,r,d1,d2,d3,dc_c44,shape)
+
+        # gradiant of the objective function
+        iw = ifw
+        for i in range(ndata):
+            dyda[0][i]=dfdp(wsort[iw], dgamma_c11, z, indice[iw], r)
+            dyda[1][i]=dfdp(wsort[iw], dgamma_c12, z, indice[iw], r)
+            dyda[2][i]=dfdp(wsort[iw], dgamma_c44, z, indice[iw], r)
+            iw += 1
+
+    # hexagonal - VTI
+    elif ns == 5 and hextype == 1:
+        print('hextype={}'.format(hextype))
+  
+        dc_c33 = dstiff_vti_c33()
+        dc_c23 = dstiff_vti_c23()
+        dc_c12 = dstiff_vti_c12()
+        dc_c44 = dstiff_vti_c44()
+        dc_c66 = dstiff_vti_c66()
+    
+        dgamma_c33 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c33, shape)
+        dgamma_c23 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c23, shape)
+        dgamma_c12 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c12, shape)
+        dgamma_c44 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c44, shape)
+        dgamma_c66 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c66, shape)
+    
+        # gradiant of the objective function
+        iw = ifw
+        for i in range(ndata):
+            dyda[0][i]=dfdp(wsort[iw], dgamma_c33, z, indice[iw], r)
+            dyda[1][i]=dfdp(wsort[iw], dgamma_c23, z, indice[iw], r)
+            dyda[2][i]=dfdp(wsort[iw], dgamma_c12, z, indice[iw], r)
+            dyda[3][i]=dfdp(wsort[iw], dgamma_c44, z, indice[iw], r)
+            dyda[4][i]=dfdp(wsort[iw], dgamma_c66, z, indice[iw], r)
+            iw += 1
    
-    }
-    free2double(dgamma_c33);
-    free2double(dgamma_c23);
-    free2double(dgamma_c12);
-    free2double(dgamma_c44);
-    free2double(dgamma_c66);
-    
-      }
+    elif ns == 5 and hextype == 2:
+        print('hextype={}'.format(hextype))
    
+        dc_c11 = dstiff_hti_c11()
+        dc_c33 = dstiff_hti_c33()
+        dc_c12 = dstiff_hti_c12()
+        dc_c44 = dstiff_hti_c44()
+        dc_c66 = dstiff_hti_c66()
 
-    else if (hextype == 2) {
-      /* HTI */
-      fprintf(stderr, "hextype=%d\n", hextype);
-   
-    dc_c11= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c11[i]=alloc3double(3,3,3);
-    dstiff_hti_c11 (dc_c11);
+        dgamma_c11 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c33, shape)
+        dgamma_c33 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c33, shape)
+        dgamma_c12 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c12, shape)
+        dgamma_c44 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c44, shape)
+        dgamma_c66 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c66, shape)
 
-    dc_c33= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c33[i]=alloc3double(3,3,3);
-    dstiff_hti_c33 (dc_c33);
-  
-    dc_c12= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c12[i]=alloc3double(3,3,3);
-    dstiff_hti_c12 (dc_c12);
+        # gradiant of the objective function
+        iw = ifw
+        for i in range(ndata):
+            dyda[0][i]=dfdp(wsort[iw], dgamma_c11, z, indice[iw], r)
+            dyda[1][i]=dfdp(wsort[iw], dgamma_c33, z, indice[iw], r)
+            dyda[2][i]=dfdp(wsort[iw], dgamma_c12, z, indice[iw], r)
+            dyda[3][i]=dfdp(wsort[iw], dgamma_c44, z, indice[iw], r)
+            dyda[4][i]=dfdp(wsort[iw], dgamma_c66, z, indice[iw], r)
+            iw += 1
+
+    # tetragonal
+    elif ns == 6:
+        dc_c11 = dstiff_tetra_c11()
+        dc_c33 = dstiff_tetra_c33()
+        dc_c23 = dstiff_tetra_c23()
+        dc_c12 = dstiff_tetra_c12()
+        dc_c44 = dstiff_tetra_c44()
+        dc_c66 = dstiff_tetra_c66()
+
+        dgamma_c11 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c11, shape)
+        dgamma_c33 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c33, shape)
+        dgamma_c23 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c23, shape)
+        dgamma_c12 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c12, shape)
+        dgamma_c44 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c44, shape)
+        dgamma_c66 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c66, shape)
     
-    dc_c44= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c44[i]=alloc3double(3,3,3);
-    dstiff_hti_c44 (dc_c44);
+        # gradiant of the objective function
+        iw = ifw
+        for i in range(ndata):
+            dyda[0][i]=dfdp(wsort[iw], dgamma_c11, z, indice[iw], r)
+            dyda[1][i]=dfdp(wsort[iw], dgamma_c33, z, indice[iw], r)
+            dyda[2][i]=dfdp(wsort[iw], dgamma_c23, z, indice[iw], r)
+            dyda[3][i]=dfdp(wsort[iw], dgamma_c12, z, indice[iw], r)
+            dyda[4][i]=dfdp(wsort[iw], dgamma_c44, z, indice[iw], r)
+            dyda[5][i]=dfdp(wsort[iw], dgamma_c66, z, indice[iw], r)
+            iw += 1
+
+    # orthorhombic
+    elif ns == 9:
+        dc_c11 = dstiff_orth_c11()
+        dc_c22 = dstiff_orth_c22()
+        dc_c33 = dstiff_orth_c33()
+        dc_c23 = dstiff_orth_c23()
+        dc_c13 = dstiff_orth_c13()
+        dc_c12 = dstiff_orth_c12()
+        dc_c44 = dstiff_orth_c44()
+        dc_c55 = dstiff_orth_c55()
+        dc_c66 = dstiff_orth_c66()
     
-    dc_c66= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c66[i]=alloc3double(3,3,3);
-    dstiff_hti_c66 (dc_c66);
-
-    /* fill dgamma_c11 */
-    dgamma_c11=alloc2double(r, r);
-    dgamma_fill(dgamma_c11, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c33, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c11[i]);
-    free(dc_c11);
-
-    /* fill dgamma_c33 */
-    dgamma_c33=alloc2double(r, r);
-    dgamma_fill(dgamma_c33, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c33, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c33[i]);
-    free(dc_c33);
-      
-    /* fill dgamma_c12 */
-    dgamma_c12=alloc2double(r, r);
-    dgamma_fill(dgamma_c12, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c12, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c12[i]);
-    free(dc_c12);
+        dgamma_c11=dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c11, shape)
+        dgamma_c22=dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c22, shape)
+        dgamma_c33=dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c33, shape)
+        dgamma_c23=dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c23, shape)
+        dgamma_c13=dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c13, shape)
+        dgamma_c12=dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c12, shape)
+        dgamma_c44=dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c44, shape)
+        dgamma_c55=dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c55, shape)
+        dgamma_c66=dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c66, shape)
     
-    /* fill dgamma_c44 */
-    dgamma_c44=alloc2double(r, r);
-    dgamma_fill(dgamma_c44, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c44, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c44[i]);
-    free(dc_c44);
-
-    /* fill dgamma_c66 */
-    dgamma_c66=alloc2double(r, r);
-    dgamma_fill(dgamma_c66, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c66, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c66[i]);
-    free(dc_c66);
-
-    /* gradiant of the objective function */
-    for (iw=ifw,i=0; i<ndata; ++i, ++iw){
-      dyda[0][i]=dfdp(wsort[iw], dgamma_c11, z, indice[iw], r);
-      dyda[1][i]=dfdp(wsort[iw], dgamma_c33, z, indice[iw], r);
-      dyda[2][i]=dfdp(wsort[iw], dgamma_c12, z, indice[iw], r);
-      dyda[3][i]=dfdp(wsort[iw], dgamma_c44, z, indice[iw], r);
-      dyda[4][i]=dfdp(wsort[iw], dgamma_c66, z, indice[iw], r);
-
-    }
-    free2double(dgamma_c11);
-    free2double(dgamma_c33);
-    free2double(dgamma_c12);
-    free2double(dgamma_c44);
-    free2double(dgamma_c66);
-
-    }
-
- }
-
-  else if (ns==6) {
-    /* tetragonal */
-    dc_c11= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c11[i]=alloc3double(3,3,3);
-    dstiff_tetra_c11 (dc_c11);
-
-    dc_c33= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c33[i]=alloc3double(3,3,3);
-    dstiff_tetra_c33 (dc_c33);
-  
-    dc_c23= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c23[i]=alloc3double(3,3,3);
-    dstiff_tetra_c23 (dc_c23);
-  
-    dc_c12= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c12[i]=alloc3double(3,3,3);
-    dstiff_tetra_c12 (dc_c12);
-    
-    dc_c44= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c44[i]=alloc3double(3,3,3);
-    dstiff_tetra_c44 (dc_c44);
-    
-    dc_c66= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c66[i]=alloc3double(3,3,3);
-    dstiff_tetra_c66 (dc_c66);
-    /* fill dgamma_c11 */
-    dgamma_c11=alloc2double(r, r);
-    dgamma_fill(dgamma_c11, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c11, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c11[i]);
-    free(dc_c11);
-    
-    /* fill dgamma_c33 */
-    dgamma_c33=alloc2double(r, r);
-    dgamma_fill(dgamma_c33, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c33, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c33[i]);
-    free(dc_c33);
-    
-    /* fill dgamma_c23 */
-    dgamma_c23=alloc2double(r, r);
-    dgamma_fill(dgamma_c23, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c23, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c23[i]);
-    free(dc_c23);
-    
-    /* fill dgamma_c12 */
-    dgamma_c12=alloc2double(r, r);
-    dgamma_fill(dgamma_c12, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c12, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c12[i]);
-    free(dc_c12);
-    
-    /* fill dgamma_c44 */
-    dgamma_c44=alloc2double(r, r);
-    dgamma_fill(dgamma_c44, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c44, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c44[i]);
-    free(dc_c44);
-
-    /* fill dgamma_c66 */
-    dgamma_c66=alloc2double(r, r);
-    dgamma_fill(dgamma_c66, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c66, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c66[i]);
-    free(dc_c66);
-    
-    /* gradiant of the objective function */
-    for (iw=ifw,i=0; i<ndata; ++i, ++iw){
-      dyda[0][i]=dfdp(wsort[iw], dgamma_c11, z, indice[iw], r);
-      dyda[1][i]=dfdp(wsort[iw], dgamma_c33, z, indice[iw], r);
-      dyda[2][i]=dfdp(wsort[iw], dgamma_c23, z, indice[iw], r);
-      dyda[3][i]=dfdp(wsort[iw], dgamma_c12, z, indice[iw], r);
-      dyda[4][i]=dfdp(wsort[iw], dgamma_c44, z, indice[iw], r);
-      dyda[5][i]=dfdp(wsort[iw], dgamma_c66, z, indice[iw], r);
-    }
-    free2double(dgamma_c11);
-    free2double(dgamma_c33);
-    free2double(dgamma_c23);
-    free2double(dgamma_c12);
-    free2double(dgamma_c44);
-    free2double(dgamma_c66);
-  } 
-
-  else if (ns==9) {
-    /* orthorhombic */
-    dc_c11= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c11[i]=alloc3double(3,3,3);
-    dstiff_orth_c11 (dc_c11);
-
-    dc_c22= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c22[i]=alloc3double(3,3,3);
-    dstiff_orth_c22 (dc_c22);
-
-    dc_c33= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c33[i]=alloc3double(3,3,3);
-    dstiff_orth_c33 (dc_c33);
-  
-    dc_c23= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c23[i]=alloc3double(3,3,3);
-    dstiff_orth_c23 (dc_c23);
-    
-    dc_c13= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c13[i]=alloc3double(3,3,3);
-    dstiff_orth_c13 (dc_c13);
-  
-    dc_c12= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c12[i]=alloc3double(3,3,3);
-    dstiff_orth_c12 (dc_c12);
-    
-    
-    dc_c44= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c44[i]=alloc3double(3,3,3);
-    dstiff_orth_c44 (dc_c44);
-    
-    dc_c55= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c55[i]=alloc3double(3,3,3);
-    dstiff_orth_c55 (dc_c55);
-    
-    dc_c66= (double ****) malloc(sizeof(double ***)*3);
-    for (i=0; i<3; ++i)
-      dc_c66[i]=alloc3double(3,3,3);
-    dstiff_orth_c66 (dc_c66);
-    
-    /* fill dgamma_c11 */
-    dgamma_c11=alloc2double(r, r);
-    dgamma_fill(dgamma_c11, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c11, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c11[i]);
-    free(dc_c11);
-    /* fill dgamma_c22 */
-    dgamma_c22=alloc2double(r, r);
-    dgamma_fill(dgamma_c22, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c22, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c22[i]);
-    free(dc_c22);
-    
-    /* fill dgamma_c33 */
-    dgamma_c33=alloc2double(r, r);
-    dgamma_fill(dgamma_c33, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c33, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c33[i]);
-    free(dc_c33);
-    
-    /* fill dgamma_c23 */
-    dgamma_c23=alloc2double(r, r);
-    dgamma_fill(dgamma_c23, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c23, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c23[i]);
-    free(dc_c23);
-    
-    /* fill dgamma_c23 */
-    dgamma_c13=alloc2double(r, r);
-    dgamma_fill(dgamma_c13, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c13, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c13[i]);
-    free(dc_c13);
-    
-    /* fill dgamma_c12 */
-    dgamma_c12=alloc2double(r, r);
-    dgamma_fill(dgamma_c12, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c12, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c12[i]);
-    free(dc_c12);
-    
-    /* fill dgamma_c44 */
-    dgamma_c44=alloc2double(r, r);
-    dgamma_fill(dgamma_c44, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c44, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c44[i]);
-    free(dc_c44);
-
-    /* fill dgamma_c55 */
-    dgamma_c55=alloc2double(r, r);
-    dgamma_fill(dgamma_c55, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c55, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c55[i]);
-    free(dc_c55);
-
-    /* fill dgamma_c66 */
-    dgamma_c66=alloc2double(r, r);
-    dgamma_fill(dgamma_c66, itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c66, shape);
-    for (i=0; i<3; ++i)
-      free3double(dc_c66[i]);
-    free(dc_c66);
-    
-    /* gradiant of the objective function */
-    for (iw=ifw,i=0; i<ndata; ++i, ++iw){
-      dyda[0][i]=dfdp(wsort[iw], dgamma_c11, z, indice[iw], r);
-      dyda[1][i]=dfdp(wsort[iw], dgamma_c22, z, indice[iw], r);
-      dyda[2][i]=dfdp(wsort[iw], dgamma_c33, z, indice[iw], r);
-      dyda[3][i]=dfdp(wsort[iw], dgamma_c23, z, indice[iw], r);
-      dyda[4][i]=dfdp(wsort[iw], dgamma_c13, z, indice[iw], r);
-      dyda[5][i]=dfdp(wsort[iw], dgamma_c12, z, indice[iw], r);
-      dyda[6][i]=dfdp(wsort[iw], dgamma_c44, z, indice[iw], r);
-      dyda[7][i]=dfdp(wsort[iw], dgamma_c55, z, indice[iw], r);
-      dyda[8][i]=dfdp(wsort[iw], dgamma_c66, z, indice[iw], r);
-    }
-    free2double(dgamma_c11); 
-    free2double(dgamma_c22);
-    free2double(dgamma_c33);
-    free2double(dgamma_c23);
-    free2double(dgamma_c13);
-    free2double(dgamma_c12);
-    free2double(dgamma_c44);
-    free2double(dgamma_c55);
-    free2double(dgamma_c66);
-  }
-}
-
-
-/* isotropic */
-void dstiff_iso_c11(double ****c){
-  double **cm;
-  int i,j;
-  
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[0][0]=10.0;
-  cm[1][1]=cm[2][2]=cm[0][0];
-  cm[0][1]=cm[0][2]=cm[1][2]=cm[0][0];
-  cm[1][0]=cm[2][0]=cm[2][1]=cm[0][0];
-  stiffness (c,cm);
-}
-void dstiff_iso_c44(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[3][3]=1.0;
-  cm[4][4]=cm[5][5]=cm[3][3];	
-  cm[0][1]=cm[0][2]=cm[1][2]=-2.0*cm[3][3];
-  cm[1][0]=cm[2][0]=cm[2][1]=-2.0*cm[3][3];
-  stiffness (c,cm);
-}
-
-/* cubic */
-void dstiff_cub_c11(double ****c){
-  double **cm;
-  int i,j;
-  
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[0][0]=10.0;
-  cm[1][1]=cm[2][2]=cm[0][0];	
-  
-  stiffness (c,cm);
-}
-void dstiff_cub_c12(double ****c){
-  double **cm;
-  int i,j;
-  
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[0][1]=10.0;
-  cm[0][2]=cm[1][2]=cm[0][1];
-  cm[2][0]=cm[2][1]=cm[1][0]=cm[0][1];
-  
-  stiffness (c,cm);
-}
-void dstiff_cub_c44(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[3][3]=1.0;
-  cm[4][4]=cm[5][5]=cm[3][3];	
-  stiffness (c,cm);
-}
-
-/* VTI */
-void dstiff_vti_c33(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[2][2]=10.0;
-  stiffness (c,cm);
-}
-
-void dstiff_vti_c23(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[1][2]=10.0;
-  cm[0][2]=cm[2][0]=cm[2][1]=cm[1][2];
-  stiffness (c,cm);
-}
-
-void dstiff_vti_c12(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[0][1]=10.0;
-  cm[0][0]=cm[1][1]=cm[0][1];
-  cm[1][0]=cm[0][1];
-  stiffness (c,cm);
-}
-
-void dstiff_vti_c44(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[3][3]=1.0;
-  cm[4][4]=cm[3][3];
-  stiffness (c,cm);
-}
-
-void dstiff_vti_c66(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[5][5]=1.0;
-  cm[0][0]=cm[1][1]=2.0*cm[5][5];
-  stiffness (c,cm);
-}
-
-/* HTI */
-void dstiff_hti_c11(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[0][0]=10.0;
-  stiffness (c,cm);
-}
-
-void dstiff_hti_c33(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[2][2]=10.0;
-  cm[1][1]=cm[2][2];
-  stiffness (c,cm);
-}
-  
-
-void dstiff_hti_c12(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[0][1]=10.0;
-  cm[0][2]=cm[1][0]=cm[2][0]=cm[0][1];
-  stiffness (c,cm);
-}
-
-void dstiff_hti_c44(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[3][3]=1.0;
-  stiffness (c,cm);
-}
-
-void dstiff_hti_c66(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[5][5]=1.0;
-  cm[4][4]=cm[5][5];
-  stiffness (c,cm);
-}
+        # gradiant of the objective function
+        iw = ifw
+        for i in range(ndata):
+            dyda[0][i]=dfdp(wsort[iw], dgamma_c11, z, indice[iw], r)
+            dyda[1][i]=dfdp(wsort[iw], dgamma_c22, z, indice[iw], r)
+            dyda[2][i]=dfdp(wsort[iw], dgamma_c33, z, indice[iw], r)
+            dyda[3][i]=dfdp(wsort[iw], dgamma_c23, z, indice[iw], r)
+            dyda[4][i]=dfdp(wsort[iw], dgamma_c13, z, indice[iw], r)
+            dyda[5][i]=dfdp(wsort[iw], dgamma_c12, z, indice[iw], r)
+            dyda[6][i]=dfdp(wsort[iw], dgamma_c44, z, indice[iw], r)
+            dyda[7][i]=dfdp(wsort[iw], dgamma_c55, z, indice[iw], r)
+            dyda[8][i]=dfdp(wsort[iw], dgamma_c66, z, indice[iw], r)
+            iw += 1
 
 
 
+# isotropic
+def dstiff_iso_c11():
+    cm = numpy.zeros((6,6))
+    cm[0][0] = 10.0
+    cm[1][1] = cm[2][2] = cm[0][0]
+    cm[0][1] = cm[0][2] = cm[1][2] = cm[0][0]
+    cm[1][0] = cm[2][0] = cm[2][1] = cm[0][0]
+    return rus.stiffness(cm)
 
-/* Tetragonal */
-void dstiff_tetra_c11(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[1][1]=cm[0][0]=10.0;
-  stiffness (c,cm);
-}
+def dstiff_iso_c44():
+    cm = numpy.zeros((6,6))
+    cm[3][3] = 1.0
+    cm[4][4] = cm[5][5] = cm[3][3]
+    cm[0][1] = cm[0][2] = cm[1][2] = -2.0 * cm[3][3]
+    cm[1][0] = cm[2][0] = cm[2][1] = -2.0 * cm[3][3]
+    return rus.stiffness(cm)
 
-void dstiff_tetra_c33(double ****c){ 
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[2][2]=10.0;
-  stiffness (c,cm);
-}
+# cubic
+def dstiff_cub_c11():
+    cm = numpy.zeros((6,6))
+    cm[0][0] = 10.0
+    cm[1][1] = cm[2][2] = cm[0][0]
+    return rus.stiffness(cm)
 
-void dstiff_tetra_c23(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[1][2]=10.0;
-  cm[0][2]=cm[2][0]=cm[2][1]=cm[1][2];
-  stiffness (c,cm);
-}
-void dstiff_tetra_c12(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[0][1]=10.0;
-  cm[1][0]=cm[0][1];
-  stiffness (c,cm);
-}
+def dstiff_cub_c12():
+    cm = numpy.zeros((6,6))
+    cm[0][1] = 10.0
+    cm[0][2] = cm[1][2] = cm[0][1]
+    cm[2][0] = cm[2][1] = cm[1][0] = cm[0][1]
+    return rus.stiffness(cm)
 
-void dstiff_tetra_c44(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[3][3]=1.0;
-  cm[4][4]=cm[3][3];
-  stiffness (c,cm);
-}
+def dstiff_cub_c44():
+    cm = numpy.zeros((6,6))
+    cm[3][3] = 1.0
+    cm[4][4] = cm[5][5] = cm[3][3]
+    return rus.stiffness(cm)
 
-void dstiff_tetra_c66(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[5][5]=1.0;
-  stiffness (c,cm);
-}
+# VTI
+def dstiff_vti_c33():
+    cm = numpy.zeros((6,6))
+    cm[2][2] = 10.0
+    return rus.stiffness(cm)
 
+def dstiff_vti_c23():
+    cm = numpy.zeros((6,6))
+    cm[1][2] = 10.0
+    cm[0][2] = cm[2][0] = cm[2][1] = cm[1][2]
+    return rus.stiffness(cm)
 
-/* Orthorhombic */
-void dstiff_orth_c11(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[0][0]=10.0;
-  stiffness (c,cm);
-}
-void dstiff_orth_c22(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[1][1]=10.0;
-  stiffness (c,cm);
-}
+def dstiff_vti_c12():
+    cm = numpy.zeros((6,6))
+    cm[0][1] = 10.0
+    cm[0][0] = cm[1][1] = cm[0][1]
+    cm[1][0] = cm[0][1]
+    return rus.stiffness(cm)
 
-void dstiff_orth_c33(double ****c){ 
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[2][2]=10.0;
-  stiffness (c,cm);
-}
+def dstiff_vti_c44():
+    cm = numpy.zeros((6,6))
+    cm[3][3] = 1.0
+    cm[4][4] = cm[3][3]
+    return rus.stiffness(cm)
 
-void dstiff_orth_c23(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[1][2]=10.0;
-  cm[2][1]=cm[1][2];
-  stiffness (c,cm);
-}
+def dstiff_vti_c66():
+    cm = numpy.zeros((6,6))
+    cm[5][5] = 1.0
+    cm[0][0] = cm[1][1] = 2.0 * cm[5][5]
+    return rus.stiffness(cm)
 
-void dstiff_orth_c13(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[0][2]=10.0;
-  cm[2][0]=cm[0][2];
-  stiffness (c,cm);
-}
+# HTI
+def dstiff_hti_c11():
+    cm = numpy.zeros((6,6))
+    cm[0][0] = 10.0
+    return rus.stiffness(cm)
 
-void dstiff_orth_c12(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[0][1]=10.0;
-  cm[1][0]=cm[0][1];
-  stiffness (c,cm);
-}
+def dstiff_hti_c33():
+    cm = numpy.zeros((6,6))
+    cm[2][2] = 10.0;
+    cm[1][1] = cm[2][2]
+    return rus.stiffness(cm)
 
-void dstiff_orth_c44(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[3][3]=1.0;
- stiffness (c,cm);
-}
-void dstiff_orth_c55(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[4][4]=1.0;
- stiffness (c,cm);
-}
+def dstiff_hti_c12():
+    cm = numpy.zeros((6,6))
+    cm[0][1] = 10.0
+    cm[0][2] = cm[1][0] = cm[2][0] = cm[0][1]
+    return rus.stiffness(cm)
 
-void dstiff_orth_c66(double ****c){
-  double **cm;
-  int i,j;
-  cm=alloc2double(6,6);
-  for (i=0; i<6; ++i)
-    for (j=0; j<6; ++j)
-      cm[i][j]=0.0;
-  cm[5][5]=1.0;
-  stiffness (c,cm);
-}
+def dstiff_hti_c44():
+    cm = numpy.zeros((6,6))
+    cm[3][3] = 1.0
+    return rus.stiffness(cm)
 
+def dstiff_hti_c66():
+    cm = numpy.zeros((6,6))
+    cm[5][5] = 1.0
+    cm[4][4] = cm[5][5]
+    return rus.stiffness(cm)
 
+# Tetragonal
+def dstiff_tetra_c11():
+    cm = numpy.zeros((6,6))
+  cm[1][1] = cm[0][0] = 10.0
+    return rus.stiffness(cm)
 
+def dstiff_tetra_c33():
+    cm = numpy.zeros((6,6))
+    cm[2][2] = 10.0
+    return rus.stiffness(cm)
 
-void dgamma_fill(double **dgamma, int *itab, int *ltab, int *mtab, int *ntab, 
-	   int r, double d1, double  d2, double d3, double ****dc, int shape)
-{
-  int ir1, ir2, i1, i2, l1, l2, m1, m2, n1, n2;
-  int j1, j2;
-  int l, m, n;
+def dstiff_tetra_c23():
+    cm = numpy.zeros((6,6))
+    cm[1][2] = 10.0
+    cm[0][2] = cm[2][0] = cm[2][1] = cm[1][2]
+    return rus.stiffness(cm)
+
+def dstiff_tetra_c12():
+    cm = numpy.zeros((6,6))
+    cm[0][1] = 10.0
+    cm[1][0] = cm[0][1]
+    return rus.stiffness(cm)
+
+def dstiff_tetra_c44():
+    cm = numpy.zeros((6,6))
+    cm[3][3] = 1.0
+    cm[4][4] = cm[3][3]
+    return rus.stiffness(cm)
+
+def dstiff_tetra_c66():
+    cm = numpy.zeros((6,6))
+    cm[5][5] = 1.0
+    return rus.stiffness(cm)
+
+# Orthorhombic
+def dstiff_orth_c11(double ****c):
+    cm = numpy.zeros((6,6))
+  cm[0][0] = 10.0
+    return rus.stiffness(cm)
+
+def dstiff_orth_c22(double ****c):
+    cm = numpy.zeros((6,6))
+  cm[1][1] = 10.0
+    return rus.stiffness(cm)
+
+def dstiff_orth_c33(double ****c): 
+    cm = numpy.zeros((6,6))
+  cm[2][2] = 10.0
+    return rus.stiffness(cm)
+
+def dstiff_orth_c23(double ****c):
+    cm = numpy.zeros((6,6))
+    cm[1][2] = 10.0
+    cm[2][1] = cm[1][2]
+    return rus.stiffness(cm)
+
+def dstiff_orth_c13(double ****c):
+    cm = numpy.zeros((6,6))
+    cm[0][2] = 10.0
+    cm[2][0] = cm[0][2]
+    return rus.stiffness(cm)
+
+def dstiff_orth_c12(double ****c):
+    cm = numpy.zeros((6,6))
+    cm[0][1] = 10.0
+    cm[1][0] = cm[0][1]
+    return rus.stiffness(cm)
+
+def dstiff_orth_c44(double ****c):
+    cm = numpy.zeros((6,6))
+    cm[3][3] = 1.0
+    return rus.stiffness(cm)
+
+def dstiff_orth_c55(double ****c):
+    cm = numpy.zeros((6,6))
+    cm[4][4] = 1.0
+    return rus.stiffness(cm)
+
+def dstiff_orth_c66(double ****c):
+    cm = numpy.zeros((6,6))
+    cm[5][5] = 1.0
+    return rus.stiffness(cm)
 
 
-  
-  for (ir1=0; ir1<r; ++ir1){
-    for (ir2=0; ir2<r; ++ir2){
-      i1=itab[ir1];
-      i2=itab[ir2];
-      l1=ltab[ir1];
-      l2=ltab[ir2];
-      m1=mtab[ir1];
-      m2=mtab[ir2];
-      n1=ntab[ir1];
-      n2=ntab[ir2];
-      dgamma[ir1][ir2]=0.0;
-      if (l1>0) {
-	j1=0;
-	if (l2>0) {
-	 j2=0;
-	  l=l1+l2-2;
-	  m=m1+m2;
-	  n=n1+n2;
-	  dgamma[ir1][ir2] +=dc[i1][j1][i2][j2]*l1*l2*volintegral(d1, d2, d3, l, m, n, shape);
-	  
-	}
-	if (m2>0) {
-	  j2=1;
-	  l=l1+l2-1;
-	  m=m1+m2-1;
-	  n=n1+n2;
-	  dgamma[ir1][ir2] +=dc[i1][j1][i2][j2]*l1*m2*volintegral(d1, d2, d3, l, m, n, shape);
-	}
-	if (n2>0) {
-	  j2=2;
-	  l=l1+l2-1;
-	  m=m1+m2;
-	  n=n1+n2-1;
-	  dgamma[ir1][ir2] +=dc[i1][j1][i2][j2]*l1*n2*volintegral(d1, d2, d3, l, m, n, shape);
-	  
-	}
-      }
-      if (m1>0) {
-	j1=1;
-	if (l2>0) {
-	 j2=0;
-	  l=l1+l2-1;
-	  m=m1+m2-1;
-	  n=n1+n2;
-	  dgamma[ir1][ir2] +=dc[i1][j1][i2][j2]*m1*l2*volintegral(d1, d2, d3, l, m, n, shape);
-	  
-	}
-	if (m2>0) {
-	  j2=1;
-	  l=l1+l2;
-	  m=m1+m2-2;
-	  n=n1+n2; 
-	  dgamma[ir1][ir2] +=dc[i1][j1][i2][j2]*m1*m2*volintegral(d1, d2, d3, l, m, n, shape);
-	  
-	}
-	if (n2>0) {
-	  j2=2;
-	  l=l1+l2;
-	  m=m1+m2-1;
-	  n=n1+n2-1;
-	  dgamma[ir1][ir2] +=dc[i1][j1][i2][j2]*m1*n2*volintegral(d1, d2, d3, l, m, n, shape);
-	
-	}
-      }
-      if (n1>0) {
-	j1=2;
-	if (l2>0) {
-	 j2=0;
-	  l=l1+l2-1;
-	  m=m1+m2;
-	  n=n1+n2-1;
-	  dgamma[ir1][ir2] +=dc[i1][j1][i2][j2]*n1*l2*volintegral(d1, d2, d3, l, m, n, shape);
-	
-	}
-	if (m2>0) {
-	  j2=1;
-	  l=l1+l2;
-	  m=m1+m2-1;
-	  n=n1+n2-1;
-	  dgamma[ir1][ir2] +=dc[i1][j1][i2][j2]*n1*m2*volintegral(d1, d2, d3, l, m, n, shape);
-	
-	}
-	if (n2>0) {
-	  j2=2;
-	  l=l1+l2;
-	  m=m1+m2;
-	  n=n1+n2-2;
-	  dgamma[ir1][ir2] +=dc[i1][j1][i2][j2]*n1*n2*volintegral(d1, d2, d3, l, m, n, shape);
-	
-	}
-      }
-    }
-  }
-}
 
-double  dfdp(double f, double **dgammadp, double **z, int ie, int n)
-{
-  int i;
-  double *p; 
-  p=alloc1double(n);
-  
-  for (i=0; i<n; ++i)
-    p[i]= scalarproduct(dgammadp[i], z[ie], n); #/* we use dgammadp's 
-						   #symmetry here*/
- 
-  return scalarproduct(z[ie], p, n)/(8.0*PI*PI*f); 
-  free1double(p);
-}
+def dgamma_fill(itab,ltab,mtab,ntab,r,d1,d2,d3,dc,shape):
+    dgamma = numpy.zeros((r,r))
+    for ir1 in range(r):
+        for ir2 in range(r):
+            i1 = itab[ir1]
+            i2 = itab[ir2]
+            l1 = ltab[ir1]
+            l2 = ltab[ir2]
+            m1 = mtab[ir1]
+            m2 = mtab[ir2]
+            n1 = ntab[ir1]
+            n2 = ntab[ir2]
+            if l1 > 0:
+                j1 = 0
+                if l2 > 0:
+                    j2 = 0
+                    l = l1 + l2 - 2
+                    m = m1 + m2
+                    n = n1 + n2
+                    dgamma[ir1][ir2] += dc[i1][j1][i2][j2] * l1 * l2 * rus.volintegral(d1, d2, d3, l, m, n, shape)
+                if m2 > 0:
+                    j2 = 1
+                    l = l1 + l2 - 1
+                    m = m1 + m2 - 1
+                    n = n1 + n2
+                    dgamma[ir1][ir2] += dc[i1][j1][i2][j2] * l1 * m2 * rus.volintegral(d1, d2, d3, l, m, n, shape)
+                if n2 > 0:
+                    j2 = 2
+                    l = l1 + l2 - 1
+                    m = m1 + m2
+                    n = n1 + n2 - 1
+                    dgamma[ir1][ir2] += dc[i1][j1][i2][j2] * l1 * n2 * rus.volintegral(d1, d2, d3, l, m, n, shape)
+            if m1 > 0:
+                j1 = 1
+                if l2 > 0:
+                    j2 = 0
+                    l = l1 + l2 - 1
+                    m = m1 + m2 - 1
+                    n = n1 + n2
+                    dgamma[ir1][ir2] += dc[i1][j1][i2][j2] * m1 * l2 * rus.volintegral(d1, d2, d3, l, m, n, shape)
+                if m2 > 0:
+                    j2 = 1
+                    l = l1 + l2
+                    m = m1 + m2 - 2
+                    n = n1 + n2
+                    dgamma[ir1][ir2] += dc[i1][j1][i2][j2] * m1 * m2 * rus.volintegral(d1, d2, d3, l, m, n, shape)
+                if n2 > 0:
+                    j2 = 2
+                    l = l1 + l2
+                    m = m1 + m2 - 1
+                    n = n1 + n2 - 1
+                    dgamma[ir1][ir2] += dc[i1][j1][i2][j2] * m1 * n2 * rus.volintegral(d1, d2, d3, l, m, n, shape)
+            if n1 > 0:
+                j1 = 2
+                if l2 > 0:
+                    j2 = 0
+                    l = l1 + l2 - 1
+                    m = m1 + m2
+                    n = n1 + n2 - 1
+                    dgamma[ir1][ir2] += dc[i1][j1][i2][j2] * n1 * l2 * rus.volintegral(d1, d2, d3, l, m, n, shape)
+                if m2 > 0:
+                    j2 = 1
+                    l = l1 + l2
+                    m = m1 + m2 - 1
+                    n = n1 + n2 - 1
+                    dgamma[ir1][ir2] += dc[i1][j1][i2][j2] * n1 * m2 * rus.volintegral(d1, d2, d3, l, m, n, shape)
+                if n2 > 0:
+                    j2 = 2
+                    l = l1 + l2
+                    m = m1 + m2
+                    n = n1 + n2 - 2
+                    dgamma[ir1][ir2] += dc[i1][j1][i2][j2] * n1 * n2 * rus.volintegral(d1, d2, d3, l, m, n, shape)
+    return dgamma
 
-double  scalarproduct(double *a, double *b, int n)
-{
-  int i; 
-  double sp; 
-  sp=0.0; 
-  for (i=0; i<n; ++i)
-    sp+=a[i]*b[i];
-  return sp;
-}
+
+
+def dfdp(f, dgammadp, z, ie, n):
+    p = []
+    for i in range(n):
+        # we use dgammadp's 
+        # symmetry here
+        p.append(scalarproduct(dgammadp[i],z[ie],n)) 
+    return scalarproduct(z[ie],p,n) / (8.0 * scipy.pi * scipy.pi * f)
+
+
+
+def scalarproduct(a, b, n):
+    sp = 0.0; 
+    for i in range(n):
+        sp += a[i] * b[i]
+    return sp
+
 
 
 void dqkpart (double a[], int p, int q, int *j, int *k)
