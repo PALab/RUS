@@ -15,8 +15,9 @@ def compute_dyda(dyda,ns,hextype,r,itab,ltab,mtab,ntab,d1,d2,d3,shape,ifw,ndata,
         # gradiant of the objective function
         iw = ifw
         for i in range(ndata):
-            dyda[0][i]=dfdp(wsort[iw], dgamma_c11, z, indice[iw], r)
-            dyda[1][i]=dfdp(wsort[iw], dgamma_c44, z, indice[iw], r)
+            # print(dyda, ndata, i)
+            dyda[0][i] = dfdp(wsort[iw], dgamma_c11, z, indice[iw], r)
+            dyda[1][i] = dfdp(wsort[iw], dgamma_c44, z, indice[iw], r)
             iw += 1
 
     # cubic
@@ -607,10 +608,10 @@ def gaussj(a, n, b, m):
 # vector BETA from (14.4.8) 
 
 # called by mrqmin each iteration. Computes "chisq"
-def mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,alpha,beta,chisq,hextype,funcs):
+def mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,alpha,beta,chisq,hextype):
 
     mfit = 0
-    dyda = numpy.zeros((ndata,ma))
+    dyda = numpy.zeros((ma,ndata))
     ymod = numpy.zeros(ndata)
     for j in range(ma):
         if ia[j] != 0:
@@ -621,7 +622,7 @@ def mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
         beta[j] = 0.0
 
     chisq = 0.0
-    funcs(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,ymod,dyda,ma,hextype)
+    formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,ymod,dyda,ma,hextype)
     for i in range(ndata):
         sig2i = sig[i] * sig[i]
         dy = y[i] - ymod[i]
@@ -692,6 +693,7 @@ def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,y,dyda
         for ir1 in range(irk[k]):
             wsort[i] = w[k][ir1]
             i += 1
+    indice = numpy.argsort(wsort)
     wsort.sort()
 
     for w in wsort:
@@ -718,7 +720,7 @@ def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,y,dyda
         print(freqfile, '{}', y[i])
         iw += 1
     freqfile.close()
-
+    
     # compute dyda
     compute_dyda(dyda,ns,hextype,r,itab,ltab,mtab,ntab,d1,d2,d3,shape,ifw,ndata,z,wsort,indice)
   
@@ -793,10 +795,10 @@ def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,y,dyda
 #/* alpha = curvature matrix. Of size ns by ns (number of cijs). Initialised as identity matrix */
 #/* chisq = the difference between measured and predicted frequencies. Is not a "traditional" chisq */
 #/* hextype = differentiates between VTI and HTI symmetry in the hexagonal case */
-#/* (*funcs) = forward model. Calculates the frequencies based on cij values */
+#/* (*formod) = forward model. Calculates the frequencies based on cij values */
 #/* alamda = parameter from conjugate-gradient method. Starts as <0 to initialise the routine and is changed in subsequent iterations */
 #
-def mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,covar,alpha,chisq,hextype,funcs,alamda):
+def mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,covar,alpha,chisq,hextype,alamda):
     # Loop is called if almada <0.
     # This initializes the routine.
     # Sets almada = -1.0 in main before calling MRQMIN.
@@ -822,13 +824,13 @@ def mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
         alamda = 0.001
 
         # Compute "chisq" - need to update to formal chisq.
-        mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,alpha,beta,chisq,hextype,funcs)
+        mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,alpha,beta,chisq,hextype)
 
         # update chisq value
         ochisq = chisq
         for j in range(ma):
             # set atry[j] equal to the inital guess of the cij value a[j]
-            atry[j] = a[j]
+            atry[j] = a.values()[j]
   
     # mfit started = 0 and then increased in the prior if loop, but mfit <= ns
     for j in range(mfit):
@@ -859,7 +861,7 @@ def mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
             atry[l] = a[l] + da[j]
 
     # Compute "chisq" - need to update to formal chisq
-    mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,atry,ia,ma,covar,da,chisq,hextype,funcs)
+    mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,atry,ia,ma,covar,da,chisq,hextype)
 
     # if step succeeds value of chisq decreases: ochisq < chisq
     if chisq < ochisq:
