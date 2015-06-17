@@ -101,7 +101,7 @@ chisq  =  0.0
 alamda = -1.0
 niter  =  100 # set number of iterations
 for i in range(niter):
-    mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,args.a,ia,ns,covar,alpha,&chisq,hextype,formod,alamda)
+    mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,args.a,ia,ns,covar,alpha,chisq,hextype,formod,alamda)
     print('iter #' + str(iter))
     for is_1 in range(args.ns): # ns = dimension of symmetry
         print(str(100 * guess[is_1])) # print estimated cij values
@@ -141,7 +141,7 @@ def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,y,dyda
         for ir1 in range(irf):
             for ir2 in range(irf,irf+irk[k]):
                 z[ir2][ir1] = 0.0
-        for ir1 in range(irf,irf+irk[k])
+        for ir1 in range(irf,irf+irk[k]):
             for ir2 in range(irf, ir2<irf+irk[k]):
                 z[ir2][ir1] = gamma[k][(ir2-irf)*irk[k]+ir1-irf]
         #/* change the order of the array at the same time since we go
@@ -162,7 +162,7 @@ def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,y,dyda
 
     for w in wsort:
         if w > 0 and (sqrt(w) / (2.0 * scipy.pi)) > 0.00001:
-            w = sqrt(w / (2.0 * scipy.pi)
+            w = sqrt(w / (2.0 * scipy.pi))
         else:
             w = 0.0
   
@@ -439,7 +439,7 @@ def dstiff_hti_c66():
 # Tetragonal
 def dstiff_tetra_c11():
     cm = numpy.zeros((6,6))
-  cm[1][1] = cm[0][0] = 10.0
+    cm[1][1] = cm[0][0] = 10.0
     return rus.stiffness(cm)
 
 def dstiff_tetra_c33():
@@ -471,50 +471,50 @@ def dstiff_tetra_c66():
     return rus.stiffness(cm)
 
 # Orthorhombic
-def dstiff_orth_c11(double ****c):
+def dstiff_orth_c11():
     cm = numpy.zeros((6,6))
-  cm[0][0] = 10.0
+    cm[0][0] = 10.0
     return rus.stiffness(cm)
 
-def dstiff_orth_c22(double ****c):
+def dstiff_orth_c22():
     cm = numpy.zeros((6,6))
-  cm[1][1] = 10.0
+    cm[1][1] = 10.0
     return rus.stiffness(cm)
 
-def dstiff_orth_c33(double ****c): 
+def dstiff_orth_c33(): 
     cm = numpy.zeros((6,6))
-  cm[2][2] = 10.0
+    cm[2][2] = 10.0
     return rus.stiffness(cm)
 
-def dstiff_orth_c23(double ****c):
+def dstiff_orth_c23():
     cm = numpy.zeros((6,6))
     cm[1][2] = 10.0
     cm[2][1] = cm[1][2]
     return rus.stiffness(cm)
 
-def dstiff_orth_c13(double ****c):
+def dstiff_orth_c13():
     cm = numpy.zeros((6,6))
     cm[0][2] = 10.0
     cm[2][0] = cm[0][2]
     return rus.stiffness(cm)
 
-def dstiff_orth_c12(double ****c):
+def dstiff_orth_c12():
     cm = numpy.zeros((6,6))
     cm[0][1] = 10.0
     cm[1][0] = cm[0][1]
     return rus.stiffness(cm)
 
-def dstiff_orth_c44(double ****c):
+def dstiff_orth_c44():
     cm = numpy.zeros((6,6))
     cm[3][3] = 1.0
     return rus.stiffness(cm)
 
-def dstiff_orth_c55(double ****c):
+def dstiff_orth_c55():
     cm = numpy.zeros((6,6))
     cm[4][4] = 1.0
     return rus.stiffness(cm)
 
-def dstiff_orth_c66(double ****c):
+def dstiff_orth_c66():
     cm = numpy.zeros((6,6))
     cm[5][5] = 1.0
     return rus.stiffness(cm)
@@ -617,7 +617,8 @@ def scalarproduct(a, b, n):
 
 def dqkpart(a,p,q,j,k):
     # choose random pivot element between p and q, inclusive
-    gobal _dqkpart_seed = (_dqkpart_seed * FA + FC) % FM
+    global _dqkpart_seed
+    _dqkpart_seed = (_dqkpart_seed * FA + FC) % FM
     pivot = p + (q - p) * _dqkpart_seed / FM
     if pivot < p:
         pivot = p
