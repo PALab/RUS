@@ -100,5 +100,10 @@ def inverse_parser(params):
     if args.c44: args.a['c44'] = args.c44
     if args.c55: args.a['c55'] = args.c55
     if args.c66: args.a['c66'] = args.c66
+
+    # set default a
+    if len(args.a) == 0:
+        args.a['c11'] = 110.0
+        args.a['c44'] = 26.0
     
     return args
