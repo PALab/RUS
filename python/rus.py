@@ -1,6 +1,6 @@
 import scipy
 import numpy
-from math import sqrt
+import math
 import scipy.linalg.lapack as lapack
 
 def compute_dyda(dyda,ns,hextype,r,itab,ltab,mtab,ntab,d1,d2,d3,shape,ifw,ndata,z,wsort,indice):
@@ -570,7 +570,7 @@ def gaussj(a, n, b, m):
             for l in range(n):
                 a[irow][l], a[icol][l] = a[icol][l], a[irow][l]
             for l in range(m):
-                b[irow][l], b[icol][l] = b[icol][l], b[irow][l]
+                b[l][irow], b[l][icol] = b[l][icol], b[l][irow]
         indxr.append(irow)
         indxc.append(icol)
         if a[icol][icol] == 0.0:
@@ -586,9 +586,9 @@ def gaussj(a, n, b, m):
                 dum = a[ll][icol]
                 a[ll][icol] = 0.0
                 for l in range(n):
-                    a[ll][l] -= a[icol][l] * dum
+                    a[l][ll] -= a[l][icol] * dum
                 for l in range(m):
-                    b[ll][l] -= b[icol][l] * dum
+                    b[l][ll] -= b[l][icol] * dum
     for l in range(n-1,-1,-1):
         if indxr[l] != indxc[l]:
             for k in range(n):
@@ -697,8 +697,8 @@ def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,y,dyda
     wsort.sort()
 
     for w in wsort:
-        if w > 0 and (sqrt(w) / (2.0 * scipy.pi)) > 0.00001:
-            w = sqrt(w / (2.0 * scipy.pi))
+        if w > 0 and (math.sqrt(w) / (2.0 * scipy.pi)) > 0.00001:
+            w = math.sqrt(w / (2.0 * scipy.pi))
         else:
             w = 0.0
   
@@ -771,11 +771,6 @@ def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,y,dyda
 #
 #/* *itab, *ltab, *mtab, *ntab = 1D array's of type int. Related to r. _tab=alloc1int(r) */
 #/* *irk = 1D array on int. irk = alloc1int(8)*/
-#/* --------------------------------------- */
-#/* the * in front of the variable is a pointer */
-#/* char *p declares p to be a pointer to char */
-#/* *p = 0 means "put a zero in the byte which p points to" */
-#/* --------------------------------------- */
 #
 #/* d1, d2, d3 = dimensions of sample, diameter, height */
 #/* rho = density in g/cm^3 */
@@ -795,7 +790,6 @@ def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,y,dyda
 #/* alpha = curvature matrix. Of size ns by ns (number of cijs). Initialised as identity matrix */
 #/* chisq = the difference between measured and predicted frequencies. Is not a "traditional" chisq */
 #/* hextype = differentiates between VTI and HTI symmetry in the hexagonal case */
-#/* (*formod) = forward model. Calculates the frequencies based on cij values */
 #/* alamda = parameter from conjugate-gradient method. Starts as <0 to initialise the routine and is changed in subsequent iterations */
 #
 def mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,covar,alpha,chisq,hextype,alamda):
@@ -803,10 +797,10 @@ def mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
     # This initializes the routine.
     # Sets almada = -1.0 in main before calling MRQMIN.
     if alamda < 0.0:
-        # create 1D arrays the size of ma = ns = number of cijs
-        atry = numpy.zeros(ma)
-        beta = numpy.zeros(ma)
-        da   = numpy.zeros(ma)
+        # create 1D arrays the size of the number of cxx values.
+        atry = a.copy()
+        beta = numpy.zeros(len(a))
+        da   = numpy.zeros(len(a))
 
         # mfit is the number of cijs that are adjusted.
         # The remaining (ma = ns) - mfit cij values are left unchanged.
@@ -828,9 +822,6 @@ def mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
 
         # update chisq value
         ochisq = chisq
-        for j in range(ma):
-            # set atry[j] equal to the inital guess of the cij value a[j]
-            atry[j] = a.values()[j]
   
     # mfit started = 0 and then increased in the prior if loop, but mfit <= ns
     for j in range(mfit):
@@ -842,11 +833,11 @@ def mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
         # change the main diagonals
         covar[j][j] = alpha[j][j] * (1.0 + alamda)
         # update oneda values by beta - which is changed (?) by mrqcof()
-        oneda[j][0] = beta[j]
+        oneda[0][j] = beta[j]
   
     gaussj(covar,mfit,oneda,1)
     for j in range(mfit):
-        da[j] = oneda[j][0]
+        da[j] = oneda[0][j]
 
     # This is the stopping criteria - but how do we get alamda = 0.0?
     if alamda == 0.0:
@@ -854,11 +845,12 @@ def mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
         covsrt(alpha,ma,ia,mfit)
         return
 
-    j = -1
+    j = 0
     for l in range(ma):
         if ia[l] != 0:
+            k = a.keys()[l]
+            atry[k] = a[k] + da[j]
             j += 1
-            atry[l] = a[l] + da[j]
 
     # Compute "chisq" - need to update to formal chisq
     mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,atry,ia,ma,covar,da,chisq,hextype)
@@ -887,6 +879,9 @@ def mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
 
 def make_cm(a, hextype=None):
     num_values = len(a)
+
+    for k,v in a.iteritems():
+        print(k,v)
 
     if num_values == 2: return __make_cm_isotropic(a)
     if num_values == 3: return __make_cm_cubic(a)
