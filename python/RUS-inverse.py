@@ -19,12 +19,6 @@ import rus
 import rus_parser as p
 from math import fabs
 
-NSTACK = 50     # maximum sort length is 2^NSTACK
-NSMALL = 7      # size of array for which insertion sort is fast
-FM = 7875       # constants used to generate random pivots
-FA = 211
-FC = 1663
-
 # global variable
 _dqkpart_seed = 0
 
