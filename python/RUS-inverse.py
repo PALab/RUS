@@ -31,9 +31,20 @@ _dqkpart_seed = 0
 # send to parser
 args = p.inverse_parser(sys.argv)
 
+print('d={}'.format(args.order))
+print('shape={}'.format(args.shape))
+print('ns={}'.format(args.ns))
+print('hextype={}'.format(args.hextype))
+print('d1={0:.6f}'.format(args.d1))
+print('d2={0:.6f}'.format(args.d2))
+print('d3={0:.6f}'.format(args.d3))
+print('rho={0:.6f}'.format(args.rho))
+print('freqmin={0:.6f}'.format(args.freqmin))
+print('freqmax={0:.6f}'.format(args.freqmax))
+
 # print out initial guess
 for k,v in args.a.iteritems():
-    print(v)
+    print('{0:.6f}'.format(v))
     args.a[k] = v / 100
 
 d  = args.order
@@ -50,7 +61,7 @@ measurement = "freq_data"  # CHANGE THIS LINE TO APPROPRIATE DIRECTORY
 # get measured frequencies from file
 f = open(measurement, "rU")
 nfreq = int(f.readline())
-print('nfreq = ' + str(nfreq))
+print('nfreq={}'.format(nfreq))
 freq   = []
 weight = []
 for i in range(nfreq):
@@ -62,7 +73,7 @@ for i in range(nfreq):
         sys.exit(-1)
     freq.append(float(nums[0]))
     weight.append(float(nums[1]))
-    print('freq = ' + str(freq[-1]))
+    print(' freq={0:.6f}'.format(freq[-1]))
 f.close()
 
 if len(freq) != nfreq:
@@ -102,9 +113,9 @@ alamda = -1.0
 niter  =  100 # set number of iterations
 for i in range(niter):
     rus.mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,args.rho,args.shape,args.freqmin,y,sig,ndata,args.a,ia,args.ns,covar,alpha,chisq,args.hextype,alamda)
-    print('iter #' + str(iter))
+    print('iter #{}'.format(niter))
     for k,v in args.a.iteritems(): # ns = dimension of symmetry
-        print(str(100 * v)) # print estimated cij values
+        print('{}'.format(100 * v)) # print estimated cij values
 
 print()
 print('This calculation can be executed again with the following command:')
