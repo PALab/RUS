@@ -103,8 +103,8 @@ niter  =  100 # set number of iterations
 for i in range(niter):
     rus.mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,args.rho,args.shape,args.freqmin,y,sig,ndata,args.a,ia,args.ns,covar,alpha,chisq,args.hextype,alamda)
     print('iter #' + str(iter))
-    for is_1 in range(args.ns): # ns = dimension of symmetry
-        print(str(100 * guess[is_1])) # print estimated cij values
+    for k,v in args.a.iteritems(): # ns = dimension of symmetry
+        print(str(100 * v)) # print estimated cij values
 
 print()
 print('This calculation can be executed again with the following command:')
