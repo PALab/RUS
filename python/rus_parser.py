@@ -3,16 +3,17 @@ import argparse
 def inverse_parser(params):
     # Parser help text
     d_help  = 'order of polynomials used to estimate the eigenvectors (Default: 8)'
-    s_help  = '0=sphere, 1=cylinder, 2=parallelepiped (Default: 1)'
+    f_help  = 'file containing the predicted frequencies'
+    i_help  = 'number of iterations to perform'
+    l_help  = 'lower frequency bound for inversion in MHz (set >1 KHz lower than your lowest measured value) (Default: 0.020)'
     n_help  = 'number of cijs (Default: 2)'
+    r_help  = 'density in grams/cm^3 (Default: 2.713)'
+    s_help  = '0=sphere, 1=cylinder, 2=parallelepiped (Default: 1)'
     t_help  = 'hextype - 1=VTI, 2=HTI. Type of hexagonal symetry (Only matters for ns=5) (Default: 1)'
     x_help  = 'dimension 1 in cm (diameter for cyl. or sphere) (Default: 4.420)'
     y_help  = 'dimension 2 in cm (diameter for cyl. or sphere) (Default: 4.420)'
     z_help  = 'dimension 3 in cm (height for cyl. diameter for sphere) (Default: 6.414)'
-    r_help  = 'density in grams/cm^3 (Default: 2.713)'
-    l_help  = 'lower frequency bound for inversion in MHz (set >1 KHz lower than your lowest measured value) (Default: 0.020)'
     u_help  = 'upper frequency bound for inversion in MHz (set >5 or 10KHz higher than your highest value used for THIS particular fit as defined by Line 1 of freq_data) (Default: 0.110)'
-    f_help  = 'file containing the predicted frequencies'
 
     parser = argparse.ArgumentParser(description='Inverse Algorithm')
 
@@ -21,6 +22,12 @@ def inverse_parser(params):
         type = int,
         default = 8,
         help = d_help)
+
+    parser.add_argument(
+        '-i', '--iterations',
+        type = int,
+        default = 100,
+        help = i_help)
 
     parser.add_argument(
         '-s', '--shape',

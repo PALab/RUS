@@ -109,8 +109,7 @@ covar  = numpy.identity(args.ns)
 alpha  = numpy.identity(args.ns)
 chisq  =  0.0
 alamda = -1.0
-niter  =  100 # set number of iterations
-for i in range(niter):
+for i in range(args.iterations):
     rus.mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,args.rho,args.shape,args.freqmin,y,sig,ndata,args.a,ia,args.ns,covar,alpha,chisq,args.hextype,alamda)
     print('iter #{}'.format(i))
     for k,v in args.a.iteritems(): # ns = dimension of symmetry
@@ -118,7 +117,7 @@ for i in range(niter):
 
 print()
 print('This calculation can be executed again with the following command:')
-print('python {} --order {} --shape {} --ns {} --hextype {} --d1 {} --d2 {} --d3 {} --rho {} --freqmin {} --freqmax {} {}'.format(sys.argv[0], args.order, args.shape, args.ns, args.hextype, args.d1, args.d2, args.d3, args.rho, args.freqmin, args.freqmax, ' '.join(('--' + s + ' ' + str(v)) for k,v in args.a.iteritems())))
+print('python {} --order {} --shape {} --ns {} --hextype {} --d1 {} --d2 {} --d3 {} --rho {} --freqmin {} --freqmax {} --iterations {} {}'.format(sys.argv[0], args.order, args.shape, args.ns, args.hextype, args.d1, args.d2, args.d3, args.rho, args.freqmin, args.freqmax, args.iterations, ' '.join(('--' + k + ' ' + str(v*100)) for k,v in args.a.iteritems())))
 
 
 
