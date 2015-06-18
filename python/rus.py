@@ -15,7 +15,6 @@ def compute_dyda(dyda,ns,hextype,r,itab,ltab,mtab,ntab,d1,d2,d3,shape,ifw,ndata,
         # gradiant of the objective function
         iw = ifw
         for i in range(ndata):
-            # print(dyda, ndata, i)
             dyda[0][i] = dfdp(wsort[iw], dgamma_c11, z, indice[iw], r)
             dyda[1][i] = dfdp(wsort[iw], dgamma_c44, z, indice[iw], r)
             iw += 1
@@ -40,8 +39,6 @@ def compute_dyda(dyda,ns,hextype,r,itab,ltab,mtab,ntab,d1,d2,d3,shape,ifw,ndata,
 
     # hexagonal - VTI
     elif ns == 5 and hextype == 1:
-        print('hextype={}'.format(hextype))
-  
         dc_c33 = dstiff_vti_c33()
         dc_c23 = dstiff_vti_c23()
         dc_c12 = dstiff_vti_c12()
@@ -65,8 +62,6 @@ def compute_dyda(dyda,ns,hextype,r,itab,ltab,mtab,ntab,d1,d2,d3,shape,ifw,ndata,
             iw += 1
    
     elif ns == 5 and hextype == 2:
-        print('hextype={}'.format(hextype))
-   
         dc_c11 = dstiff_hti_c11()
         dc_c33 = dstiff_hti_c33()
         dc_c12 = dstiff_hti_c12()
@@ -641,7 +636,7 @@ def mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
         chisq += dy * dy * sig2i
   
     # chisq prints from here
-    print('chisq={}'.format(100.0 * chisq))
+    print('chisq={0:.6f}'.format(100.0 * chisq))
     for j in range(1,mfit):
         for k in range(j-1):
             alpha[k][j] = alpha[j][k]
@@ -709,7 +704,7 @@ def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,y,dyda
     iw = ifw
     for i in range(ndata):
         y[i] = wsort[iw]
-        print('f{}={}'.format(i + 1, y[i]))
+        print('f{0}={1:.6f}'.format(i + 1, y[i]))
         iw += 1
 
     # write predicted frequencies to file predictedf */
@@ -717,7 +712,7 @@ def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,y,dyda
     iw = ifw
     for i in range(ndata):
         y[i] = wsort[iw]
-        print(freqfile, '{}', y[i])
+        freqfile.write('{}'.format(y[i]))
         iw += 1
     freqfile.close()
     
@@ -879,9 +874,6 @@ def mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
 
 def make_cm(a, hextype=None):
     num_values = len(a)
-
-    for k,v in a.iteritems():
-        print(k,v)
 
     if num_values == 2: return __make_cm_isotropic(a)
     if num_values == 3: return __make_cm_cubic(a)
