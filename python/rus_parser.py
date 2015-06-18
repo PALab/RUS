@@ -12,6 +12,7 @@ def inverse_parser(params):
     r_help  = 'density in grams/cm^3 (Default: 2.713)'
     l_help  = 'lower frequency bound for inversion in MHz (set >1 KHz lower than your lowest measured value) (Default: 0.020)'
     u_help  = 'upper frequency bound for inversion in MHz (set >5 or 10KHz higher than your highest value used for THIS particular fit as defined by Line 1 of freq_data) (Default: 0.110)'
+    f_help  = 'file containing the predicted frequencies'
 
     parser = argparse.ArgumentParser(description='Inverse Algorithm')
 
@@ -77,6 +78,11 @@ def inverse_parser(params):
         type = float,
         default = 0.110,
         help = u_help)
+
+    parser.add_argument(
+        '-f', '--input_file',
+        default = 'sample/default_frequencies',
+        help = f_help)
 
     parser.add_argument('--c11', type = float)
     parser.add_argument('--c12', type = float)

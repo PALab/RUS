@@ -53,32 +53,37 @@ d2 = args.d2 / 2.0
 d3 = args.d3 / 2.0 
 
 # dimension of the problem
-r = 3 *(d + 1) * (d + 2) * (d + 3) / 6
+r = 3 * (d + 1) * (d + 2) * (d + 3) / 6
 
-# matrices of the eigenvalue problem and for the function gradiant
-measurement = "freq_data"  # CHANGE THIS LINE TO APPROPRIATE DIRECTORY
+if args.input_file == 'sample/default_frequencies':
+    print('!! no frequency file specified - sample file will be used !!')
 
 # get measured frequencies from file
-f = open(measurement, "rU")
-nfreq = int(f.readline())
-print('nfreq={}'.format(nfreq))
-freq   = []
-weight = []
-for i in range(nfreq):
-    line = f.readline()
-    nums = line.split(None, 1)
-    if len(nums) != 2:
-        print('Could not parse some lines in the frequency file: ' + measurement)
-        f.close()
-        sys.exit(-1)
-    freq.append(float(nums[0]))
-    weight.append(float(nums[1]))
-    print(' freq={0:.6f}'.format(freq[-1]))
-f.close()
+try:
+    f = open(args.input_file, "rU")
+except IOError:
+    print('Could not open frequency file.')
+    sys.exit(-1)
+else:
+    nfreq = int(f.readline())
+    print('nfreq={}'.format(nfreq))
+    freq   = []
+    weight = []
+    for i in range(nfreq):
+        line = f.readline()
+        nums = line.split(None, 1)
+        if len(nums) != 2:
+            print('Could not parse some lines in the frequency file: ' + measurement)
+            f.close()
+            sys.exit(-1)
+        freq.append(float(nums[0]))
+        weight.append(float(nums[1]))
+        print(' freq={0:.6f}'.format(freq[-1]))
+    f.close()
 
 if len(freq) != nfreq:
     print('Unexpected number of frequencies.')
-    print('Expected ' + str(nfreq) + ' but read ' + str(len(freq)))
+    print('Expected {} but read {}'.format(nfreq, len(freq)))
     sys.exit(-1)
 
 # relationship between ir and l,m,n - filling tables
