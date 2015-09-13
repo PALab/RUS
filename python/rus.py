@@ -419,16 +419,8 @@ def dfdp(f, dgammadp, z, ie, n):
     for i in range(n):
         # we use dgammadp's 
         # symmetry here
-        p.append(scalarproduct(dgammadp[i],z[ie],n)) 
-    return scalarproduct(z[ie],p,n) / (8.0 * scipy.pi * scipy.pi * f)
-
-
-
-def scalarproduct(a, b, n):
-    sp = 0.0 
-    for i in range(n):
-        sp += a[i] * b[i]
-    return sp
+        p.append(numpy.dot(dgammadp[i],z[ie])) 
+    return numpy.dot(z[ie],p) / (8.0 * scipy.pi * scipy.pi * f)
 
 
 
