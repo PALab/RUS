@@ -1,9 +1,14 @@
+import sys
 import scipy
 import numpy
 import math
-import scipy.linalg.lapack as lapack
+import scipy.linalg as LA
 
-def compute_dyda(dyda,ns,hextype,r,itab,ltab,mtab,ntab,d1,d2,d3,shape,ifw,ndata,z,wsort,indice):
+import pdb
+
+def compute_dyda(ns,hextype,r,itab,ltab,mtab,ntab,d1,d2,d3,shape,ifw,ndata,z,wsort,indice):
+    dyda = numpy.zeros((ns,ndata))
+
     # isotropic case
     if ns == 2:
         dc_c11 = dstiff_iso_c11()
@@ -146,6 +151,8 @@ def compute_dyda(dyda,ns,hextype,r,itab,ltab,mtab,ntab,d1,d2,d3,shape,ifw,ndata,
             dyda[7][i]=dfdp(wsort[iw], dgamma_c55, z, indice[iw], r)
             dyda[8][i]=dfdp(wsort[iw], dgamma_c66, z, indice[iw], r)
             iw += 1
+
+    return dyda
 
 
 
@@ -581,9 +588,9 @@ def gaussj(a, n, b, m):
                 dum = a[ll][icol]
                 a[ll][icol] = 0.0
                 for l in range(n):
-                    a[l][ll] -= a[l][icol] * dum
+                    a[ll][l] -= a[icol][l] * dum
                 for l in range(m):
-                    b[l][ll] -= b[l][icol] * dum
+                    b[ll][l] -= b[icol][l] * dum
     for l in range(n-1,-1,-1):
         if indxr[l] != indxc[l]:
             for k in range(n):
@@ -606,8 +613,6 @@ def gaussj(a, n, b, m):
 def mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,alpha,beta,chisq,hextype):
 
     mfit = 0
-    dyda = numpy.zeros((ma,ndata))
-    ymod = numpy.zeros(ndata)
     for j in range(ma):
         if ia[j] != 0:
             mfit += 1
@@ -617,7 +622,7 @@ def mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
         beta[j] = 0.0
 
     chisq = 0.0
-    formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,ymod,dyda,ma,hextype)
+    ymod, dyda = formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,ma,hextype)
     for i in range(ndata):
         sig2i = sig[i] * sig[i]
         dy = y[i] - ymod[i]
@@ -642,7 +647,7 @@ def mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
             alpha[k][j] = alpha[j][k]
 
 
-def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,y,dyda,ns,hextype):
+def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,ns,hextype):
 
     freqs = 'predictedf' # CHANGE THIS LINE TO APPROPRIATE DIRECTORY
 
@@ -655,11 +660,13 @@ def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,y,dyda
     #/*-------------------------------------------------------------*/
     #/*--------- solve the generalized eigenvalue problem ----------*/
     #/*-------------------------------------------------------------*/  
-    w = []
+    eigvals = []
+    eigvect = []
     for k in range(8):
         # lapack routine
-        a, w_temp, info = lapack.dsygv(gamma[k], e[k], itype=1, jobz='V', uplo='U')  
-        w.append(w_temp)
+        w, v = LA.eigh(gamma[k], e[k], lower=False, eigvals_only=False, turbo=False, type=1, overwrite_a=True, overwrite_b=True, check_finite=False)
+        eigvals.append(w)
+        eigvect.append(numpy.transpose(v))
 
     #/*-------------------------------------------------------------*/  
     #/*-------------------------------------------------------------*/
@@ -668,14 +675,9 @@ def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,y,dyda
     z = numpy.zeros((r,r))
     irf = 0
     for k in range(8):
-        for ir1 in range(irf):
-            for ir2 in range(irf,irf+irk[k]):
-                z[ir2][ir1] = 0.0
         for ir1 in range(irf,irf+irk[k]):
-            for ir2 in range(irf, irf+irk[k]):
-                z[ir2][ir1] = gamma[k][(ir2-irf)][ir1-irf]
-        #/* change the order of the array at the same time since we go
-        #   from fortran array to C array */
+            for ir2 in range(irf,irf+irk[k]):
+                z[ir2][ir1] = eigvect[k][ir2-irf][ir1-irf]
         for ir1 in range(irk[k]+irf,r):
             for ir2 in range(irf,irf+irk[k]):
                 z[ir2][ir1] = 0.0
@@ -686,38 +688,44 @@ def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,y,dyda
     i = 0
     for k in range(8):
         for ir1 in range(irk[k]):
-            wsort[i] = w[k][ir1]
+            wsort[i] = eigvals[k][ir1]
             i += 1
     indice = numpy.argsort(wsort)
     wsort.sort()
 
-    for w in wsort:
-        if w > 0 and (math.sqrt(w) / (2.0 * scipy.pi)) > 0.00001:
-            w = math.sqrt(w / (2.0 * scipy.pi))
+    for i in range(len(wsort)):
+        if wsort[i] > 0:
+            x = math.sqrt(wsort[i]) / (2.0 * scipy.pi)
+            if x > 0.00001:
+                wsort[i] = x
+            else:
+                wsort[i] = 0.0
         else:
-            w = 0.0
+            wsort[i]= 0.0
   
     # output
-    ifw = 0
-    ifw = xindex(wsort, freqmin, ifw)
+    freqfile = open(freqs, 'w')
+    y = []
+    ifw = xindex(wsort, freqmin, 0)
     ifw += 1
     iw = ifw
     for i in range(ndata):
-        y[i] = wsort[iw]
-        print('f{0}={1:.6f}'.format(i + 1, y[i]))
-        iw += 1
-
-    # write predicted frequencies to file predictedf */
-    freqfile = open(freqs, 'w')
-    iw = ifw
-    for i in range(ndata):
-        y[i] = wsort[iw]
-        freqfile.write('{}'.format(y[i]))
-        iw += 1
+        try:
+            y.append(wsort[iw])
+        except IndexError:
+            print('IndexError in wsort with iw = {}'.format(iw))
+            sys.exit(-1)
+        else:
+            print('f{0}={1:.6f}'.format(i + 1, y[i]))
+            # write predicted frequencies to file predictedf */
+            freqfile.write('{}'.format(y[i]))
+            iw += 1
     freqfile.close()
-    
+
     # compute dyda
-    compute_dyda(dyda,ns,hextype,r,itab,ltab,mtab,ntab,d1,d2,d3,shape,ifw,ndata,z,wsort,indice)
+    dyda = compute_dyda(ns,hextype,r,itab,ltab,mtab,ntab,d1,d2,d3,shape,ifw,ndata,z,wsort,indice)
+
+    return y, dyda
   
 
 
@@ -806,7 +814,7 @@ def mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
                 mfit += 1
 
         # allocate a 2-d array of doubles - row vector the size of mfit?
-        oneda = numpy.zeros((1,mfit))
+        oneda = []
 
         # Set alamda to a small positive value (0.001)
         # after the routine has been initialized by the negative value
@@ -828,11 +836,11 @@ def mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
         # change the main diagonals
         covar[j][j] = alpha[j][j] * (1.0 + alamda)
         # update oneda values by beta - which is changed (?) by mrqcof()
-        oneda[0][j] = beta[j]
+        oneda.append([beta[j]])
   
     gaussj(covar,mfit,oneda,1)
     for j in range(mfit):
-        da[j] = oneda[0][j]
+        da[j] = oneda[j][0]
 
     # This is the stopping criteria - but how do we get alamda = 0.0?
     if alamda == 0.0:

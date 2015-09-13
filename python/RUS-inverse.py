@@ -17,7 +17,6 @@ import sys
 import numpy
 import rus
 import rus_parser as p
-from math import fabs
 
 # global variable
 _dqkpart_seed = 0
