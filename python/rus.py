@@ -602,7 +602,7 @@ def gaussj(a, n, b, m):
 # vector BETA from (14.4.8) 
 
 # called by mrqmin each iteration. Computes "chisq"
-def mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,alpha,beta,chisq,hextype):
+def mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,alpha,beta,hextype):
 
     mfit = 0
     for j in range(ma):
@@ -637,6 +637,8 @@ def mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
     for j in range(1,mfit):
         for k in range(j-1):
             alpha[k][j] = alpha[j][k]
+
+    return chisq
 
 
 def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,ns,hextype):
@@ -813,7 +815,7 @@ def mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
         alamda = 0.001
 
         # Compute "chisq" - need to update to formal chisq.
-        mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,alpha,beta,chisq,hextype)
+        chisq = mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,alpha,beta,hextype)
 
         # update chisq value
         ochisq = chisq
@@ -848,7 +850,7 @@ def mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
             j += 1
 
     # Compute "chisq" - need to update to formal chisq
-    mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,atry,ia,ma,covar,da,chisq,hextype)
+    chisq = mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,atry,ia,ma,covar,da,hextype)
 
     # if step succeeds value of chisq decreases: ochisq < chisq
     if chisq < ochisq:
@@ -861,7 +863,8 @@ def mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
                 alpha[j][k] = covar[j][k]
             beta[j] = da[j]
         for l in range(ma):
-            a[l] = atry[l]
+            k = atry.keys()[l]
+            a[k] = atry[k]
 
     # else step does not succeed and chisq increases
     else:
