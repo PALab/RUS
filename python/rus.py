@@ -422,61 +422,6 @@ def dfdp(f, dgammadp, z, ie, n):
 
 
 
-def dqkpart(a,p,q,j,k):
-    # choose random pivot element between p and q, inclusive
-    global _dqkpart_seed
-    _dqkpart_seed = (_dqkpart_seed * FA + FC) % FM
-    pivot = p + (q - p) * _dqkpart_seed / FM
-    if pivot < p:
-        pivot = p
-    if (pivot>q):
-        pivot = q
-    apivot = a[pivot]
-
-    # initialize left and right pointers and loop until break
-    left = p
-    right = q
-    while True:
-        # increment left pointer until either
-        # (1) an element greater than the pivot element is found, or
-        # (2) the upper bound of the input subarray is reached
-        while a[left] <= apivot and left < q:
-            left += 1
-
-        # decrement right pointer until either
-        # (1) an element less than the pivot element is found, or
-        # (2) the lower bound of the input subarray is reached
-        while a[right] >= apivot and right > p:
-            right -= 1
-
-        # if left pointer is still to the left of right pointer
-        if left < right:
-            # exchange left and right elements
-            a[left], a[right] = a[right], a[left]
-            left += 1
-            right -= 1
-        # else, if pointers are equal or have crossed, break
-        else:
-            break
-
-        # if left pointer has not crossed pivot
-        if left < pivot:
-            # exchange elements at left and pivot
-            a[left], a[pivot] = a[pivot], a[left]
-            left += 1
-
-        # else, if right pointer has not crossed pivot
-        elif pivot < right:
-            # exchange elements at pivot and right
-            a[right], a[pivot] = a[pivot], a[right]
-            right -= 1
-
-        # left and right pointers have now crossed; set output bounds
-        j = right
-        k = left
-
-
-
 #/* ----------------------------------------------------------- */
 #/* ----------------------------------------------------------- */
 #/* ----------------  Optimization routines  ------------------ */
