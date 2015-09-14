@@ -4,8 +4,6 @@ import numpy
 import math
 import scipy.linalg as LA
 
-import pdb
-
 def compute_dyda(ns,hextype,r,tabs,d1,d2,d3,shape,ifw,ndata,z,wsort,indice):
     dyda = numpy.zeros((ns,ndata))
 
@@ -479,17 +477,6 @@ def dqkpart(a,p,q,j,k):
 
 
 
-def dqkinss(a, p, q):
-    for i in range(p+1,q+1):
-        ai = a[i]
-        j = i
-        while j > p and a[j-1] > ai:
-            a[j] = a[j-1]
-            j -= 1
-        a[j] = ai
-
-
-
 #/* ----------------------------------------------------------- */
 #/* ----------------------------------------------------------- */
 #/* ----------------  Optimization routines  ------------------ */
@@ -796,7 +783,6 @@ def mrqmin(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,covar,alp
     # Sets almada = -1.0 in main before calling MRQMIN.
     if alamda < 0.0:
         # create 1D arrays the size of the number of cxx values.
-        atry = a.copy()
         beta = numpy.zeros(len(a))
         da   = numpy.zeros(len(a))
 
@@ -818,6 +804,7 @@ def mrqmin(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,covar,alp
         # Compute "chisq" - need to update to formal chisq.
         chisq = mrqcof(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,alpha,beta,hextype)
 
+        atry = a.copy()
         # update chisq value
         ochisq = chisq
   
