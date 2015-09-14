@@ -6,7 +6,7 @@ import scipy.linalg as LA
 
 import pdb
 
-def compute_dyda(ns,hextype,r,itab,ltab,mtab,ntab,d1,d2,d3,shape,ifw,ndata,z,wsort,indice):
+def compute_dyda(ns,hextype,r,tabs,d1,d2,d3,shape,ifw,ndata,z,wsort,indice):
     dyda = numpy.zeros((ns,ndata))
 
     # isotropic case
@@ -14,8 +14,8 @@ def compute_dyda(ns,hextype,r,itab,ltab,mtab,ntab,d1,d2,d3,shape,ifw,ndata,z,wso
         dc_c11 = dstiff_iso_c11()
         dc_c44 = dstiff_iso_c44()
         
-        dgamma_c11 = dgamma_fill(itab,ltab,mtab,ntab,r,d1,d2,d3,dc_c11,shape)
-        dgamma_c44 = dgamma_fill(itab,ltab,mtab,ntab,r,d1,d2,d3,dc_c44,shape)
+        dgamma_c11 = dgamma_fill(tabs,r,d1,d2,d3,dc_c11,shape)
+        dgamma_c44 = dgamma_fill(tabs,r,d1,d2,d3,dc_c44,shape)
 
         # gradiant of the objective function
         iw = ifw
@@ -30,9 +30,9 @@ def compute_dyda(ns,hextype,r,itab,ltab,mtab,ntab,d1,d2,d3,shape,ifw,ndata,z,wso
         dc_c12 = dstiff_cub_c12()
         dc_c44 = dstiff_cub_c44()
     
-        dgamma_c11 = dgamma_fill(itab,ltab,mtab,ntab,r,d1,d2,d3,dc_c11,shape)
-        dgamma_c12 = dgamma_fill(itab,ltab,mtab,ntab,r,d1,d2,d3,dc_c12,shape)
-        dgamma_c44 = dgamma_fill(itab,ltab,mtab,ntab,r,d1,d2,d3,dc_c44,shape)
+        dgamma_c11 = dgamma_fill(tabs,r,d1,d2,d3,dc_c11,shape)
+        dgamma_c12 = dgamma_fill(tabs,r,d1,d2,d3,dc_c12,shape)
+        dgamma_c44 = dgamma_fill(tabs,r,d1,d2,d3,dc_c44,shape)
 
         # gradiant of the objective function
         iw = ifw
@@ -50,11 +50,11 @@ def compute_dyda(ns,hextype,r,itab,ltab,mtab,ntab,d1,d2,d3,shape,ifw,ndata,z,wso
         dc_c44 = dstiff_vti_c44()
         dc_c66 = dstiff_vti_c66()
     
-        dgamma_c33 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c33, shape)
-        dgamma_c23 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c23, shape)
-        dgamma_c12 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c12, shape)
-        dgamma_c44 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c44, shape)
-        dgamma_c66 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c66, shape)
+        dgamma_c33 = dgamma_fill(tabs, r, d1, d2, d3, dc_c33, shape)
+        dgamma_c23 = dgamma_fill(tabs, r, d1, d2, d3, dc_c23, shape)
+        dgamma_c12 = dgamma_fill(tabs, r, d1, d2, d3, dc_c12, shape)
+        dgamma_c44 = dgamma_fill(tabs, r, d1, d2, d3, dc_c44, shape)
+        dgamma_c66 = dgamma_fill(tabs, r, d1, d2, d3, dc_c66, shape)
     
         # gradiant of the objective function
         iw = ifw
@@ -73,11 +73,11 @@ def compute_dyda(ns,hextype,r,itab,ltab,mtab,ntab,d1,d2,d3,shape,ifw,ndata,z,wso
         dc_c44 = dstiff_hti_c44()
         dc_c66 = dstiff_hti_c66()
 
-        dgamma_c11 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c33, shape)
-        dgamma_c33 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c33, shape)
-        dgamma_c12 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c12, shape)
-        dgamma_c44 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c44, shape)
-        dgamma_c66 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c66, shape)
+        dgamma_c11 = dgamma_fill(tabs, r, d1, d2, d3, dc_c33, shape)
+        dgamma_c33 = dgamma_fill(tabs, r, d1, d2, d3, dc_c33, shape)
+        dgamma_c12 = dgamma_fill(tabs, r, d1, d2, d3, dc_c12, shape)
+        dgamma_c44 = dgamma_fill(tabs, r, d1, d2, d3, dc_c44, shape)
+        dgamma_c66 = dgamma_fill(tabs, r, d1, d2, d3, dc_c66, shape)
 
         # gradiant of the objective function
         iw = ifw
@@ -98,12 +98,12 @@ def compute_dyda(ns,hextype,r,itab,ltab,mtab,ntab,d1,d2,d3,shape,ifw,ndata,z,wso
         dc_c44 = dstiff_tetra_c44()
         dc_c66 = dstiff_tetra_c66()
 
-        dgamma_c11 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c11, shape)
-        dgamma_c33 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c33, shape)
-        dgamma_c23 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c23, shape)
-        dgamma_c12 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c12, shape)
-        dgamma_c44 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c44, shape)
-        dgamma_c66 = dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c66, shape)
+        dgamma_c11 = dgamma_fill(tabs, r, d1, d2, d3, dc_c11, shape)
+        dgamma_c33 = dgamma_fill(tabs, r, d1, d2, d3, dc_c33, shape)
+        dgamma_c23 = dgamma_fill(tabs, r, d1, d2, d3, dc_c23, shape)
+        dgamma_c12 = dgamma_fill(tabs, r, d1, d2, d3, dc_c12, shape)
+        dgamma_c44 = dgamma_fill(tabs, r, d1, d2, d3, dc_c44, shape)
+        dgamma_c66 = dgamma_fill(tabs, r, d1, d2, d3, dc_c66, shape)
     
         # gradiant of the objective function
         iw = ifw
@@ -128,15 +128,15 @@ def compute_dyda(ns,hextype,r,itab,ltab,mtab,ntab,d1,d2,d3,shape,ifw,ndata,z,wso
         dc_c55 = dstiff_orth_c55()
         dc_c66 = dstiff_orth_c66()
     
-        dgamma_c11=dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c11, shape)
-        dgamma_c22=dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c22, shape)
-        dgamma_c33=dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c33, shape)
-        dgamma_c23=dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c23, shape)
-        dgamma_c13=dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c13, shape)
-        dgamma_c12=dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c12, shape)
-        dgamma_c44=dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c44, shape)
-        dgamma_c55=dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c55, shape)
-        dgamma_c66=dgamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, dc_c66, shape)
+        dgamma_c11=dgamma_fill(tabs, r, d1, d2, d3, dc_c11, shape)
+        dgamma_c22=dgamma_fill(tabs, r, d1, d2, d3, dc_c22, shape)
+        dgamma_c33=dgamma_fill(tabs, r, d1, d2, d3, dc_c33, shape)
+        dgamma_c23=dgamma_fill(tabs, r, d1, d2, d3, dc_c23, shape)
+        dgamma_c13=dgamma_fill(tabs, r, d1, d2, d3, dc_c13, shape)
+        dgamma_c12=dgamma_fill(tabs, r, d1, d2, d3, dc_c12, shape)
+        dgamma_c44=dgamma_fill(tabs, r, d1, d2, d3, dc_c44, shape)
+        dgamma_c55=dgamma_fill(tabs, r, d1, d2, d3, dc_c55, shape)
+        dgamma_c66=dgamma_fill(tabs, r, d1, d2, d3, dc_c66, shape)
     
         # gradiant of the objective function
         iw = ifw
@@ -338,18 +338,18 @@ def dstiff_orth_c66():
 
 
 
-def dgamma_fill(itab,ltab,mtab,ntab,r,d1,d2,d3,dc,shape):
+def dgamma_fill(tabs,r,d1,d2,d3,dc,shape):
     dgamma = numpy.zeros((r,r))
     for ir1 in range(r):
         for ir2 in range(r):
-            i1 = itab[ir1]
-            i2 = itab[ir2]
-            l1 = ltab[ir1]
-            l2 = ltab[ir2]
-            m1 = mtab[ir1]
-            m2 = mtab[ir2]
-            n1 = ntab[ir1]
-            n2 = ntab[ir2]
+            i1 = tabs[0][ir1]
+            i2 = tabs[0][ir2]
+            l1 = tabs[1][ir1]
+            l2 = tabs[1][ir2]
+            m1 = tabs[2][ir1]
+            m2 = tabs[2][ir2]
+            n1 = tabs[3][ir1]
+            n2 = tabs[3][ir2]
             if l1 > 0:
                 j1 = 0
                 if l2 > 0:
@@ -601,8 +601,8 @@ def gaussj(a, n, b, m):
 # Used by MRQMIN to evaluate the linearized fitting matrix ALPHA, and 
 # vector BETA from (14.4.8) 
 
-# called by mrqmin each iteration. Computes "chisq"
-def mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,alpha,beta,hextype):
+# called by mrqmin_function each iteration. Computes "chisq"
+def mrqcof(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,alpha,beta,hextype):
 
     mfit = 0
     for j in range(ma):
@@ -614,7 +614,7 @@ def mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
         beta[j] = 0.0
 
     chisq = 0.0
-    ymod, dyda = formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,ma,hextype)
+    ymod, dyda = formod(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,ma,hextype)
     for i in range(ndata):
         sig2i = sig[i] * sig[i]
         dy = y[i] - ymod[i]
@@ -641,13 +641,13 @@ def mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
     return chisq
 
 
-def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,ns,hextype):
+def formod(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,ns,hextype):
 
     freqs = 'predictedf' # CHANGE THIS LINE TO APPROPRIATE DIRECTORY
 
     cm = make_cm(a,hextype)
-    e = e_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, rho, shape, irk)
-    gamma = gamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, cm, shape, irk)
+    e = e_fill(tabs, r, d1, d2, d3, rho, shape, irk)
+    gamma = gamma_fill(tabs, r, d1, d2, d3, cm, shape, irk)
       
   
     print('starting eigenvalues calculation')
@@ -717,7 +717,7 @@ def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,ns,hex
     freqfile.close()
 
     # compute dyda
-    dyda = compute_dyda(ns,hextype,r,itab,ltab,mtab,ntab,d1,d2,d3,shape,ifw,ndata,z,wsort,indice)
+    dyda = compute_dyda(ns,hextype,r,tabs,d1,d2,d3,shape,ifw,ndata,z,wsort,indice)
 
     return y, dyda
   
@@ -755,7 +755,7 @@ def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,ns,hex
 #/* ------------------------------------------------------------------- */ 
 #
 #/* This is the optimisation routine which is called by MAIN once every iteration */
-#/* mrqmin(d,r,itab,ltab,mtab,ntab,
+#/* mrqmin(d,r,tabs,
 #      irk,d1,d2,d3,rho,shape,freqmin,
 #      y,sig,ndata,guess,ia,ns,covar,alpha,&chisq, hextype, formod,&alamda) */
 #
@@ -766,6 +766,7 @@ def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,ns,hex
 #/* d  = order of polynomial fit eg) 8, 10 or 12*/
 #/* r = dimension of problem. Related to d by  r= 3*(d+1)*(d+2)*(d+3)/6 */
 #
+#/* tabs = { itab, ltab, mtab, ntab }
 #/* *itab, *ltab, *mtab, *ntab = 1D array's of type int. Related to r. _tab=alloc1int(r) */
 #/* *irk = 1D array on int. irk = alloc1int(8)*/
 #
@@ -789,7 +790,7 @@ def formod(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,ns,hex
 #/* hextype = differentiates between VTI and HTI symmetry in the hexagonal case */
 #/* alamda = parameter from conjugate-gradient method. Starts as <0 to initialise the routine and is changed in subsequent iterations */
 #
-def mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,covar,alpha,chisq,hextype,alamda):
+def mrqmin(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,covar,alpha,hextype,alamda):
     # Loop is called if almada <0.
     # This initializes the routine.
     # Sets almada = -1.0 in main before calling MRQMIN.
@@ -815,7 +816,7 @@ def mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
         alamda = 0.001
 
         # Compute "chisq" - need to update to formal chisq.
-        chisq = mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,alpha,beta,hextype)
+        chisq = mrqcof(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,alpha,beta,hextype)
 
         # update chisq value
         ochisq = chisq
@@ -850,7 +851,7 @@ def mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,
             j += 1
 
     # Compute "chisq" - need to update to formal chisq
-    chisq = mrqcof(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,atry,ia,ma,covar,da,hextype)
+    chisq = mrqcof(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,atry,ia,ma,covar,da,hextype)
 
     # if step succeeds value of chisq decreases: ochisq < chisq
     if chisq < ochisq:
@@ -1036,7 +1037,7 @@ def doublefact(n):
 
 
 
-def e_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, rho, shape, irk):
+def e_fill(tabs, r, d1, d2, d3, rho, shape, irk):
 	e = [scipy.zeros((irk[i],irk[i])) for i in range(8)]
 	for k in range(8):
 		irs = 0
@@ -1050,14 +1051,14 @@ def e_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, rho, shape, irk):
 			irh = 0
 			ir2 = irs
 			while ir2 < irf:
-				i1 = itab[ir1]
-				i2 = itab[ir2]
-				l1 = ltab[ir1]
-				l2 = ltab[ir2]
-				m1 = mtab[ir1]
-				m2 = mtab[ir2]
-				n1 = ntab[ir1]
-				n2 = ntab[ir2]
+				i1 = tabs[0][ir1]
+				i2 = tabs[0][ir2]
+				l1 = tabs[1][ir1]
+				l2 = tabs[1][ir2]
+				m1 = tabs[2][ir1]
+				m2 = tabs[2][ir2]
+				n1 = tabs[3][ir1]
+				n2 = tabs[3][ir2]
 
 				l = l1 + l2
 				m = m1 + m2
@@ -1105,7 +1106,7 @@ def stiffness(cm):
 					c[i][j][k][l] = cm[a][b]
 	return c
 
-def gamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, cm, shape, irk):
+def gamma_fill(tabs, r, d1, d2, d3, cm, shape, irk):
 	gamma = [scipy.zeros((irk[i],irk[i])) for i in range(8)]
 	c = stiffness(cm)
 	for k in range(8):
@@ -1120,14 +1121,14 @@ def gamma_fill(itab, ltab, mtab, ntab, r, d1, d2, d3, cm, shape, irk):
 			irh = 0
 			ir2 = irs
 			while ir2 < irf:
-				i1 = itab[ir1]
-				i2 = itab[ir2]
-				l1 = ltab[ir1]
-				l2 = ltab[ir2]
-				m1 = mtab[ir1]
-				m2 = mtab[ir2]
-				n1 = ntab[ir1]
-				n2 = ntab[ir2]
+				i1 = tabs[0][ir1]
+				i2 = tabs[0][ir2]
+				l1 = tabs[1][ir1]
+				l2 = tabs[1][ir2]
+				m1 = tabs[2][ir1]
+				m2 = tabs[2][ir2]
+				n1 = tabs[3][ir1]
+				n2 = tabs[3][ir2]
 				gamma[k][irv][irh] = 0.0;
 				if l1 > 0:
 					j1 = 0
@@ -1276,303 +1277,99 @@ def xindex(ax, x, index):
 
 
 
+def tabs_add(tabs, ir, irk, i, l, m, n):
+    tabs[0][ir] = i
+    tabs[1][ir] = l
+    tabs[2][ir] = m
+    tabs[3][ir] = n
+    return ir + 1, irk + 1
+
+
+
 def index_relationship(d, r):
-	itab = [0 for i in range(int(r))]
-	ltab = [0 for i in range(int(r))]
-	mtab = [0 for i in range(int(r))]
-	ntab = [0 for i in range(int(r))]
-	irk  = [0 for i in range(8)]
+    tabs = numpy.zeros((4, int(r)))
+    irk  = [0 for i in range(8)]
 
-	ir = 0
+    ir = 0
+    # k == 0
+    for i in range(3):
+        for l in range(d+1):
+            for m in range(d-l+1):
+                for n in range(d-l-m+1):
+                    if (i == 0 and l % 2 == 0 and m % 2 == 0 and n % 2 == 0) or \
+                       (i == 1 and l % 2 == 1 and m % 2 == 1 and n % 2 == 0) or \
+                       (i == 2 and l % 2 == 1 and m % 2 == 0 and n % 2 == 1):
+                        ir, irk[0] = tabs_add(tabs, ir, irk[0], i, l, m, n)
+    # k == 1
+    for i in range(3):
+        for l in range(d+1):
+            for m in range(d-l+1):
+                for n in range(d-l-m+1):
+                    if (i == 0 and l % 2 == 0 and m % 2 == 0 and n % 2 == 1) or \
+                       (i == 1 and l % 2 == 1 and m % 2 == 1 and n % 2 == 1) or \
+                       (i == 2 and l % 2 == 1 and m % 2 == 0 and n % 2 == 0):
+                        ir, irk[1] = tabs_add(tabs, ir, irk[1], i, l, m, n)
+    # k == 2
+    for i in range(3):
+        for l in range(d+1):
+            for m in range(d-l+1):
+                for n in range(d-l-m+1):
+                    if (i == 0 and l % 2 == 0 and m % 2 == 1 and n % 2 == 0) or \
+                       (i == 1 and l % 2 == 1 and m % 2 == 0 and n % 2 == 0) or \
+                       (i == 2 and l % 2 == 1 and m % 2 == 1 and n % 2 == 1):
+                        ir, irk[2] = tabs_add(tabs, ir, irk[2], i, l, m, n)
+    # k == 3
+    for i in range(3):
+        for l in range(d+1):
+            for m in range(d-l+1):
+                for n in range(d-l-m+1):
+                    if (i == 0 and l % 2 == 0 and m % 2 == 1 and n % 2 == 1) or \
+                       (i == 1 and l % 2 == 1 and m % 2 == 0 and n % 2 == 1) or \
+                       (i == 2 and l % 2 == 1 and m % 2 == 1 and n % 2 == 0):
+                        ir, irk[3] = tabs_add(tabs, ir, irk[3], i, l, m, n)
+    # k == 4
+    for i in range(3):
+        for l in range(d+1):
+            for m in range(d-l+1):
+                for n in range(d-l-m+1):
+                    if (i == 0 and l % 2 == 1 and m % 2 == 0 and n % 2 == 0) or \
+                       (i == 1 and l % 2 == 0 and m % 2 == 1 and n % 2 == 0) or \
+                       (i == 2 and l % 2 == 0 and m % 2 == 0 and n % 2 == 1):
+                        ir, irk[4] = tabs_add(tabs, ir, irk[4], i, l, m, n)
+    # k == 5
+    for i in range(3):
+        for l in range(d+1):
+            for m in range(d-l+1):
+                for n in range(d-l-m+1):
+                    if (i == 0 and l % 2 == 1 and m % 2 == 0 and n % 2 == 1) or \
+                       (i == 1 and l % 2 == 0 and m % 2 == 1 and n % 2 == 1) or \
+                       (i == 2 and l % 2 == 0 and m % 2 == 0 and n % 2 == 0):
+                        ir, irk[5] = tabs_add(tabs, ir, irk[5], i, l, m, n)
+    # k == 6
+    for i in range(3):
+        for l in range(d+1):
+            for m in range(d-l+1):
+                for n in range(d-l-m+1):
+                    if (i == 0 and l % 2 == 1 and m % 2 == 1 and n % 2 == 0) or \
+                       (i == 1 and l % 2 == 0 and m % 2 == 0 and n % 2 == 0) or \
+                       (i == 2 and l % 2 == 0 and m % 2 == 1 and n % 2 == 1):
+                        ir, irk[6] = tabs_add(tabs, ir, irk[6], i, l, m, n)
+    # k == 7
+    for i in range(3):
+        for l in range(d+1):
+            for m in range(d-l+1):
+                for n in range(d-l-m+1):
+                    if (i == 0 and l % 2 == 1 and m % 2 == 1 and n % 2 == 1) or \
+                       (i == 1 and l % 2 == 0 and m % 2 == 0 and n % 2 == 1) or \
+                       (i == 2 and l % 2 == 0 and m % 2 == 1 and n % 2 == 0):
+                        ir, irk[7] = tabs_add(tabs, ir, irk[7], i, l, m, n)
+    print("irk[0]=" + str(irk[0]))
+    print("irk[1]=" + str(irk[1]))
+    print("irk[2]=" + str(irk[2]))
+    print("irk[3]=" + str(irk[3]))
+    print("irk[4]=" + str(irk[4]))
+    print("irk[5]=" + str(irk[5]))
+    print("irk[6]=" + str(irk[6]))
+    print("irk[7]=" + str(irk[7]))
 
-	# k == 0
-	for i in range(3):
-		for l in range(d+1):
-			for m in range(d-l+1):
-				for n in range(d-l-m+1):
-					if i == 0:
-						if l % 2 == 0 and m % 2 == 0 and n % 2 == 0:
-							itab[ir] = i
-							ltab[ir] = l
-							mtab[ir] = m
-							ntab[ir] = n
-							ir += 1
-							irk[0] += 1
-					elif i == 1:
-						if l % 2 == 1 and m % 2 == 1 and n % 2 == 0:
-							itab[ir] = i
-							ltab[ir] = l
-							mtab[ir] = m
-							ntab[ir] = n
-							ir += 1
-							irk[0] += 1
-					elif i == 2:
-						if l % 2 == 1 and m % 2 == 0 and n % 2 == 1:
-							itab[ir] = i
-							ltab[ir] = l
-							mtab[ir] = m
-							ntab[ir] = n
-							ir += 1
-							irk[0] += 1
-	print("irk[0]=" + str(irk[0]))
-
-	# k == 1
-	for i in range(3):
-		for l in range(d+1):
-			for m in range(d-l+1):
-				for n in range(d-l-m+1):
-					if i == 0:
-						if l % 2 == 0:
-							if m % 2 == 0:
-								if n % 2 == 1:
-									itab[ir] = i
-									ltab[ir] = l
-									mtab[ir] = m
-									ntab[ir] = n
-									ir += 1
-									irk[1] += 1
-					if i == 1:
-						if l % 2 == 1:
-							if m % 2 == 1:
-								if n % 2 == 1:
-									itab[ir] = i
-									ltab[ir] = l
-									mtab[ir] = m
-									ntab[ir] = n
-									ir += 1
-									irk[1] += 1
-					if i == 2:
-						if l % 2 == 1:
-							if m % 2 == 0:
-								if n % 2 == 0:
-									itab[ir] = i
-									ltab[ir] = l
-									mtab[ir] = m
-									ntab[ir] = n
-									ir += 1
-									irk[1] += 1
-	print("irk[1]=" + str(irk[1]))
-
-	# k == 2
-	for i in range(3):
-		for l in range(d+1):
-			for m in range(d-l+1):
-				for n in range(d-l-m+1):
-					if i == 0:
-						if l % 2 == 0:
-							if m % 2 == 1:
-								if n % 2 == 0:
-									itab[ir] = i
-									ltab[ir] = l
-									mtab[ir] = m
-									ntab[ir] = n
-									ir += 1
-									irk[2] += 1
-					if i == 1:
-						if l % 2 == 1:
-							if m % 2 == 0:
-								if n % 2 == 0:
-									itab[ir] = i
-									ltab[ir] = l
-									mtab[ir] = m
-									ntab[ir] = n
-									ir += 1
-									irk[2] += 1
-					if i == 2:
-						if l % 2 == 1:
-							if m % 2 == 1:
-								if n % 2 == 1:
-									itab[ir] = i
-									ltab[ir] = l
-									mtab[ir] = m
-									ntab[ir] = n
-									ir += 1
-									irk[2] += 1
-	print("irk[2]=" + str(irk[2]))
-
-	# k == 3
-	for i in range(3):
-		for l in range(d+1):
-			for m in range(d-l+1):
-				for n in range(d-l-m+1):
-					if i == 0:
-						if l % 2 == 0:
-							if m % 2 == 1:
-								if n % 2 == 1:
-									itab[ir] = i
-									ltab[ir] = l
-									mtab[ir] = m
-									ntab[ir] = n
-									ir += 1
-									irk[3] += 1
-					if i == 1:
-						if l % 2 == 1:
-							if m % 2 == 0:
-								if n % 2 == 1:
-									itab[ir] = i
-									ltab[ir] = l
-									mtab[ir] = m
-									ntab[ir] = n
-									ir += 1
-									irk[3] += 1
-					if i == 2:
-						if l % 2 == 1:
-							if m % 2 == 1:
-								if n % 2 == 0:
-									itab[ir] = i
-									ltab[ir] = l
-									mtab[ir] = m
-									ntab[ir] = n
-									ir += 1
-									irk[3] += 1
-	print("irk[3]=" + str(irk[3]))
-
-	# k == 4
-	for i in range(3):
-		for l in range(d+1):
-			for m in range(d-l+1):
-				for n in range(d-l-m+1):
-					if i == 0:
-						if l % 2 == 1:
-							if m % 2 == 0:
-								if n % 2 == 0:
-									itab[ir] = i
-									ltab[ir] = l
-									mtab[ir] = m
-									ntab[ir] = n
-									ir += 1
-									irk[4] += 1
-					if i == 1:
-						if l % 2 == 0:
-							if m % 2 == 1:
-								if n % 2 == 0:
-									itab[ir] = i
-									ltab[ir] = l
-									mtab[ir] = m
-									ntab[ir] = n
-									ir += 1
-									irk[4] += 1
-					if i == 2:
-						if l % 2 == 0:
-							if m % 2 == 0:
-								if n % 2 == 1:
-									itab[ir] = i
-									ltab[ir] = l
-									mtab[ir] = m
-									ntab[ir] = n
-									ir += 1
-									irk[4] += 1
-	print("irk[4]=" + str(irk[4]))
-
-	# k == 5
-	for i in range(3):
-		for l in range(d+1):
-			for m in range(d-l+1):
-				for n in range(d-l-m+1):
-					if i == 0:
-						if l % 2 == 1:
-							if m % 2 == 0:
-								if n % 2 == 1:
-									itab[ir] = i
-									ltab[ir] = l
-									mtab[ir] = m
-									ntab[ir] = n
-									ir += 1
-									irk[5] += 1
-					if i == 1:
-						if l % 2 == 0:
-							if m % 2 == 1:
-								if n % 2 == 1:
-									itab[ir] = i
-									ltab[ir] = l
-									mtab[ir] = m
-									ntab[ir] = n
-									ir += 1
-									irk[5] += 1
-					if i == 2:
-						if l % 2 == 0:
-							if m % 2 == 0:
-								if n % 2 == 0:
-									itab[ir] = i
-									ltab[ir] = l
-									mtab[ir] = m
-									ntab[ir] = n
-									ir += 1
-									irk[5] += 1
-	print("irk[5]=" + str(irk[5]))
-
-	# k == 6
-	for i in range(3):
-		for l in range(d+1):
-			for m in range(d-l+1):
-				for n in range(d-l-m+1):
-					if i == 0:
-						if l % 2 == 1:
-							if m % 2 == 1:
-								if n % 2 == 0:
-									itab[ir] = i
-									ltab[ir] = l
-									mtab[ir] = m
-									ntab[ir] = n
-									ir += 1
-									irk[6] += 1
-					if i == 1:
-						if l % 2 == 0:
-							if m % 2 == 0:
-								if n % 2 == 0:
-									itab[ir] = i
-									ltab[ir] = l
-									mtab[ir] = m
-									ntab[ir] = n
-									ir += 1
-									irk[6] += 1
-					if i == 2:
-						if l % 2 == 0:
-							if m % 2 == 1:
-								if n % 2 == 1:
-									itab[ir] = i
-									ltab[ir] = l
-									mtab[ir] = m
-									ntab[ir] = n
-									ir += 1
-									irk[6] += 1
-	print("irk[6]=" + str(irk[6]))
-
-	# k == 7
-	for i in range(3):
-		for l in range(d+1):
-			for m in range(d-l+1):
-				for n in range(d-l-m+1):
-					if i == 0:
-						if l % 2 == 1:
-							if m % 2 == 1:
-								if n % 2 == 1:
-									itab[ir] = i
-									ltab[ir] = l
-									mtab[ir] = m
-									ntab[ir] = n
-									ir += 1
-									irk[7] += 1
-					if i == 1:
-						if l % 2 == 0:
-							if m % 2 == 0:
-								if n % 2 == 1:
-									itab[ir] = i
-									ltab[ir] = l
-									mtab[ir] = m
-									ntab[ir] = n
-									ir += 1
-									irk[7] += 1
-					if i == 2:
-						if l % 2 == 0:
-							if m % 2 == 1:
-								if n % 2 == 0:
-									itab[ir] = i
-									ltab[ir] = l
-									mtab[ir] = m
-									ntab[ir] = n
-									ir += 1
-									irk[7] += 1
-	print("irk[7]=" + str(irk[7]))
-
-	return itab, ltab, mtab, ntab, irk
+    return tabs, irk

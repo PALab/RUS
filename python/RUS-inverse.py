@@ -80,7 +80,7 @@ if len(freq) != nfreq:
     sys.exit(-1)
 
 # relationship between ir and l,m,n - filling tables
-itab, ltab, mtab, ntab, irk = rus.index_relationship(d, r)
+tabs, irk = rus.index_relationship(d, r)
 
 ifr1 = rus.xindex(freq, args.freqmin, 0)
 ifr2 = rus.xindex(freq, args.freqmax, nfreq)
@@ -106,10 +106,9 @@ for ifr in range(ifr1, ifr2):
 
 covar  = numpy.identity(args.ns)
 alpha  = numpy.identity(args.ns)
-chisq  =  0.0
 alamda = -1.0
 for i in range(args.iterations):
-    rus.mrqmin(d,r,itab,ltab,mtab,ntab,irk,d1,d2,d3,args.rho,args.shape,args.freqmin,y,sig,ndata,args.a,ia,args.ns,covar,alpha,chisq,args.hextype,alamda)
+    rus.mrqmin(d,r,tabs,irk,d1,d2,d3,args.rho,args.shape,args.freqmin,y,sig,ndata,args.a,ia,args.ns,covar,alpha,args.hextype,alamda)
     print('iter #{}'.format(i))
     for k,v in args.a.iteritems(): # ns = dimension of symmetry
         print('{}'.format(100 * v)) # print estimated cij values
