@@ -778,7 +778,7 @@ def mrqmin(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,cxx_values,ia,ma,
     j = 0
     for l in range(ma):
         if ia[l] != 0:
-            k = cxx_values.keys()[l]
+            k = sorted(cxx_values.keys())[l]
             cxx_try[k] = cxx_values[k] + da[j]
             j += 1
 
@@ -796,7 +796,7 @@ def mrqmin(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,cxx_values,ia,ma,
                 alpha[j][k] = covar[j][k]
             beta[j] = da[j]
         for l in range(ma):
-            k = cxx_try.keys()[l]
+            k = sorted(cxx_try.keys())[l]
             cxx_values[k] = cxx_try[k]
 
     # else step does not succeed and chisq increases
