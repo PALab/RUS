@@ -722,14 +722,14 @@ def formod(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,ns,hextype):
 #/* hextype = differentiates between VTI and HTI symmetry in the hexagonal case */
 #/* alamda = parameter from conjugate-gradient method. Starts as <0 to initialise the routine and is changed in subsequent iterations */
 #
-def mrqmin(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,covar,alpha,hextype,alamda):
+def mrqmin(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,cxx_values,ia,ma,covar,alpha,hextype,alamda):
     # Loop is called if almada <0.
     # This initializes the routine.
     # Sets almada = -1.0 in main before calling MRQMIN.
     if alamda < 0.0:
         # create 1D arrays the size of the number of cxx values.
-        beta = numpy.zeros(len(a))
-        da   = numpy.zeros(len(a))
+        beta = numpy.zeros(len(cxx_values))
+        da   = numpy.zeros(len(cxx_values))
 
         # mfit is the number of cijs that are adjusted.
         # The remaining (ma = ns) - mfit cij values are left unchanged.
@@ -747,9 +747,9 @@ def mrqmin(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,covar,alp
         alamda = 0.001
 
         # Compute "chisq" - need to update to formal chisq.
-        chisq = mrqcof(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,alpha,beta,hextype)
+        chisq = mrqcof(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,cxx_values,ia,ma,alpha,beta,hextype)
 
-        atry = a.copy()
+        cxx_try = cxx_values.copy()
         # update chisq value
         ochisq = chisq
   
@@ -778,12 +778,12 @@ def mrqmin(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,covar,alp
     j = 0
     for l in range(ma):
         if ia[l] != 0:
-            k = a.keys()[l]
-            atry[k] = a[k] + da[j]
+            k = cxx_values.keys()[l]
+            cxx_try[k] = cxx_values[k] + da[j]
             j += 1
 
     # Compute "chisq" - need to update to formal chisq
-    chisq = mrqcof(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,atry,ia,ma,covar,da,hextype)
+    chisq = mrqcof(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,cxx_try,ia,ma,covar,da,hextype)
 
     # if step succeeds value of chisq decreases: ochisq < chisq
     if chisq < ochisq:
@@ -796,8 +796,8 @@ def mrqmin(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,covar,alp
                 alpha[j][k] = covar[j][k]
             beta[j] = da[j]
         for l in range(ma):
-            k = atry.keys()[l]
-            a[k] = atry[k]
+            k = cxx_try.keys()[l]
+            cxx_values[k] = cxx_try[k]
 
     # else step does not succeed and chisq increases
     else:
