@@ -1040,97 +1040,57 @@ def stiffness(cm):
 	return c
 
 def gamma_fill(tabs, r, d1, d2, d3, cm, shape, irk):
-	gamma = [scipy.zeros((irk[i],irk[i])) for i in range(8)]
-	c = stiffness(cm)
-	for k in range(8):
-		irs = 0
-		for ik in range(k):
-			irs += irk[ik]
-		irf = irs + irk[k]
-
-		irv = 0
-		ir1 = irs
-		while ir1 < irf:
-			irh = 0
-			ir2 = irs
-			while ir2 < irf:
-				[i1,l1,m1,n1] = tabs[ir1]
-				[i2,l2,m2,n2] = tabs[ir2]
-				gamma[k][irv][irh] = 0.0;
-				if l1 > 0:
-					j1 = 0
-					if l2 > 0:
-						j2 = 0
-						l = l1 + l2 - 2
-						m = m1 + m2
-						n = n1 + n2
-						v = volintegral(d1, d2, d3, l, m, n, shape)
-						gamma[k][irv][irh] += c[i1][j1][i2][j2] * l1 * l2 * v
-					if m2 > 0:
-						j2 = 1
-						l = l1 + l2 - 1
-						m = m1 + m2 - 1
-						n = n1 + n2
-						v = volintegral(d1, d2, d3, l, m, n, shape)
-						gamma[k][irv][irh] += c[i1][j1][i2][j2] * l1 * m2 * v
-					if n2 > 0:
-						j2 = 2
-						l = l1 + l2 - 1
-						m = m1 + m2
-						n = n1 + n2 - 1
-						v = volintegral(d1, d2, d3, l, m, n, shape)
-						gamma[k][irv][irh] += c[i1][j1][i2][j2] * l1 * n2 * v
-				if m1 > 0:
-					j1 = 1
-					if l2 > 0:
-						j2 = 0
-						l = l1 + l2 - 1
-						m = m1 + m2 - 1
-						n = n1 + n2
-						v = volintegral(d1, d2, d3, l, m, n, shape)
-						gamma[k][irv][irh] += c[i1][j1][i2][j2] * m1 * l2 * v
-					if m2 > 0:
-						j2 = 1
-						l = l1 + l2
-						m = m1 + m2 - 2
-						n = n1 + n2
-						v = volintegral(d1, d2, d3, l, m, n, shape)
-						gamma[k][irv][irh] += c[i1][j1][i2][j2] * m1 * m2 * v
-					if n2 > 0:
-						j2 = 2
-						l = l1 + l2
-						m = m1 + m2 - 1
-						n = n1 + n2 - 1
-						v = volintegral(d1, d2, d3, l, m, n, shape)
-						gamma[k][irv][irh] += c[i1][j1][i2][j2] * m1 * n2 * v
-				if n1 > 0:
-					j1 = 2
-					if l2 > 0:
-						j2 = 0
-						l = l1 + l2 - 1
-						m = m1 + m2
-						n = n1 + n2 - 1
-						v = volintegral(d1, d2, d3, l, m, n, shape)
-						gamma[k][irv][irh] += c[i1][j1][i2][j2] * n1 * l2 * v
-					if m2 > 0:
-						j2 = 1
-						l = l1 + l2
-						m = m1 + m2 - 1
-						n = n1 + n2 - 1
-						v = volintegral(d1, d2, d3, l, m, n, shape)
-						gamma[k][irv][irh] += c[i1][j1][i2][j2] * n1 * m2 * v
-					if n2 > 0:
-						j2 = 2
-						l = l1 + l2
-						m = m1 + m2
-						n = n1 + n2 - 2
-						v = volintegral(d1, d2, d3, l, m, n, shape)
-						gamma[k][irv][irh] += c[i1][j1][i2][j2] * n1 * n2 * v
-				ir2 += 1
-				irh += 1
-			ir1 += 1
-			irv += 1
-	return gamma
+    gamma = [scipy.zeros((irk[i],irk[i])) for i in range(8)]
+    c = stiffness(cm)
+    for k in range(8):
+        irs = sum(irk[0:k])
+        irf = irs + irk[k]
+        irv = 0
+        for ir1 in range(irs,irf):
+            irh = 0
+            [i1,l1,m1,n1] = tabs[ir1]
+            for ir2 in range(irs,irf):
+                [i2,l2,m2,n2] = tabs[ir2]
+                l = l1 + l2
+                m = m1 + m2
+                n = n1 + n2
+                gamma[k][irv][irh] = 0.0
+                if l1 > 0:
+                    [st1,st2,st3] = c[i1][0][i2]
+                    if l % 2 == 0:
+                        if l2 > 0 and st1 != 0 and m % 2 == 0 and n % 2 == 0:
+                            gamma[k][irv][irh] += st1 * l1 * l2 * volintegral(d1, d2, d3, l-2, m, n, shape)
+                    elif m % 2 == 1:
+                        if m2 > 0 and st2 != 0 and n % 2 == 0:
+                            gamma[k][irv][irh] += st2 * l1 * m2 * volintegral(d1, d2, d3, l-1, m-1, n, shape)
+                    elif n % 2 == 1:
+                        if n2 > 0 and st3 != 0:
+                            gamma[k][irv][irh] += st3 * l1 * n2 * volintegral(d1, d2, d3, l-1, m, n-1, shape)
+                if m1 > 0:
+                    [st1,st2,st3] = c[i1][1][i2]
+                    if l % 2 == 1:
+                        if l2 > 0 and st1 != 0 and m % 2 == 1 and n % 2 == 0:
+                            gamma[k][irv][irh] += st1 * m1 * l2 * volintegral(d1, d2, d3, l-1, m-1, n, shape)
+                    elif m % 2 == 0:
+                        if m2 > 0 and st2 != 0 and n % 2 == 0:
+                            gamma[k][irv][irh] += st2 * m1 * m2 * volintegral(d1, d2, d3, l, m-2, n, shape)
+                    elif n % 2 == 1:
+                        if n2 > 0 and st3 != 0:
+                            gamma[k][irv][irh] += st3 * m1 * n2 * volintegral(d1, d2, d3, l, m-1, n-1, shape)
+                if n1 > 0:
+                    [st1,st2,st3] = c[i1][2][i2]
+                    if l % 2 == 1:
+                        if l2 > 0 and st1 != 0 and m % 2 == 0 and n % 2 == 1:
+                            gamma[k][irv][irh] += st1 * n1 * l2 * volintegral(d1, d2, d3, l-1, m, n-1, shape)
+                    elif m % 2 == 1:
+                        if m2 > 0 and st2 != 0 and n % 2 == 1:
+                            gamma[k][irv][irh] += st2 * n1 * m2 * volintegral(d1, d2, d3, l, m-1, n-1, shape)
+                    elif n % 2 == 0:
+                        if n2 > 0 and st3 != 0:
+                            gamma[k][irv][irh] += st3 * n1 * n2 * volintegral(d1, d2, d3, l, m, n-2, shape)
+                irh += 1
+            irv += 1
+    return gamma
 
 def xindex(ax, x, index):
 	# Copyright (c) Colorado School of Mines, 2011.
