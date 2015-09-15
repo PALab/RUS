@@ -13,7 +13,7 @@ _memo_doublefact = [None for i in range(_memo_max)]
 _memo_doublefact[0] = 1
 _memo_doublefact[1] = 1
 
-def compute_dyda(ns,hextype,r,tabs,d1,d2,d3,shape,ifw,ndata,z,wsort,indice):
+def compute_dyda(ns,hextype,r,tabs,dimensions,shape,ifw,ndata,z,wsort,indice):
     dyda = numpy.zeros((ns,ndata))
 
     # isotropic case
@@ -21,8 +21,8 @@ def compute_dyda(ns,hextype,r,tabs,d1,d2,d3,shape,ifw,ndata,z,wsort,indice):
         dc_c11 = dstiff_iso_c11()
         dc_c44 = dstiff_iso_c44()
         
-        dgamma_c11 = dgamma_fill(tabs,r,d1,d2,d3,dc_c11,shape)
-        dgamma_c44 = dgamma_fill(tabs,r,d1,d2,d3,dc_c44,shape)
+        dgamma_c11 = dgamma_fill(tabs,r,dimensions,dc_c11,shape)
+        dgamma_c44 = dgamma_fill(tabs,r,dimensions,dc_c44,shape)
 
         # gradiant of the objective function
         iw = ifw
@@ -37,9 +37,9 @@ def compute_dyda(ns,hextype,r,tabs,d1,d2,d3,shape,ifw,ndata,z,wsort,indice):
         dc_c12 = dstiff_cub_c12()
         dc_c44 = dstiff_cub_c44()
     
-        dgamma_c11 = dgamma_fill(tabs,r,d1,d2,d3,dc_c11,shape)
-        dgamma_c12 = dgamma_fill(tabs,r,d1,d2,d3,dc_c12,shape)
-        dgamma_c44 = dgamma_fill(tabs,r,d1,d2,d3,dc_c44,shape)
+        dgamma_c11 = dgamma_fill(tabs,r,dimensions,dc_c11,shape)
+        dgamma_c12 = dgamma_fill(tabs,r,dimensions,dc_c12,shape)
+        dgamma_c44 = dgamma_fill(tabs,r,dimensions,dc_c44,shape)
 
         # gradiant of the objective function
         iw = ifw
@@ -57,11 +57,11 @@ def compute_dyda(ns,hextype,r,tabs,d1,d2,d3,shape,ifw,ndata,z,wsort,indice):
         dc_c44 = dstiff_vti_c44()
         dc_c66 = dstiff_vti_c66()
     
-        dgamma_c33 = dgamma_fill(tabs, r, d1, d2, d3, dc_c33, shape)
-        dgamma_c23 = dgamma_fill(tabs, r, d1, d2, d3, dc_c23, shape)
-        dgamma_c12 = dgamma_fill(tabs, r, d1, d2, d3, dc_c12, shape)
-        dgamma_c44 = dgamma_fill(tabs, r, d1, d2, d3, dc_c44, shape)
-        dgamma_c66 = dgamma_fill(tabs, r, d1, d2, d3, dc_c66, shape)
+        dgamma_c33 = dgamma_fill(tabs, r, dimensions, dc_c33, shape)
+        dgamma_c23 = dgamma_fill(tabs, r, dimensions, dc_c23, shape)
+        dgamma_c12 = dgamma_fill(tabs, r, dimensions, dc_c12, shape)
+        dgamma_c44 = dgamma_fill(tabs, r, dimensions, dc_c44, shape)
+        dgamma_c66 = dgamma_fill(tabs, r, dimensions, dc_c66, shape)
     
         # gradiant of the objective function
         iw = ifw
@@ -80,11 +80,11 @@ def compute_dyda(ns,hextype,r,tabs,d1,d2,d3,shape,ifw,ndata,z,wsort,indice):
         dc_c44 = dstiff_hti_c44()
         dc_c66 = dstiff_hti_c66()
 
-        dgamma_c11 = dgamma_fill(tabs, r, d1, d2, d3, dc_c33, shape)
-        dgamma_c33 = dgamma_fill(tabs, r, d1, d2, d3, dc_c33, shape)
-        dgamma_c12 = dgamma_fill(tabs, r, d1, d2, d3, dc_c12, shape)
-        dgamma_c44 = dgamma_fill(tabs, r, d1, d2, d3, dc_c44, shape)
-        dgamma_c66 = dgamma_fill(tabs, r, d1, d2, d3, dc_c66, shape)
+        dgamma_c11 = dgamma_fill(tabs, r, dimensions, dc_c33, shape)
+        dgamma_c33 = dgamma_fill(tabs, r, dimensions, dc_c33, shape)
+        dgamma_c12 = dgamma_fill(tabs, r, dimensions, dc_c12, shape)
+        dgamma_c44 = dgamma_fill(tabs, r, dimensions, dc_c44, shape)
+        dgamma_c66 = dgamma_fill(tabs, r, dimensions, dc_c66, shape)
 
         # gradiant of the objective function
         iw = ifw
@@ -105,12 +105,12 @@ def compute_dyda(ns,hextype,r,tabs,d1,d2,d3,shape,ifw,ndata,z,wsort,indice):
         dc_c44 = dstiff_tetra_c44()
         dc_c66 = dstiff_tetra_c66()
 
-        dgamma_c11 = dgamma_fill(tabs, r, d1, d2, d3, dc_c11, shape)
-        dgamma_c33 = dgamma_fill(tabs, r, d1, d2, d3, dc_c33, shape)
-        dgamma_c23 = dgamma_fill(tabs, r, d1, d2, d3, dc_c23, shape)
-        dgamma_c12 = dgamma_fill(tabs, r, d1, d2, d3, dc_c12, shape)
-        dgamma_c44 = dgamma_fill(tabs, r, d1, d2, d3, dc_c44, shape)
-        dgamma_c66 = dgamma_fill(tabs, r, d1, d2, d3, dc_c66, shape)
+        dgamma_c11 = dgamma_fill(tabs, r, dimensions, dc_c11, shape)
+        dgamma_c33 = dgamma_fill(tabs, r, dimensions, dc_c33, shape)
+        dgamma_c23 = dgamma_fill(tabs, r, dimensions, dc_c23, shape)
+        dgamma_c12 = dgamma_fill(tabs, r, dimensions, dc_c12, shape)
+        dgamma_c44 = dgamma_fill(tabs, r, dimensions, dc_c44, shape)
+        dgamma_c66 = dgamma_fill(tabs, r, dimensions, dc_c66, shape)
     
         # gradiant of the objective function
         iw = ifw
@@ -135,15 +135,15 @@ def compute_dyda(ns,hextype,r,tabs,d1,d2,d3,shape,ifw,ndata,z,wsort,indice):
         dc_c55 = dstiff_orth_c55()
         dc_c66 = dstiff_orth_c66()
     
-        dgamma_c11=dgamma_fill(tabs, r, d1, d2, d3, dc_c11, shape)
-        dgamma_c22=dgamma_fill(tabs, r, d1, d2, d3, dc_c22, shape)
-        dgamma_c33=dgamma_fill(tabs, r, d1, d2, d3, dc_c33, shape)
-        dgamma_c23=dgamma_fill(tabs, r, d1, d2, d3, dc_c23, shape)
-        dgamma_c13=dgamma_fill(tabs, r, d1, d2, d3, dc_c13, shape)
-        dgamma_c12=dgamma_fill(tabs, r, d1, d2, d3, dc_c12, shape)
-        dgamma_c44=dgamma_fill(tabs, r, d1, d2, d3, dc_c44, shape)
-        dgamma_c55=dgamma_fill(tabs, r, d1, d2, d3, dc_c55, shape)
-        dgamma_c66=dgamma_fill(tabs, r, d1, d2, d3, dc_c66, shape)
+        dgamma_c11=dgamma_fill(tabs, r, dimensions, dc_c11, shape)
+        dgamma_c22=dgamma_fill(tabs, r, dimensions, dc_c22, shape)
+        dgamma_c33=dgamma_fill(tabs, r, dimensions, dc_c33, shape)
+        dgamma_c23=dgamma_fill(tabs, r, dimensions, dc_c23, shape)
+        dgamma_c13=dgamma_fill(tabs, r, dimensions, dc_c13, shape)
+        dgamma_c12=dgamma_fill(tabs, r, dimensions, dc_c12, shape)
+        dgamma_c44=dgamma_fill(tabs, r, dimensions, dc_c44, shape)
+        dgamma_c55=dgamma_fill(tabs, r, dimensions, dc_c55, shape)
+        dgamma_c66=dgamma_fill(tabs, r, dimensions, dc_c66, shape)
     
         # gradiant of the objective function
         iw = ifw
@@ -345,18 +345,18 @@ def dstiff_orth_c66():
 
 
 
-def dgamma_fill(tabs,r,d1,d2,d3,dc,shape):
+def dgamma_fill(tabs,r,dimensions,dc,shape):
     dgamma = numpy.zeros((r,r))
     for ir1 in range(r):
         tabs1 = tabs[ir1]
         for ir2 in range(r):
             tabs2 = tabs[ir2]
-            gamma_helper(dgamma,dc,tabs1,tabs2,ir1,ir2,d1,d2,d3,shape)
+            gamma_helper(dgamma,dc,tabs1,tabs2,ir1,ir2,dimensions,shape)
     return dgamma
 
 
 
-def gamma_helper(gamma,c,tabs1,tabs2,ir1,ir2,d1,d2,d3,shape):
+def gamma_helper(gamma,c,tabs1,tabs2,ir1,ir2,dimensions,shape):
     [i1,l1,m1,n1] = tabs1
     [i2,l2,m2,n2] = tabs2
     l = l1 + l2
@@ -366,35 +366,35 @@ def gamma_helper(gamma,c,tabs1,tabs2,ir1,ir2,d1,d2,d3,shape):
         [st1,st2,st3] = c[i1][0][i2]
         if l % 2 == 0:
             if st1 != 0 and l2 > 0 and m % 2 == 0 and n % 2 == 0:
-                gamma[ir1][ir2] += st1 * l1 * l2 * volintegral(d1, d2, d3, l-2, m, n, shape)
+                gamma[ir1][ir2] += st1 * l1 * l2 * volintegral(dimensions, l-2, m, n, shape)
         elif m % 2 == 1:
             if st2 != 0 and m2 > 0 and n % 2 == 0:
-                gamma[ir1][ir2] += st2 * l1 * m2 * volintegral(d1, d2, d3, l-1, m-1, n, shape)
+                gamma[ir1][ir2] += st2 * l1 * m2 * volintegral(dimensions, l-1, m-1, n, shape)
         elif n % 2 == 1:
             if st3 != 0 and n2 > 0:
-                gamma[ir1][ir2] += st3 * l1 * n2 * volintegral(d1, d2, d3, l-1, m, n-1, shape)
+                gamma[ir1][ir2] += st3 * l1 * n2 * volintegral(dimensions, l-1, m, n-1, shape)
     if m1 > 0:
         [st1,st2,st3] = c[i1][1][i2]
         if l % 2 == 1:
             if st1 != 0 and l2 > 0 and m % 2 == 1 and n % 2 == 0:
-                gamma[ir1][ir2] += st1 * m1 * l2 * volintegral(d1, d2, d3, l-1, m-1, n, shape)
+                gamma[ir1][ir2] += st1 * m1 * l2 * volintegral(dimensions, l-1, m-1, n, shape)
         elif m % 2 == 0:
             if st2 != 0 and m2 > 0 and n % 2 == 0:
-                gamma[ir1][ir2] += st2 * m1 * m2 * volintegral(d1, d2, d3, l, m-2, n, shape)
+                gamma[ir1][ir2] += st2 * m1 * m2 * volintegral(dimensions, l, m-2, n, shape)
         elif n % 2 == 1:
             if st3 != 0 and n2 > 0:
-                gamma[ir1][ir2] += st3 * m1 * n2 * volintegral(d1, d2, d3, l, m-1, n-1, shape)
+                gamma[ir1][ir2] += st3 * m1 * n2 * volintegral(dimensions, l, m-1, n-1, shape)
     if n1 > 0:
         [st1,st2,st3] = c[i1][2][i2]
         if l % 2 == 1:
             if st1 != 0 and l2 > 0 and m % 2 == 0 and n % 2 == 1:
-                gamma[ir1][ir2] += st1 * n1 * l2 * volintegral(d1, d2, d3, l-1, m, n-1, shape)
+                gamma[ir1][ir2] += st1 * n1 * l2 * volintegral(dimensions, l-1, m, n-1, shape)
         elif m % 2 == 1:
             if st2 != 0 and m2 > 0 and n % 2 == 1:
-                gamma[ir1][ir2] += st2 * n1 * m2 * volintegral(d1, d2, d3, l, m-1, n-1, shape)
+                gamma[ir1][ir2] += st2 * n1 * m2 * volintegral(dimensions, l, m-1, n-1, shape)
         elif n % 2 == 0:
             if st3 != 0 and n2 > 0:
-                gamma[ir1][ir2] += st3 * n1 * n2 * volintegral(d1, d2, d3, l, m, n-2, shape)
+                gamma[ir1][ir2] += st3 * n1 * n2 * volintegral(dimensions, l, m, n-2, shape)
 
 
 
@@ -518,7 +518,7 @@ def gaussj(a, n, b, m):
 # vector BETA from (14.4.8) 
 
 # called by mrqmin_function each iteration. Computes "chisq"
-def mrqcof(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,alpha,beta,hextype):
+def mrqcof(d,r,tabs,irk,dimensions,rho,shape,freqmin,y,ndata,a,ia,ma,alpha,beta,hextype):
 
     mfit = 0
     for j in range(ma):
@@ -530,10 +530,11 @@ def mrqcof(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,alpha,bet
         beta[j] = 0.0
 
     chisq = 0.0
-    ymod, dyda = formod(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,ma,hextype)
+    ymod, dyda = formod(d,r,tabs,irk,dimensions,rho,shape,freqmin,ndata,a,ma,hextype)
     for i in range(ndata):
-        sig2i = sig[i] * sig[i]
-        dy = y[i] - ymod[i]
+        freq, sig = y[i]
+        sig2i = sig * sig
+        dy = freq - ymod[i]
         j = -1
         for l in range(ma):
             if ia[l] != 0:
@@ -557,13 +558,13 @@ def mrqcof(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,a,ia,ma,alpha,bet
     return chisq
 
 
-def formod(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,ns,hextype):
+def formod(d,r,tabs,irk,dimensions,rho,shape,freqmin,ndata,a,ns,hextype):
 
     freqs = 'predictedf' # CHANGE THIS LINE TO APPROPRIATE DIRECTORY
 
     cm = make_cm(a,hextype)
-    e = e_fill(tabs, r, d1, d2, d3, rho, shape, irk)
-    gamma = gamma_fill(tabs, r, d1, d2, d3, cm, shape, irk)
+    e = e_fill(tabs,r,dimensions,rho,shape,irk)
+    gamma = gamma_fill(tabs,r,dimensions,cm,shape,irk)
       
   
     print('starting eigenvalues calculation')
@@ -633,7 +634,7 @@ def formod(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,ns,hextype):
     freqfile.close()
 
     # compute dyda
-    dyda = compute_dyda(ns,hextype,r,tabs,d1,d2,d3,shape,ifw,ndata,z,wsort,indice)
+    dyda = compute_dyda(ns,hextype,r,tabs,dimensions,shape,ifw,ndata,z,wsort,indice)
 
     return y, dyda
   
@@ -672,7 +673,7 @@ def formod(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,ns,hextype):
 #
 #/* This is the optimisation routine which is called by MAIN once every iteration */
 #/* mrqmin(d,r,tabs,
-#      irk,d1,d2,d3,rho,shape,freqmin,
+#      irk,dimensions,rho,shape,freqmin,
 #      y,sig,ndata,guess,ia,ns,covar,alpha,&chisq, hextype, formod,&alamda) */
 #
 #/* ------ */
@@ -686,7 +687,7 @@ def formod(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,ns,hextype):
 #/* *itab, *ltab, *mtab, *ntab = 1D array's of type int. Related to r. _tab=alloc1int(r) */
 #/* *irk = 1D array on int. irk = alloc1int(8)*/
 #
-#/* d1, d2, d3 = dimensions of sample, diameter, height */
+#/* dimenstions = dimensions of sample, diameter, height */
 #/* rho = density in g/cm^3 */
 #/* shape = cylinder, sphere or rectangular parallelepiped */
 #/* freqmin = minimum frequency, from param_data */
@@ -706,7 +707,7 @@ def formod(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,ndata,a,ns,hextype):
 #/* hextype = differentiates between VTI and HTI symmetry in the hexagonal case */
 #/* alamda = parameter from conjugate-gradient method. Starts as <0 to initialise the routine and is changed in subsequent iterations */
 #
-def mrqmin(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,cxx_values,ia,ma,covar,alpha,hextype,alamda):
+def mrqmin(d,r,tabs,irk,dimensions,rho,shape,freqmin,y,ndata,cxx_values,ia,ma,covar,alpha,hextype,alamda):
     # Loop is called if almada <0.
     # This initializes the routine.
     # Sets almada = -1.0 in main before calling MRQMIN.
@@ -731,7 +732,7 @@ def mrqmin(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,cxx_values,ia,ma,
         alamda = 0.001
 
         # Compute "chisq" - need to update to formal chisq.
-        chisq = mrqcof(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,cxx_values,ia,ma,alpha,beta,hextype)
+        chisq = mrqcof(d,r,tabs,irk,dimensions,rho,shape,freqmin,y,ndata,cxx_values,ia,ma,alpha,beta,hextype)
 
         cxx_try = cxx_values.copy()
         # update chisq value
@@ -767,7 +768,7 @@ def mrqmin(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,cxx_values,ia,ma,
             j += 1
 
     # Compute "chisq" - need to update to formal chisq
-    chisq = mrqcof(d,r,tabs,irk,d1,d2,d3,rho,shape,freqmin,y,sig,ndata,cxx_try,ia,ma,covar,da,hextype)
+    chisq = mrqcof(d,r,tabs,irk,dimensions,rho,shape,freqmin,y,ndata,cxx_try,ia,ma,covar,da,hextype)
 
     # if step succeeds value of chisq decreases: ochisq < chisq
     if chisq < ochisq:
@@ -921,7 +922,7 @@ def __make_cm_orthorhombic(a):
         return cm
 
 
-def volintegral(d1, d2, d3, l, m, n, shape):
+def volintegral(dimensions,l,m,n,shape):
 
     global _memo_vol_max
     global _memo_volintegral
@@ -942,13 +943,13 @@ def volintegral(d1, d2, d3, l, m, n, shape):
 
     # ell. cylinder shape
     if shape == 1:
-        ds = d1**(l+1) * d2**(m+1) * d3**(n+1)
+        ds = dimensions[0]**(l+1) * dimensions[1]**(m+1) * dimensions[2]**(n+1)
         df_lm = doublefact(l-1) * doublefact(m-1)
         result = 4.0 * scipy.pi * ds / (n+1) * df_lm / doublefact(l+m+2)
 
     # spheroid shape
     elif shape == 2:
-        ds = d1**(l+1) * d2**(m+1) * d3**(n+1)
+        ds = dimensions[0]**(l+1) * dimensions[1]**(m+1) * dimensions[2]**(n+1)
         df_lm = doublefact(l-1) * doublefact(m-1)
         df_all = doublefact(l+m+n+3)
         result = 4.0 * scipy.pi * ds * df_lm * doublefact(n-1) / df_all
@@ -980,34 +981,34 @@ def doublefact(n):
 
 
 
-def e_fill(tabs, r, d1, d2, d3, rho, shape, irk):
-	e = [scipy.zeros((irk[i],irk[i])) for i in range(8)]
-	for k in range(8):
-		irs = 0
-		for ik in range(k):
-			irs += irk[ik]
-		irf = irs + irk[k]
+def e_fill(tabs,r,dimensions,rho,shape,irk):
+    e = [scipy.zeros((irk[i],irk[i])) for i in range(8)]
+    for k in range(8):
+        irs = 0
+        for ik in range(k):
+            irs += irk[ik]
+        irf = irs + irk[k]
 
-		irv = 0
-		ir1 = irs
-		while ir1 < irf:
-			irh = 0
-			ir2 = irs
-			while ir2 < irf:
-				[i1,l1,m1,n1] = tabs[ir1]
-				[i2,l2,m2,n2] = tabs[ir2]
-				l = l1 + l2
-				m = m1 + m2
-				n = n1 + n2
-				if i1 != i2:
-					e[k][irv][irh] = 0.0
-				else:
-					e[k][irv][irh] = rho * volintegral(d1, d2, d3, l, m, n, shape);
-				ir2 += 1
-				irh += 1
-			ir1 += 1
-			irv += 1
-	return e
+        irv = 0
+        ir1 = irs
+        while ir1 < irf:
+            irh = 0
+            ir2 = irs
+            while ir2 < irf:
+                [i1,l1,m1,n1] = tabs[ir1]
+                [i2,l2,m2,n2] = tabs[ir2]
+                l = l1 + l2
+                m = m1 + m2
+                n = n1 + n2
+                if i1 == i2 and l % 2 == 0 and m % 2 == 0 and n % 2 == 0:
+                    e[k][irv][irh] = rho * volintegral(dimensions,l,m,n,shape);
+                else:
+                    e[k][irv][irh] = 0.0
+                ir2 += 1
+                irh += 1
+            ir1 += 1
+            irv += 1
+    return e
 
 def stiffness(cm):
 	c = scipy.zeros((3,3,3,3))
@@ -1042,7 +1043,7 @@ def stiffness(cm):
 					c[i][j][k][l] = cm[a][b]
 	return c
 
-def gamma_fill(tabs, r, d1, d2, d3, cm, shape, irk):
+def gamma_fill(tabs,r,dimensions,cm,shape,irk):
     gamma = [scipy.zeros((irk[i],irk[i])) for i in range(8)]
     c = stiffness(cm)
     for k in range(8):
@@ -1054,7 +1055,7 @@ def gamma_fill(tabs, r, d1, d2, d3, cm, shape, irk):
             tabs1 = tabs[ir1]
             for ir2 in range(irs,irf):
                 tabs2 = tabs[ir2]
-                gamma_helper(gamma[k],c,tabs1,tabs2,irv,irh,d1,d2,d3,shape)
+                gamma_helper(gamma[k],c,tabs1,tabs2,irv,irh,dimensions,shape)
                 irh += 1
             irv += 1
     return gamma
