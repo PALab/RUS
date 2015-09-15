@@ -347,71 +347,46 @@ def dstiff_orth_c66():
 
 def dgamma_fill(tabs,r,d1,d2,d3,dc,shape):
     dgamma = numpy.zeros((r,r))
-    x = 0
     for ir1 in range(r):
         [i1,l1,m1,n1] = tabs[ir1]
         for ir2 in range(r):
             [i2,l2,m2,n2] = tabs[ir2]
+            l = l1 + l2
+            m = m1 + m2
+            n = n1 + n2
             if l1 > 0:
                 [st1,st2,st3] = dc[i1][0][i2]
-                if l2 > 0 and st1 != 0:
-                    l = l1 + l2 - 2
-                    m = m1 + m2
-                    n = n1 + n2
-                    if l % 2 == 0 and m % 2 == 0 and n % 2 == 0:
-                        dgamma[ir1][ir2] += st1 * l1 * l2 * volintegral(d1, d2, d3, l, m, n, shape)
-                if m2 > 0 and st2 != 0:
-                    l = l1 + l2 - 1
-                    m = m1 + m2 - 1
-                    n = n1 + n2
-                    if l % 2 == 0 and m % 2 == 0 and n % 2 == 0:
-                        dgamma[ir1][ir2] += st2 * l1 * m2 * volintegral(d1, d2, d3, l, m, n, shape)
-                if n2 > 0 and st3 != 0:
-                    l = l1 + l2 - 1
-                    m = m1 + m2
-                    n = n1 + n2 - 1
-                    if l % 2 == 0 and m % 2 == 0 and n % 2 == 0:
-                        dgamma[ir1][ir2] += st3 * l1 * n2 * volintegral(d1, d2, d3, l, m, n, shape)
+                if l % 2 == 0:
+                    if l2 > 0 and st1 != 0 and m % 2 == 0 and n % 2 == 0:
+                        dgamma[ir1][ir2] += st1 * l1 * l2 * volintegral(d1, d2, d3, l-2, m, n, shape)
+                elif m % 2 == 1:
+                    if m2 > 0 and st2 != 0 and n % 2 == 0:
+                        dgamma[ir1][ir2] += st2 * l1 * m2 * volintegral(d1, d2, d3, l-1, m-1, n, shape)
+                elif n % 2 == 1:
+                    if n2 > 0 and st3 != 0:
+                        dgamma[ir1][ir2] += st3 * l1 * n2 * volintegral(d1, d2, d3, l-1, m, n-1, shape)
             if m1 > 0:
                 [st1,st2,st3] = dc[i1][1][i2]
-                if l2 > 0 and st1 != 0:
-                    l = l1 + l2 - 1
-                    m = m1 + m2 - 1
-                    n = n1 + n2
-                    if l % 2 == 0 and m % 2 == 0 and n % 2 == 0:
-                        dgamma[ir1][ir2] += st1 * m1 * l2 * volintegral(d1, d2, d3, l, m, n, shape)
-                if m2 > 0 and st2 != 0:
-                    l = l1 + l2
-                    m = m1 + m2 - 2
-                    n = n1 + n2
-                    if l % 2 == 0 and m % 2 == 0 and n % 2 == 0:
-                        dgamma[ir1][ir2] += st2 * m1 * m2 * volintegral(d1, d2, d3, l, m, n, shape)
-                if n2 > 0 and st3 != 0:
-                    l = l1 + l2
-                    m = m1 + m2 - 1
-                    n = n1 + n2 - 1
-                    if l % 2 == 0 and m % 2 == 0 and n % 2 == 0:
-                        dgamma[ir1][ir2] += st3 * m1 * n2 * volintegral(d1, d2, d3, l, m, n, shape)
+                if l % 2 == 1:
+                    if l2 > 0 and st1 != 0 and m % 2 == 1 and n % 2 == 0:
+                        dgamma[ir1][ir2] += st1 * m1 * l2 * volintegral(d1, d2, d3, l-1, m-1, n, shape)
+                elif m % 2 == 0:
+                    if m2 > 0 and st2 != 0 and n % 2 == 0:
+                        dgamma[ir1][ir2] += st2 * m1 * m2 * volintegral(d1, d2, d3, l, m-2, n, shape)
+                elif n % 2 == 1:
+                    if n2 > 0 and st3 != 0:
+                        dgamma[ir1][ir2] += st3 * m1 * n2 * volintegral(d1, d2, d3, l, m-1, n-1, shape)
             if n1 > 0:
                 [st1,st2,st3] = dc[i1][2][i2]
-                if l2 > 0 and st1 != 0:
-                    l = l1 + l2 - 1
-                    m = m1 + m2
-                    n = n1 + n2 - 1
-                    if l % 2 == 0 and m % 2 == 0 and n % 2 == 0:
-                        dgamma[ir1][ir2] += st1 * n1 * l2 * volintegral(d1, d2, d3, l, m, n, shape)
-                if m2 > 0 and st2 != 0:
-                    l = l1 + l2
-                    m = m1 + m2 - 1
-                    n = n1 + n2 - 1
-                    if l % 2 == 0 and m % 2 == 0 and n % 2 == 0:
-                        dgamma[ir1][ir2] += st2 * n1 * m2 * volintegral(d1, d2, d3, l, m, n, shape)
-                if n2 > 0 and st3 != 0:
-                    l = l1 + l2
-                    m = m1 + m2
-                    n = n1 + n2 - 2
-                    if l % 2 == 0 and m % 2 == 0 and n % 2 == 0:
-                        dgamma[ir1][ir2] += st3 * n1 * n2 * volintegral(d1, d2, d3, l, m, n, shape)
+                if l % 2 == 1:
+                    if l2 > 0 and st1 != 0 and m % 2 == 0 and n % 2 == 1:
+                        dgamma[ir1][ir2] += st1 * n1 * l2 * volintegral(d1, d2, d3, l-1, m, n-1, shape)
+                elif m % 2 == 1:
+                    if m2 > 0 and st2 != 0 and n % 2 == 1:
+                        dgamma[ir1][ir2] += st2 * n1 * m2 * volintegral(d1, d2, d3, l, m-1, n-1, shape)
+                elif n % 2 == 0:
+                    if n2 > 0 and st3 != 0:
+                        dgamma[ir1][ir2] += st3 * n1 * n2 * volintegral(d1, d2, d3, l, m, n-2, shape)
     return dgamma
 
 
@@ -480,9 +455,7 @@ def covsrt(covar, ma, ia, mfit):
 def gaussj(a, n, b, m):
     indxc = []
     indxr = []
-    ipiv  = []
-    for j in range(n):
-        ipiv.append(0)
+    ipiv  = [0 for j in range(n)]
     for i in range(n):
         big = 0.0
         for j in range(n):
@@ -941,11 +914,17 @@ def __make_cm_orthorhombic(a):
         return cm
 
 
+_counter = 0
 
 def volintegral(d1, d2, d3, l, m, n, shape):
 
     global _memo_vol_max
     global _memo_volintegral
+
+    global _counter
+
+# It is assumed that l, m, and n are all even numbers.
+# Use the following code to check if necessary.
 
 #    if l % 2 == 1 or m % 2 == 1 or n % 2 == 1:
 #        return 0.0
@@ -953,27 +932,32 @@ def volintegral(d1, d2, d3, l, m, n, shape):
     hl = l//2
     hm = m//2
     hn = n//2
-    if hl < _memo_vol_max and hm < _memo_vol_max and hn < _memo_vol_max and _memo_volintegral[hl][hm][hn]:
+    small = hl < _memo_vol_max and hm < _memo_vol_max and hn < _memo_vol_max
+    
+    if small and _memo_volintegral[hl][hm][hn]:
         return _memo_volintegral[hl][hm][hn]
 
     # ell. cylinder shape
     if shape == 1:
         ds = d1**(l+1) * d2**(m+1) * d3**(n+1)
         df_lm = doublefact(l-1) * doublefact(m-1)
-        _memo_volintegral[hl][hm][hn] = 4.0 * scipy.pi * ds / (n+1) * df_lm / doublefact(l+m+2)
-        return _memo_volintegral[hl][hm][hn]
+        result = 4.0 * scipy.pi * ds / (n+1) * df_lm / doublefact(l+m+2)
 
     # spheroid shape
-    if shape == 2:
+    elif shape == 2:
         ds = d1**(l+1) * d2**(m+1) * d3**(n+1)
         df_lm = doublefact(l-1) * doublefact(m-1)
         df_all = doublefact(l+m+n+3)
-        _memo_volintegral[hl][hm][hn] = 4.0 * scipy.pi * ds * df_lm * doublefact(n-1) / df_all
-        return _memo_volintegral[hl][hm][hn]
+        result = 4.0 * scipy.pi * ds * df_lm * doublefact(n-1) / df_all
 
     # rp shape
-    _memo_volintegral[hl][hm][hn] = 8.0 / ((l+1) * (m+1) * (n+1)) * ds
-    return _memo_volintegral[hl][hm][hn]
+    else:
+        result = 8.0 / ((l+1) * (m+1) * (n+1)) * ds
+
+    if small:
+        _memo_volintegral[hl][hm][hn] = result
+
+    return result
 
 
 
