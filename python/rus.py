@@ -348,46 +348,53 @@ def dstiff_orth_c66():
 def dgamma_fill(tabs,r,d1,d2,d3,dc,shape):
     dgamma = numpy.zeros((r,r))
     for ir1 in range(r):
-        [i1,l1,m1,n1] = tabs[ir1]
+        tabs1 = tabs[ir1]
         for ir2 in range(r):
-            [i2,l2,m2,n2] = tabs[ir2]
-            l = l1 + l2
-            m = m1 + m2
-            n = n1 + n2
-            if l1 > 0:
-                [st1,st2,st3] = dc[i1][0][i2]
-                if l % 2 == 0:
-                    if l2 > 0 and st1 != 0 and m % 2 == 0 and n % 2 == 0:
-                        dgamma[ir1][ir2] += st1 * l1 * l2 * volintegral(d1, d2, d3, l-2, m, n, shape)
-                elif m % 2 == 1:
-                    if m2 > 0 and st2 != 0 and n % 2 == 0:
-                        dgamma[ir1][ir2] += st2 * l1 * m2 * volintegral(d1, d2, d3, l-1, m-1, n, shape)
-                elif n % 2 == 1:
-                    if n2 > 0 and st3 != 0:
-                        dgamma[ir1][ir2] += st3 * l1 * n2 * volintegral(d1, d2, d3, l-1, m, n-1, shape)
-            if m1 > 0:
-                [st1,st2,st3] = dc[i1][1][i2]
-                if l % 2 == 1:
-                    if l2 > 0 and st1 != 0 and m % 2 == 1 and n % 2 == 0:
-                        dgamma[ir1][ir2] += st1 * m1 * l2 * volintegral(d1, d2, d3, l-1, m-1, n, shape)
-                elif m % 2 == 0:
-                    if m2 > 0 and st2 != 0 and n % 2 == 0:
-                        dgamma[ir1][ir2] += st2 * m1 * m2 * volintegral(d1, d2, d3, l, m-2, n, shape)
-                elif n % 2 == 1:
-                    if n2 > 0 and st3 != 0:
-                        dgamma[ir1][ir2] += st3 * m1 * n2 * volintegral(d1, d2, d3, l, m-1, n-1, shape)
-            if n1 > 0:
-                [st1,st2,st3] = dc[i1][2][i2]
-                if l % 2 == 1:
-                    if l2 > 0 and st1 != 0 and m % 2 == 0 and n % 2 == 1:
-                        dgamma[ir1][ir2] += st1 * n1 * l2 * volintegral(d1, d2, d3, l-1, m, n-1, shape)
-                elif m % 2 == 1:
-                    if m2 > 0 and st2 != 0 and n % 2 == 1:
-                        dgamma[ir1][ir2] += st2 * n1 * m2 * volintegral(d1, d2, d3, l, m-1, n-1, shape)
-                elif n % 2 == 0:
-                    if n2 > 0 and st3 != 0:
-                        dgamma[ir1][ir2] += st3 * n1 * n2 * volintegral(d1, d2, d3, l, m, n-2, shape)
+            tabs2 = tabs[ir2]
+            gamma_helper(dgamma,dc,tabs1,tabs2,ir1,ir2,d1,d2,d3,shape)
     return dgamma
+
+
+
+def gamma_helper(gamma,c,tabs1,tabs2,ir1,ir2,d1,d2,d3,shape):
+    [i1,l1,m1,n1] = tabs1
+    [i2,l2,m2,n2] = tabs2
+    l = l1 + l2
+    m = m1 + m2
+    n = n1 + n2
+    if l1 > 0:
+        [st1,st2,st3] = c[i1][0][i2]
+        if l % 2 == 0:
+            if st1 != 0 and l2 > 0 and m % 2 == 0 and n % 2 == 0:
+                gamma[ir1][ir2] += st1 * l1 * l2 * volintegral(d1, d2, d3, l-2, m, n, shape)
+        elif m % 2 == 1:
+            if st2 != 0 and m2 > 0 and n % 2 == 0:
+                gamma[ir1][ir2] += st2 * l1 * m2 * volintegral(d1, d2, d3, l-1, m-1, n, shape)
+        elif n % 2 == 1:
+            if st3 != 0 and n2 > 0:
+                gamma[ir1][ir2] += st3 * l1 * n2 * volintegral(d1, d2, d3, l-1, m, n-1, shape)
+    if m1 > 0:
+        [st1,st2,st3] = c[i1][1][i2]
+        if l % 2 == 1:
+            if st1 != 0 and l2 > 0 and m % 2 == 1 and n % 2 == 0:
+                gamma[ir1][ir2] += st1 * m1 * l2 * volintegral(d1, d2, d3, l-1, m-1, n, shape)
+        elif m % 2 == 0:
+            if st2 != 0 and m2 > 0 and n % 2 == 0:
+                gamma[ir1][ir2] += st2 * m1 * m2 * volintegral(d1, d2, d3, l, m-2, n, shape)
+        elif n % 2 == 1:
+            if st3 != 0 and n2 > 0:
+                gamma[ir1][ir2] += st3 * m1 * n2 * volintegral(d1, d2, d3, l, m-1, n-1, shape)
+    if n1 > 0:
+        [st1,st2,st3] = c[i1][2][i2]
+        if l % 2 == 1:
+            if st1 != 0 and l2 > 0 and m % 2 == 0 and n % 2 == 1:
+                gamma[ir1][ir2] += st1 * n1 * l2 * volintegral(d1, d2, d3, l-1, m, n-1, shape)
+        elif m % 2 == 1:
+            if st2 != 0 and m2 > 0 and n % 2 == 1:
+                gamma[ir1][ir2] += st2 * n1 * m2 * volintegral(d1, d2, d3, l, m-1, n-1, shape)
+        elif n % 2 == 0:
+            if st3 != 0 and n2 > 0:
+                gamma[ir1][ir2] += st3 * n1 * n2 * volintegral(d1, d2, d3, l, m, n-2, shape)
 
 
 
@@ -914,14 +921,10 @@ def __make_cm_orthorhombic(a):
         return cm
 
 
-_counter = 0
-
 def volintegral(d1, d2, d3, l, m, n, shape):
 
     global _memo_vol_max
     global _memo_volintegral
-
-    global _counter
 
 # It is assumed that l, m, and n are all even numbers.
 # Use the following code to check if necessary.
@@ -1048,119 +1051,83 @@ def gamma_fill(tabs, r, d1, d2, d3, cm, shape, irk):
         irv = 0
         for ir1 in range(irs,irf):
             irh = 0
-            [i1,l1,m1,n1] = tabs[ir1]
+            tabs1 = tabs[ir1]
             for ir2 in range(irs,irf):
-                [i2,l2,m2,n2] = tabs[ir2]
-                l = l1 + l2
-                m = m1 + m2
-                n = n1 + n2
-                gamma[k][irv][irh] = 0.0
-                if l1 > 0:
-                    [st1,st2,st3] = c[i1][0][i2]
-                    if l % 2 == 0:
-                        if l2 > 0 and st1 != 0 and m % 2 == 0 and n % 2 == 0:
-                            gamma[k][irv][irh] += st1 * l1 * l2 * volintegral(d1, d2, d3, l-2, m, n, shape)
-                    elif m % 2 == 1:
-                        if m2 > 0 and st2 != 0 and n % 2 == 0:
-                            gamma[k][irv][irh] += st2 * l1 * m2 * volintegral(d1, d2, d3, l-1, m-1, n, shape)
-                    elif n % 2 == 1:
-                        if n2 > 0 and st3 != 0:
-                            gamma[k][irv][irh] += st3 * l1 * n2 * volintegral(d1, d2, d3, l-1, m, n-1, shape)
-                if m1 > 0:
-                    [st1,st2,st3] = c[i1][1][i2]
-                    if l % 2 == 1:
-                        if l2 > 0 and st1 != 0 and m % 2 == 1 and n % 2 == 0:
-                            gamma[k][irv][irh] += st1 * m1 * l2 * volintegral(d1, d2, d3, l-1, m-1, n, shape)
-                    elif m % 2 == 0:
-                        if m2 > 0 and st2 != 0 and n % 2 == 0:
-                            gamma[k][irv][irh] += st2 * m1 * m2 * volintegral(d1, d2, d3, l, m-2, n, shape)
-                    elif n % 2 == 1:
-                        if n2 > 0 and st3 != 0:
-                            gamma[k][irv][irh] += st3 * m1 * n2 * volintegral(d1, d2, d3, l, m-1, n-1, shape)
-                if n1 > 0:
-                    [st1,st2,st3] = c[i1][2][i2]
-                    if l % 2 == 1:
-                        if l2 > 0 and st1 != 0 and m % 2 == 0 and n % 2 == 1:
-                            gamma[k][irv][irh] += st1 * n1 * l2 * volintegral(d1, d2, d3, l-1, m, n-1, shape)
-                    elif m % 2 == 1:
-                        if m2 > 0 and st2 != 0 and n % 2 == 1:
-                            gamma[k][irv][irh] += st2 * n1 * m2 * volintegral(d1, d2, d3, l, m-1, n-1, shape)
-                    elif n % 2 == 0:
-                        if n2 > 0 and st3 != 0:
-                            gamma[k][irv][irh] += st3 * n1 * n2 * volintegral(d1, d2, d3, l, m, n-2, shape)
+                tabs2 = tabs[ir2]
+                gamma_helper(gamma[k],c,tabs1,tabs2,irv,irh,d1,d2,d3,shape)
                 irh += 1
             irv += 1
     return gamma
 
 def xindex(ax, x, index):
-	# Copyright (c) Colorado School of Mines, 2011.
-	# All rights reserved. 
+    # Copyright (c) Colorado School of Mines, 2011.
+    # All rights reserved. 
 
-	# Author:  Dave Hale, Colorado School of Mines, 12/25/89
-	# Translated to Python: Paul Freeman, University of Auckland, 6/11/2015
+    # Author:  Dave Hale, Colorado School of Mines, 12/25/89
+    # Translated to Python: Paul Freeman, University of Auckland, 6/11/2015
 
-	nx = len(ax)
+    nx = len(ax)
 
-	# initialize lower and upper indices and step
-	lower = index
-	if lower < 0:
-		lower = 0
-	if lower >= nx:
-		lower = nx - 1
-	upper = lower + 1
-	step = 1
+    # initialize lower and upper indices and step
+    lower = index
+    if lower < 0:
+        lower = 0
+    if lower >= nx:
+        lower = nx - 1
+    upper = lower + 1
+    step = 1
 
-	# if x values increasing
-	if ax[-1] > ax[0]:
-		# find indices such that ax[lower] <= x < ax[upper]
-		while lower > 0 and ax[lower] > x:
-			upper = lower
-			lower -= step
-			step += step
-		if lower < 0:
-			lower = 0;
-		while upper < nx and ax[upper] <= x:
-			lower = upper
-			upper += step
-			step += step
-		if upper > nx:
-			upper = nx
+    # if x values increasing
+    if ax[-1] > ax[0]:
+        # find indices such that ax[lower] <= x < ax[upper]
+        while lower > 0 and ax[lower] > x:
+            upper = lower
+            lower -= step
+            step += step
+        if lower < 0:
+            lower = 0;
+        while upper < nx and ax[upper] <= x:
+            lower = upper
+            upper += step
+            step += step
+        if upper > nx:
+            upper = nx
 
-		# find index via bisection
-		middle = (lower + upper) // 2
-		while middle != lower:
-			if x >= ax[middle]:
-				lower = middle
-			else:
-				upper = middle
-			middle = (lower + upper) // 2
+        # find index via bisection
+        middle = (lower + upper) // 2
+        while middle != lower:
+            if x >= ax[middle]:
+                lower = middle
+            else:
+                upper = middle
+            middle = (lower + upper) // 2
 
-	# else, if not increasing
-	else:
-		# find indices such that ax[lower] >= x > ax[upper]
-		while lower > 0 and ax[lower] < x:
-			upper = lower
-			lower -= step
-			step += step
-		if lower < 0:
-			lower = 0;
-		while upper < nx and ax[upper] >= x:
-			lower = upper
-			upper += step
-			step += step
-		if upper > nx:
-			upper = nx
+    # else, if not increasing
+    else:
+        # find indices such that ax[lower] >= x > ax[upper]
+        while lower > 0 and ax[lower] < x:
+            upper = lower
+            lower -= step
+            step += step
+        if lower < 0:
+            lower = 0;
+        while upper < nx and ax[upper] >= x:
+            lower = upper
+            upper += step
+            step += step
+        if upper > nx:
+            upper = nx
 
-		# find index via bisection
-		middle = (lower + upper) // 2
-		while middle != lower:
-			if x <= ax[middle]:
-				lower = middle
-			else:
-				upper = middle
-			middle = (lower + upper) // 2
+        # find index via bisection
+        middle = (lower + upper) // 2
+        while middle != lower:
+            if x <= ax[middle]:
+                lower = middle
+            else:
+                upper = middle
+            middle = (lower + upper) // 2
 
-	return lower
+    return lower
 
 
 
