@@ -1,8 +1,12 @@
 import sys
 import scipy
+import scipy.misc as misc
 import numpy
 import math
 import scipy.linalg as LA
+
+# global memoization table for double factorial
+_memo_doublefact = [None for i in range(100)]
 
 def compute_dyda(ns,hextype,r,tabs,d1,d2,d3,shape,ifw,ndata,z,wsort,indice):
     dyda = numpy.zeros((ns,ndata))
@@ -962,8 +966,14 @@ def volintegral(d1, d2, d3, l, m, n, shape):
 
 
 def doublefact(n):
+    global _memo_doublefact
     if n == -1 or n == 0 or n == 1:
         return 1
+    if _memo_doublefact[n] != None:
+        return _memo_doublefact[n]
+    if n < 100:
+        _memo_doublefact[n] = n * doublefact(n-2)
+        return _memo_doublefact[n]
     else:
         return n * doublefact(n-2)
 
@@ -1219,7 +1229,7 @@ def tabs_add(tabs, ir, irk, i, l, m, n):
 
 
 def index_relationship(d, r):
-    tabs = numpy.zeros((4, int(r)))
+    tabs = numpy.zeros((4, int(r)), dtype=numpy.int64)
     irk  = [0 for i in range(8)]
 
     ir = 0

@@ -18,9 +18,6 @@ import numpy
 import rus
 import rus_parser as p
 
-# global variable
-_dqkpart_seed = 0
-
 # main method
 if __name__ == "__main__":
 
