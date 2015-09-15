@@ -112,7 +112,7 @@ if __name__ == "__main__":
         rus.mrqmin(d,r,tabs,irk,d1,d2,d3,args.rho,args.shape,args.freqmin,y,sig,ndata,args.a,ia,args.ns,covar,alpha,args.hextype,alamda)
         print('iter #{}'.format(i))
         for k in sorted(args.a.keys()):
-            print('{}'.format(100 * args.a[k])) # print estimated cxx values
+            print('{0:.6f}'.format(100 * args.a[k])) # print estimated cxx values
 
     print('\nThis calculation can be executed again with the following command:')
     print('python {} --order {} --shape {} --ns {} --hextype {} --d1 {} --d2 {} --d3 {} --rho {} --freqmin {} --freqmax {} --iterations {} {}'.format(sys.argv[0], args.order, args.shape, args.ns, args.hextype, args.d1, args.d2, args.d3, args.rho, args.freqmin, args.freqmax, args.iterations, ' '.join(('--' + k + ' ' + str(v*100)) for k,v in orig_cxx_values.iteritems())))
