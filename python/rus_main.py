@@ -9,10 +9,16 @@ def start(argv):
     args = rus_parser.inverse_parser(argv)
 
     # half sample dimensions are used in calculations
-    dimensions = [args.d1/2.0, args.d2/2.0, args.d3/2.0]
+    dimension1 = args.d1 / 2.0
+    dimension2 = args.d2 / 2.0
+    dimension3 = args.d3 / 2.0
+    dimensions = [dimension1, dimension2, dimension3]
 
     # dimension of the problem
-    problem_size = 3 * (args.order+1) * (args.order+2) * (args.order+3) / 6
+    a = args.order + 1
+    b = args.order + 2
+    c = args.order + 3
+    problem_size = 3 * a * b * c / 6
 
     # relationship between ir and l,m,n - filling tables
     tabs, irk = rus.index_relationship(args.order, problem_size)

@@ -163,7 +163,54 @@ def compute_dyda(ns,hextype,r,tabs,dimensions,shape,ifw,ndata,z,wsort,indice):
 
 
 
+def calc_forward_cm(args):
+    # isotropic
+    if args.ns == 2:
+        return forward_iso(args.a)
+
+    # cubic
+    if args.ns == 3:
+        return forward_cub(args.a)
+
+    # hexagonal
+    if args.ns == 5:
+        # VTI
+        if args.hextype == 1:
+            return forward_vti(args.a)
+        # HTI
+        elif args.hextype == 2:
+            return forward_hti(args.a)
+        else:
+            raise NameError('hextype invalid or unassigned')
+
+    # tetragonal
+    if args.ns == 6:
+        return forward_tetra(args.a)
+        
+    # orthorhombic
+    if args.ns == 9:
+        return forward_orth(args.a)
+
+
+
 # isotropic
+def forward_iso(cxx):
+    cm = numpy.zeros((6,6))
+    try:
+        cm[0][0] = cxx['c11']
+        cm[3][3] = cxx['c44']
+    except KeyError:
+        raise ValueError('Missing cxx value.')
+    else:
+        cm[0][0] = cm[0][0] / 100
+        cm[0][1] = cm[0][1] / 100
+        cm[3][3] = cm[3][3] / 100
+        cm[1][1] = cm[2][2] = cm[0][0]
+        cm[4][4] = cm[5][5] = cm[3][3]
+        cm[0][2] = cm[1][2] = cm[0][1]
+        cm[2][0] = cm[2][1] = cm[1][0] = cm[0][1]
+        return cm
+
 def dstiff_iso_c11():
     cm = numpy.zeros((6,6))
     cm[0][0] = 10.0
@@ -181,6 +228,24 @@ def dstiff_iso_c44():
     return stiffness(cm)
 
 # cubic
+def forward_cub(cxx):
+    cm = numpy.zeros((6,6))
+    try:
+        cm[0][0] = cxx['c11']
+        cm[0][1] = cxx['c12']
+        cm[3][3] = cxx['c44']
+    except KeyError:
+        raise ValueError('Missing cxx value.')
+    else:
+        cm[0][0] = cm[0][0] / 100
+        cm[0][1] = cm[0][1] / 100
+        cm[3][3] = cm[3][3] / 100
+        cm[1][1] = cm[2][2] = cm[0][0]
+        cm[4][4] = cm[5][5] = cm[3][3]
+        cm[0][2] = cm[1][2] = cm[0][1]
+        cm[2][0] = cm[2][1] = cm[1][0] = cm[0][1]
+        return cm
+
 def dstiff_cub_c11():
     cm = numpy.zeros((6,6))
     cm[0][0] = 10.0
@@ -201,6 +266,28 @@ def dstiff_cub_c44():
     return stiffness(cm)
 
 # VTI
+def forward_vti(cxx):
+    cm = numpy.zeros((6,6))
+    try:
+        cm[2][2] = cxx['c33']
+        cm[1][2] = cxx['c23']
+        cm[0][1] = cxx['c12']
+        cm[3][3] = cxx['c44']
+        cm[5][5] = cxx['c66']
+    except KeyError:
+        raise ValueError('Missing cxx value.')
+    else:
+        cm[2][2] = cm[2][2] / 100
+        cm[1][2] = cm[1][2] / 100
+        cm[0][1] = cm[0][1] / 100
+        cm[3][3] = cm[3][3] / 100
+        cm[5][5] = cm[5][5] / 100
+        cm[0][0] = cm[1][1] = 2.0 * cm[5][5] + cm[0][1]
+        cm[0][2] = cm[2][0] = cm[2][1] = cm[1][2]
+        cm[1][0] = cm[0][1]
+        cm[4][4] = cm[3][3]
+        return cm
+
 def dstiff_vti_c33():
     cm = numpy.zeros((6,6))
     cm[2][2] = 10.0
@@ -232,6 +319,28 @@ def dstiff_vti_c66():
     return stiffness(cm)
 
 # HTI
+def forward_hti(cxx):
+    cm = numpy.zeros((6,6))
+    try:
+        cm[0][0] = cxx['c11']
+        cm[2][2] = cxx['c33']
+        cm[0][1] = cxx['c12']
+        cm[3][3] = cxx['c44']
+        cm[5][5] = cxx['c66']
+    except KeyError:
+        raise ValueError('Missing cxx value.')
+    else:
+        cm[0][0] = cm[0][0] / 100
+        cm[2][2] = cm[2][2] / 100
+        cm[0][1] = cm[0][1] / 100
+        cm[3][3] = cm[3][3] / 100
+        cm[5][5] = cm[5][5] / 100
+        cm[1][2] = cm[2][1] = cm[2][2] - 2.0 * cm[3][3]
+        cm[0][2] = cm[1][0] = cm[2][0] = cm[0][1]
+        cm[1][1] = cm[2][2]
+        cm[4][4] = cm[5][5]
+        return cm
+
 def dstiff_hti_c11():
     cm = numpy.zeros((6,6))
     cm[0][0] = 10.0
@@ -261,6 +370,31 @@ def dstiff_hti_c66():
     return stiffness(cm)
 
 # Tetragonal
+def forward_tetra(cxx):
+    cm = numpy.zeros((6,6))
+    try:
+        cm[0][0] = cxx['c11']
+        cm[2][2] = cxx['c33']
+        cm[1][2] = cxx['c23']
+        cm[0][1] = cxx['c12']
+        cm[3][3] = cxx['c44']
+        cm[5][5] = cxx['c66']
+    except KeyError:
+        raise ValueError('Missing cxx value.')
+    else:
+        cm[0][0] = cm[0][0] / 100
+        cm[2][2] = cm[2][2] / 100
+        cm[1][2] = cm[1][2] / 100
+        cm[3][3] = cm[3][3] / 100
+        cm[0][1] = cm[0][1] / 100
+        cm[5][5] = cm[5][5] / 100
+        cm[1][1] = cm[0][0]
+        cm[0][2] = cm[2][0] = cm[1][2]
+        cm[1][0] = cm[0][1]
+        cm[2][1] = cm[1][2]
+        cm[4][4] = cm[3][3]
+        return cm
+
 def dstiff_tetra_c11():
     cm = numpy.zeros((6,6))
     cm[1][1] = cm[0][0] = 10.0
@@ -295,6 +429,35 @@ def dstiff_tetra_c66():
     return stiffness(cm)
 
 # Orthorhombic
+def forward_orth(cxx):
+    cm = numpy.zeros((6,6))
+    try:
+        cm[0][0] = cxx['c11']
+        cm[1][1] = cxx['c22']
+        cm[2][2] = cxx['c33']
+        cm[1][2] = cxx['c23']
+        cm[0][2] = cxx['c13']
+        cm[0][1] = cxx['c12']
+        cm[3][3] = cxx['c44']
+        cm[4][4] = cxx['c55']
+        cm[5][5] = cxx['c66']
+    except KeyError:
+        raise ValueError('Missing cxx value.')
+    else:
+        cm[0][0] = cm[0][0] / 100
+        cm[1][1] = cm[1][1] / 100
+        cm[2][2] = cm[2][2] / 100
+        cm[1][2] = cm[1][2] / 100
+        cm[0][2] = cm[0][2] / 100
+        cm[0][1] = cm[0][1] / 100
+        cm[3][3] = cm[3][3] / 100
+        cm[4][4] = cm[4][4] / 100
+        cm[5][5] = cm[5][5] / 100
+        cm[2][0] = cm[0][2]
+        cm[1][0] = cm[0][1]
+        cm[2][1] = cm[1][2]
+        return cm
+
 def dstiff_orth_c11():
     cm = numpy.zeros((6,6))
     cm[0][0] = 10.0
