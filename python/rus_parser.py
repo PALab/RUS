@@ -133,7 +133,7 @@ def create_inverse_parser(subparsers):
     inverse_parser.add_argument(
         '-i', '--iterations',
         type = int,
-        default = 100,
+        default = 1,
         help = i_help)
 
     inverse_parser.add_argument(
