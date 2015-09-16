@@ -17,47 +17,51 @@ def create_forward_parser(subparsers):
     forward_parser = subparsers.add_parser('forward', help = 'Forward Algorithm')
     forward_parser.set_defaults(subcommand = 'forward')
 
-    d_help  = 'order of polynomials used to fit the eigenmodes (Default: 8)'
+    d_help  = 'order of polynomials used to fit the eigenmodes (Default: 6)'
     n_help  = 'number of stiffness coefficient given (determine the symmetry) (Default: 2)'
     o_help  = 'file where to put eigenvectors in double format (Default: stdout)'
     p_help  = 'number of eigen frequencies to print (Default: 10)'
     r_help  = 'density in grams/cm^3 (Default: 2.713)'
     s_help  = '0=rectangle, 1=ellipsoidal cylinder, 2=spheroid'
     t_help  = 'hextype - 1=VTI, 2=HTI. Type of hexagonal symetry (Only matters for ns=5) (Default: 1)'
-    x_help  = 'dimension 1 in cm (diameter for cyl. or sphere) (Default: 4.420)'
-    y_help  = 'dimension 2 in cm (diameter for cyl. or sphere) (Default: 4.420)'
-    z_help  = 'dimension 3 in cm (height for cyl. diameter for sphere) (Default: 6.414)'
+    x_help  = 'dimension 1 in centimeters (Default: 3.76)'
+    y_help  = 'dimension 2 in centimeters (Default: 3.76)'
+    z_help  = 'dimension 3 in centimeters (Default: 3.76)'
 
-    forward_parser.add_argument('-d', '--order', type = int, default = 8, help = d_help)
+    forward_parser.add_argument(
+        '-d', '--order',
+        type = int,
+        default = 6,
+        help = d_help)
 
     forward_parser.add_argument(
         '-x', '--d1',
         type = float,
-        default = 4.420,
+        default = 3.76,
         help = x_help)
 
     forward_parser.add_argument(
         '-y', '--d2',
         type = float,
-        default = 4.420,
+        default = 3.76,
         help = y_help)
 
     forward_parser.add_argument(
         '-z', '--d3',
         type = float,
-        default = 6.414,
+        default = 3.76,
         help = z_help)
 
     forward_parser.add_argument(
         '-r', '--rho',
         type = float,
-        default = 2.713,
+        default = 1.70,
         help = r_help)
 
     forward_parser.add_argument(
         '-n', '--ns',
         type = int,
-        default = 2,
+        default = 5,
         choices = [2,3,5,6,9],
         help = n_help)
 
@@ -71,7 +75,7 @@ def create_forward_parser(subparsers):
     forward_parser.add_argument(
         '-s', '--shape',
         type = int,
-        default = 1,
+        default = 2,
         choices = [0,1,2],
         help = s_help)
 
@@ -223,6 +227,13 @@ def post_process(args):
     if args.subcommand == 'inverse' and len(args.a) == 0:
         args.a['c11'] = 110.0
         args.a['c44'] = 26.0
+
+    if args.subcommand == 'forward' and len(args.a) == 0:
+        args.a['c33'] = 10.625
+        args.a['c23'] = 4
+        args.a['c12'] = 4.284
+        args.a['c44'] = 2.448
+        args.a['c66'] = 5.508
 
     return args
     
