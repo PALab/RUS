@@ -13,10 +13,17 @@
 # Computer Science Department
 # University of Auckland, Auckland, 1010, New Zealand
 
-import sys
-import rus_main
+import rus_parser as parser
+import rus_forward as forward
+import rus_inverse as inverse
 
 if __name__ == "__main__":
 
-    rus_main.start(sys.argv)
+    args = parser.start()
+
+    if args.subcommand == 'forward':
+        forward.start(args)
+
+    if args.subcommand == 'inverse':
+        inverse.start(args)
 

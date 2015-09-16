@@ -1,12 +1,9 @@
 import sys
-import rus
+import rus_tools as rus
 import rus_parser
 import numpy
 
-def start(argv):
-
-    # parser provided arguments
-    args = rus_parser.inverse_parser(argv)
+def start(args):
 
     # half sample dimensions are used in calculations
     dimension1 = args.d1 / 2.0

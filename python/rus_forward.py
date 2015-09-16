@@ -3,10 +3,9 @@ import sys
 import scipy
 import scipy.linalg.lapack as lapack
 from math import sqrt
-import rus
+import rus_tools as rus
 
-def start(argv):
-    args = rus_parser.forward_parser(sys.argv)
+def start(args):
 
     order   = args.order
     density = args.rho
