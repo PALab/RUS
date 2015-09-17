@@ -15,7 +15,7 @@ def start(args):
     a = args.order + 1
     b = args.order + 2
     c = args.order + 3
-    problem_size = 3 * a * b * c / 6
+    problem_size = 3 * a * b * c // 6
 
     # relationship between ir and l,m,n - filling tables
     tabs, irk = rus.index_relationship(args.order, problem_size)
@@ -47,7 +47,13 @@ def start(args):
             print('{0:.6f}'.format(100 * args.a[k])) # print estimated cxx values
 
     print('\nThis calculation can be executed again with the following command:')
-    print('python {} --order {} --shape {} --ns {} --hextype {} --d1 {} --d2 {} --d3 {} --rho {} --freqmin {} --freqmax {} --iterations {} {}'.format(sys.argv[0], args.order, args.shape, args.ns, args.hextype, args.d1, args.d2, args.d3, args.rho, args.freqmin, args.freqmax, args.iterations, ' '.join(('--' + k + ' ' + str(v*100)) for k,v in orig_cxx_values.iteritems())))
+    try:
+        orig_cxx_values.iteritems()
+    except AttributeError:
+        # Python 3
+        print('python {} --order {} --shape {} --ns {} --hextype {} --d1 {} --d2 {} --d3 {} --rho {} --freqmin {} --freqmax {} --iterations {} {}'.format(sys.argv[0], args.order, args.shape, args.ns, args.hextype, args.d1, args.d2, args.d3, args.rho, args.freqmin, args.freqmax, args.iterations, ' '.join(('--' + k + ' ' + str(v*100)) for k,v in iter(orig_cxx_values.items()))))
+    else:
+        print('python {} --order {} --shape {} --ns {} --hextype {} --d1 {} --d2 {} --d3 {} --rho {} --freqmin {} --freqmax {} --iterations {} {}'.format(sys.argv[0], args.order, args.shape, args.ns, args.hextype, args.d1, args.d2, args.d3, args.rho, args.freqmin, args.freqmax, args.iterations, ' '.join(('--' + k + ' ' + str(v*100)) for k,v in orig_cxx_values.iteritems())))
 
 def read_input(infile):
 
@@ -97,8 +103,17 @@ def print_args(args, ndata):
     print('freqmin={0:.6f}'.format(args.freqmin))
     print('freqmax={0:.6f}'.format(args.freqmax))
 
-    for key, value in args.a.iteritems():
-        print('{0:.6f}'.format(value))
-        args.a[key] = value / 100
+    try:
+        args.a.iteritems()
+    except AttributeError:
+        # For Python 3
+        for key, value in iter(args.a.items()):
+            print('{0:.6f}'.format(value))
+            args.a[key] = value / 100
+    else:
+        # For Python 2
+        for key, value in args.a.iteritems():
+            print('{0:.6f}'.format(value))
+            args.a[key] = value / 100
 
     print('ndata={}'.format(str(ndata)))
