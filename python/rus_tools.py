@@ -1,19 +1,51 @@
+# ------------------------------------------------
+# This file contains all the necessary helping
+# functions for the other RUS modules to operate.
+# Many of these functions are shared between
+# the forward and inverse code. In some cases,
+# these functions have been blindly translated
+# from their respective C versions, without
+# regards to their exact operation.
+# ------------------------------------------------
+
 import sys
 import scipy
 import numpy
 import math
 import scipy.linalg as la
 
-# global memoization table for volintegral
+# -------------------------------------------
+# GLOBAL MEMOIZATION DATA
+# -------------------------------------------
+# During testing, it was found that the majority
+# of the program execution was spent evaluating
+# integrals and double factorials. To improve
+# performace, a memoization table was implemented
+# to store the results for prior calculations.
+# This greatly improves performance.
+
+# dimension size of table
 _memo_vol_max = 11
+# memoization table for volintegral
 _memo_volintegral = [[[None for i in range(_memo_vol_max)] for j in range(_memo_vol_max)] for k in range(_memo_vol_max)]
-# global memoization table for double factorial
+
+# size of list
 _memo_max = 1024
+# memoization table for double factorial
 _memo_doublefact = [None for i in range(_memo_max)]
 _memo_doublefact[0] = 1
 _memo_doublefact[1] = 1
 
+# -------------------------------------------
+# FUNCTIONS
+# -------------------------------------------
 def compute_dyda(ns,hextype,r,tabs,dimensions,shape,ifw,ndata,z,wsort,indice):
+    """
+    Calculate and return the dyda value.
+    
+    TODO: What does this dyda value tell us and what is
+    it used for?
+    """
     dyda = numpy.zeros((ns,ndata))
 
     # isotropic case
@@ -164,6 +196,7 @@ def compute_dyda(ns,hextype,r,tabs,dimensions,shape,ifw,ndata,z,wsort,indice):
 
 
 def calc_forward_cm(args):
+    """ Calls appropriate function based on ns value. """
     # isotropic
     if args.ns == 2:
         return forward_iso(args.a)
@@ -191,320 +224,6 @@ def calc_forward_cm(args):
     if args.ns == 9:
         return forward_orth(args.a)
 
-
-
-# isotropic
-def forward_iso(cxx):
-    cm = numpy.zeros((6,6))
-    try:
-        cm[0][0] = cxx['c11']
-        cm[3][3] = cxx['c44']
-    except KeyError:
-        raise ValueError('Missing cxx value.')
-    else:
-        cm[0][0] = cm[0][0] / 100
-        cm[0][1] = cm[0][1] / 100
-        cm[3][3] = cm[3][3] / 100
-        cm[1][1] = cm[2][2] = cm[0][0]
-        cm[4][4] = cm[5][5] = cm[3][3]
-        cm[0][2] = cm[1][2] = cm[0][1]
-        cm[2][0] = cm[2][1] = cm[1][0] = cm[0][1]
-        return cm
-
-def dstiff_iso_c11():
-    cm = numpy.zeros((6,6))
-    cm[0][0] = 10.0
-    cm[1][1] = cm[2][2] = cm[0][0]
-    cm[0][1] = cm[0][2] = cm[1][2] = cm[0][0]
-    cm[1][0] = cm[2][0] = cm[2][1] = cm[0][0]
-    return stiffness(cm)
-
-def dstiff_iso_c44():
-    cm = numpy.zeros((6,6))
-    cm[3][3] = 1.0
-    cm[4][4] = cm[5][5] = cm[3][3]
-    cm[0][1] = cm[0][2] = cm[1][2] = -2.0 * cm[3][3]
-    cm[1][0] = cm[2][0] = cm[2][1] = -2.0 * cm[3][3]
-    return stiffness(cm)
-
-# cubic
-def forward_cub(cxx):
-    cm = numpy.zeros((6,6))
-    try:
-        cm[0][0] = cxx['c11']
-        cm[0][1] = cxx['c12']
-        cm[3][3] = cxx['c44']
-    except KeyError:
-        raise ValueError('Missing cxx value.')
-    else:
-        cm[0][0] = cm[0][0] / 100
-        cm[0][1] = cm[0][1] / 100
-        cm[3][3] = cm[3][3] / 100
-        cm[1][1] = cm[2][2] = cm[0][0]
-        cm[4][4] = cm[5][5] = cm[3][3]
-        cm[0][2] = cm[1][2] = cm[0][1]
-        cm[2][0] = cm[2][1] = cm[1][0] = cm[0][1]
-        return cm
-
-def dstiff_cub_c11():
-    cm = numpy.zeros((6,6))
-    cm[0][0] = 10.0
-    cm[1][1] = cm[2][2] = cm[0][0]
-    return stiffness(cm)
-
-def dstiff_cub_c12():
-    cm = numpy.zeros((6,6))
-    cm[0][1] = 10.0
-    cm[0][2] = cm[1][2] = cm[0][1]
-    cm[2][0] = cm[2][1] = cm[1][0] = cm[0][1]
-    return stiffness(cm)
-
-def dstiff_cub_c44():
-    cm = numpy.zeros((6,6))
-    cm[3][3] = 1.0
-    cm[4][4] = cm[5][5] = cm[3][3]
-    return stiffness(cm)
-
-# VTI
-def forward_vti(cxx):
-    cm = numpy.zeros((6,6))
-    try:
-        cm[2][2] = cxx['c33']
-        cm[1][2] = cxx['c23']
-        cm[0][1] = cxx['c12']
-        cm[3][3] = cxx['c44']
-        cm[5][5] = cxx['c66']
-    except KeyError:
-        raise ValueError('Missing cxx value.')
-    else:
-        cm[2][2] = cm[2][2] / 100
-        cm[1][2] = cm[1][2] / 100
-        cm[0][1] = cm[0][1] / 100
-        cm[3][3] = cm[3][3] / 100
-        cm[5][5] = cm[5][5] / 100
-        cm[0][0] = cm[1][1] = 2.0 * cm[5][5] + cm[0][1]
-        cm[0][2] = cm[2][0] = cm[2][1] = cm[1][2]
-        cm[1][0] = cm[0][1]
-        cm[4][4] = cm[3][3]
-        return cm
-
-def dstiff_vti_c33():
-    cm = numpy.zeros((6,6))
-    cm[2][2] = 10.0
-    return stiffness(cm)
-
-def dstiff_vti_c23():
-    cm = numpy.zeros((6,6))
-    cm[1][2] = 10.0
-    cm[0][2] = cm[2][0] = cm[2][1] = cm[1][2]
-    return stiffness(cm)
-
-def dstiff_vti_c12():
-    cm = numpy.zeros((6,6))
-    cm[0][1] = 10.0
-    cm[0][0] = cm[1][1] = cm[0][1]
-    cm[1][0] = cm[0][1]
-    return stiffness(cm)
-
-def dstiff_vti_c44():
-    cm = numpy.zeros((6,6))
-    cm[3][3] = 1.0
-    cm[4][4] = cm[3][3]
-    return stiffness(cm)
-
-def dstiff_vti_c66():
-    cm = numpy.zeros((6,6))
-    cm[5][5] = 1.0
-    cm[0][0] = cm[1][1] = 2.0 * cm[5][5]
-    return stiffness(cm)
-
-# HTI
-def forward_hti(cxx):
-    cm = numpy.zeros((6,6))
-    try:
-        cm[0][0] = cxx['c11']
-        cm[2][2] = cxx['c33']
-        cm[0][1] = cxx['c12']
-        cm[3][3] = cxx['c44']
-        cm[5][5] = cxx['c66']
-    except KeyError:
-        raise ValueError('Missing cxx value.')
-    else:
-        cm[0][0] = cm[0][0] / 100
-        cm[2][2] = cm[2][2] / 100
-        cm[0][1] = cm[0][1] / 100
-        cm[3][3] = cm[3][3] / 100
-        cm[5][5] = cm[5][5] / 100
-        cm[1][2] = cm[2][1] = cm[2][2] - 2.0 * cm[3][3]
-        cm[0][2] = cm[1][0] = cm[2][0] = cm[0][1]
-        cm[1][1] = cm[2][2]
-        cm[4][4] = cm[5][5]
-        return cm
-
-def dstiff_hti_c11():
-    cm = numpy.zeros((6,6))
-    cm[0][0] = 10.0
-    return stiffness(cm)
-
-def dstiff_hti_c33():
-    cm = numpy.zeros((6,6))
-    cm[2][2] = 10.0
-    cm[1][1] = cm[2][2]
-    return stiffness(cm)
-
-def dstiff_hti_c12():
-    cm = numpy.zeros((6,6))
-    cm[0][1] = 10.0
-    cm[0][2] = cm[1][0] = cm[2][0] = cm[0][1]
-    return stiffness(cm)
-
-def dstiff_hti_c44():
-    cm = numpy.zeros((6,6))
-    cm[3][3] = 1.0
-    return stiffness(cm)
-
-def dstiff_hti_c66():
-    cm = numpy.zeros((6,6))
-    cm[5][5] = 1.0
-    cm[4][4] = cm[5][5]
-    return stiffness(cm)
-
-# Tetragonal
-def forward_tetra(cxx):
-    cm = numpy.zeros((6,6))
-    try:
-        cm[0][0] = cxx['c11']
-        cm[2][2] = cxx['c33']
-        cm[1][2] = cxx['c23']
-        cm[0][1] = cxx['c12']
-        cm[3][3] = cxx['c44']
-        cm[5][5] = cxx['c66']
-    except KeyError:
-        raise ValueError('Missing cxx value.')
-    else:
-        cm[0][0] = cm[0][0] / 100
-        cm[2][2] = cm[2][2] / 100
-        cm[1][2] = cm[1][2] / 100
-        cm[3][3] = cm[3][3] / 100
-        cm[0][1] = cm[0][1] / 100
-        cm[5][5] = cm[5][5] / 100
-        cm[1][1] = cm[0][0]
-        cm[0][2] = cm[2][0] = cm[1][2]
-        cm[1][0] = cm[0][1]
-        cm[2][1] = cm[1][2]
-        cm[4][4] = cm[3][3]
-        return cm
-
-def dstiff_tetra_c11():
-    cm = numpy.zeros((6,6))
-    cm[1][1] = cm[0][0] = 10.0
-    return stiffness(cm)
-
-def dstiff_tetra_c33():
-    cm = numpy.zeros((6,6))
-    cm[2][2] = 10.0
-    return stiffness(cm)
-
-def dstiff_tetra_c23():
-    cm = numpy.zeros((6,6))
-    cm[1][2] = 10.0
-    cm[0][2] = cm[2][0] = cm[2][1] = cm[1][2]
-    return stiffness(cm)
-
-def dstiff_tetra_c12():
-    cm = numpy.zeros((6,6))
-    cm[0][1] = 10.0
-    cm[1][0] = cm[0][1]
-    return stiffness(cm)
-
-def dstiff_tetra_c44():
-    cm = numpy.zeros((6,6))
-    cm[3][3] = 1.0
-    cm[4][4] = cm[3][3]
-    return stiffness(cm)
-
-def dstiff_tetra_c66():
-    cm = numpy.zeros((6,6))
-    cm[5][5] = 1.0
-    return stiffness(cm)
-
-# Orthorhombic
-def forward_orth(cxx):
-    cm = numpy.zeros((6,6))
-    try:
-        cm[0][0] = cxx['c11']
-        cm[1][1] = cxx['c22']
-        cm[2][2] = cxx['c33']
-        cm[1][2] = cxx['c23']
-        cm[0][2] = cxx['c13']
-        cm[0][1] = cxx['c12']
-        cm[3][3] = cxx['c44']
-        cm[4][4] = cxx['c55']
-        cm[5][5] = cxx['c66']
-    except KeyError:
-        raise ValueError('Missing cxx value.')
-    else:
-        cm[0][0] = cm[0][0] / 100
-        cm[1][1] = cm[1][1] / 100
-        cm[2][2] = cm[2][2] / 100
-        cm[1][2] = cm[1][2] / 100
-        cm[0][2] = cm[0][2] / 100
-        cm[0][1] = cm[0][1] / 100
-        cm[3][3] = cm[3][3] / 100
-        cm[4][4] = cm[4][4] / 100
-        cm[5][5] = cm[5][5] / 100
-        cm[2][0] = cm[0][2]
-        cm[1][0] = cm[0][1]
-        cm[2][1] = cm[1][2]
-        return cm
-
-def dstiff_orth_c11():
-    cm = numpy.zeros((6,6))
-    cm[0][0] = 10.0
-    return stiffness(cm)
-
-def dstiff_orth_c22():
-    cm = numpy.zeros((6,6))
-    cm[1][1] = 10.0
-    return stiffness(cm)
-
-def dstiff_orth_c33(): 
-    cm = numpy.zeros((6,6))
-    cm[2][2] = 10.0
-    return stiffness(cm)
-
-def dstiff_orth_c23():
-    cm = numpy.zeros((6,6))
-    cm[1][2] = 10.0
-    cm[2][1] = cm[1][2]
-    return stiffness(cm)
-
-def dstiff_orth_c13():
-    cm = numpy.zeros((6,6))
-    cm[0][2] = 10.0
-    cm[2][0] = cm[0][2]
-    return stiffness(cm)
-
-def dstiff_orth_c12():
-    cm = numpy.zeros((6,6))
-    cm[0][1] = 10.0
-    cm[1][0] = cm[0][1]
-    return stiffness(cm)
-
-def dstiff_orth_c44():
-    cm = numpy.zeros((6,6))
-    cm[3][3] = 1.0
-    return stiffness(cm)
-
-def dstiff_orth_c55():
-    cm = numpy.zeros((6,6))
-    cm[4][4] = 1.0
-    return stiffness(cm)
-
-def dstiff_orth_c66():
-    cm = numpy.zeros((6,6))
-    cm[5][5] = 1.0
-    return stiffness(cm)
 
 
 
@@ -726,14 +445,14 @@ def formod(d,r,tabs,irk,dimensions,rho,shape,freqmin,ndata,a,ns,hextype):
     freqs = 'predictedf' # CHANGE THIS LINE TO APPROPRIATE DIRECTORY
 
     cm = make_cm(a,hextype)
-    e = e_fill(tabs,r,dimensions,rho,shape,irk)
-    gamma = gamma_fill(tabs,r,dimensions,cm,shape,irk)
+    e = e_fill(tabs,dimensions,rho,shape,irk)
+    gamma = gamma_fill(tabs,dimensions,cm,shape,irk)
       
   
     print('starting eigenvalues calculation')
-    #/*-------------------------------------------------------------*/
-    #/*--------- solve the generalized eigenvalue problem ----------*/
-    #/*-------------------------------------------------------------*/  
+    #-------------------------------------------------------------
+    #--------- solve the generalized eigenvalue problem ----------
+    #-------------------------------------------------------------
     eigvals = []
     eigvect = []
     for k in range(8):
@@ -742,10 +461,10 @@ def formod(d,r,tabs,irk,dimensions,rho,shape,freqmin,ndata,a,ns,hextype):
         eigvals.append(w)
         eigvect.append(numpy.transpose(v))
 
-    #/*-------------------------------------------------------------*/  
-    #/*-------------------------------------------------------------*/
-    #/*-------------------------------------------------------------*/
-    #/* eigen vectors */
+    #-------------------------------------------------------------
+    #-------------------------------------------------------------
+    #-------------------------------------------------------------
+    # eigen vectors
     z = numpy.zeros((r,r))
     irf = 0
     for k in range(8):
@@ -1144,7 +863,12 @@ def doublefact(n):
 
 
 
-def e_fill(tabs,r,dimensions,rho,shape,irk):
+def e_fill(tabs,dimensions,rho,shape,irk):
+    """
+    Generates and returns the value e.
+
+    TODO: What is e?
+    """
     e = [scipy.zeros((irk[i],irk[i])) for i in range(8)]
     for k in range(8):
         irs = 0
@@ -1174,39 +898,61 @@ def e_fill(tabs,r,dimensions,rho,shape,irk):
     return e
 
 def stiffness(cm):
-	c = scipy.zeros((3,3,3,3))
-	for i in range(3):
-		for j in range(3):
-			if i == 0 and j == 0:
-				a = 0
-			elif i == 1 and j == 1:
-				a = 1
-			elif i == 2 and j == 2:
-				a = 2
-			elif (i == 1 and j == 2) or (i == 2 and j == 1):
-				a = 3
-			elif (i == 0 and j == 2) or (i == 2 and j == 0):
-				a = 4
-			else:
-				a = 5
-			for k in range(3):
-				for l in range(3):
-					if k == 0 and l == 0:
-						b = 0
-					elif k == 1 and l == 1:
-						b = 1
-					elif k == 2 and l == 2:
-						b = 2
-					elif (k == 1 and l == 2) or (k == 2 and l == 1):
-						b = 3
-					elif (k == 0 and l == 2) or (k == 2 and l == 0):
-						b = 4
-					else:
-						b = 5
-					c[i][j][k][l] = cm[a][b]
-	return c
+    """
+    Uses cm to compute a value, c, which is returned.
 
-def gamma_fill(tabs,r,dimensions,cm,shape,irk):
+    Converts the 6x6 array, cm, into a 3x3x3x3 array,
+    c. The new array is returned. The existing array
+    is not changed.
+    
+    TODO: c and cm should have better descriptions
+    of what values they represent, but I was unsure
+    during initial implementation.
+    """
+    c = scipy.zeros((3,3,3,3))
+    for i in range(3):
+        for j in range(3):
+            if i == 0 and j == 0:
+                a = 0
+            elif i == 1 and j == 1:
+                a = 1
+            elif i == 2 and j == 2:
+                a = 2
+            elif (i == 1 and j == 2) or (i == 2 and j == 1):
+                a = 3
+            elif (i == 0 and j == 2) or (i == 2 and j == 0):
+                a = 4
+            else:
+                a = 5
+            for k in range(3):
+                for l in range(3):
+                    if k == 0 and l == 0:
+                        b = 0
+                    elif k == 1 and l == 1:
+                        b = 1
+                    elif k == 2 and l == 2:
+                        b = 2
+                    elif (k == 1 and l == 2) or (k == 2 and l == 1):
+                        b = 3
+                    elif (k == 0 and l == 2) or (k == 2 and l == 0):
+                        b = 4
+                    else:
+                        b = 5
+                    c[i][j][k][l] = cm[a][b]
+    return c
+
+def gamma_fill(tabs,dimensions,cm,shape,irk):
+    """
+    Calculate a value, gamma, and return it.
+    
+    gamma is a set of 8, 2D square arrays,
+    based on the values in irk.
+
+    The function calls gamma_helper() for much
+    of the work.
+
+    TODO: What is this function doing?
+    """
     gamma = [scipy.zeros((irk[i],irk[i])) for i in range(8)]
     c = stiffness(cm)
     for k in range(8):
@@ -1224,10 +970,20 @@ def gamma_fill(tabs,r,dimensions,cm,shape,irk):
     return gamma
 
 def xindex(ax, x, index):
+    """
+    Returns the index position of x in ax. (I think)
+
+    TODO: This function finds and returns the index position
+    of x in ax. It is possible that this function could
+    be replaced by a built-in Python function. However, I
+    am not sure if this functions assumes anything else
+    about the list, ax, used as input. It seems that this
+    implementation of index has been optimized.
+    """
     # Copyright (c) Colorado School of Mines, 2011.
     # All rights reserved. 
 
-    # Author:  Dave Hale, Colorado School of Mines, 12/25/89
+    # Author: Dave Hale, Colorado School of Mines, 12/25/89
     # Translated to Python: Paul Freeman, University of Auckland, 6/11/2015
 
     nx = len(ax)
@@ -1295,14 +1051,18 @@ def xindex(ax, x, index):
 
 
 
-def tabs_add(tabs, ir, irk, i, l, m, n):
-    tabs[ir] = [i,l,m,n]
-    return ir + 1, irk + 1
+def index_relationship(d, problem_size):
+    """
+    Creates and returns tabs and irk data.
 
+    tabs and irk are used in future functions.
+    This function populates them based on the
+    values of d.
 
-
-def index_relationship(d, r):
-    tabs = numpy.zeros((int(r),4), dtype=numpy.int64)
+    TODO: Improve description of what this
+    function is actually doing and why.
+    """
+    tabs = numpy.zeros((int(problem_size),4), dtype=numpy.int64)
     irk  = [0 for i in range(8)]
 
     ir = 0
@@ -1314,7 +1074,9 @@ def index_relationship(d, r):
                     if (i == 0 and l % 2 == 0 and m % 2 == 0 and n % 2 == 0) or \
                        (i == 1 and l % 2 == 1 and m % 2 == 1 and n % 2 == 0) or \
                        (i == 2 and l % 2 == 1 and m % 2 == 0 and n % 2 == 1):
-                        ir, irk[0] = tabs_add(tabs, ir, irk[0], i, l, m, n)
+                        tabs[ir] = [i,l,m,n]
+                        ir += 1
+                        irk[0] += 1
     # k == 1
     for i in range(3):
         for l in range(d+1):
@@ -1323,7 +1085,9 @@ def index_relationship(d, r):
                     if (i == 0 and l % 2 == 0 and m % 2 == 0 and n % 2 == 1) or \
                        (i == 1 and l % 2 == 1 and m % 2 == 1 and n % 2 == 1) or \
                        (i == 2 and l % 2 == 1 and m % 2 == 0 and n % 2 == 0):
-                        ir, irk[1] = tabs_add(tabs, ir, irk[1], i, l, m, n)
+                        tabs[ir] = [i,l,m,n]
+                        ir += 1
+                        irk[1] += 1
     # k == 2
     for i in range(3):
         for l in range(d+1):
@@ -1332,7 +1096,9 @@ def index_relationship(d, r):
                     if (i == 0 and l % 2 == 0 and m % 2 == 1 and n % 2 == 0) or \
                        (i == 1 and l % 2 == 1 and m % 2 == 0 and n % 2 == 0) or \
                        (i == 2 and l % 2 == 1 and m % 2 == 1 and n % 2 == 1):
-                        ir, irk[2] = tabs_add(tabs, ir, irk[2], i, l, m, n)
+                        tabs[ir] = [i,l,m,n]
+                        ir += 1
+                        irk[2] += 1
     # k == 3
     for i in range(3):
         for l in range(d+1):
@@ -1341,7 +1107,9 @@ def index_relationship(d, r):
                     if (i == 0 and l % 2 == 0 and m % 2 == 1 and n % 2 == 1) or \
                        (i == 1 and l % 2 == 1 and m % 2 == 0 and n % 2 == 1) or \
                        (i == 2 and l % 2 == 1 and m % 2 == 1 and n % 2 == 0):
-                        ir, irk[3] = tabs_add(tabs, ir, irk[3], i, l, m, n)
+                        tabs[ir] = [i,l,m,n]
+                        ir += 1
+                        irk[3] += 1
     # k == 4
     for i in range(3):
         for l in range(d+1):
@@ -1350,7 +1118,9 @@ def index_relationship(d, r):
                     if (i == 0 and l % 2 == 1 and m % 2 == 0 and n % 2 == 0) or \
                        (i == 1 and l % 2 == 0 and m % 2 == 1 and n % 2 == 0) or \
                        (i == 2 and l % 2 == 0 and m % 2 == 0 and n % 2 == 1):
-                        ir, irk[4] = tabs_add(tabs, ir, irk[4], i, l, m, n)
+                        tabs[ir] = [i,l,m,n]
+                        ir += 1
+                        irk[4] += 1
     # k == 5
     for i in range(3):
         for l in range(d+1):
@@ -1359,7 +1129,9 @@ def index_relationship(d, r):
                     if (i == 0 and l % 2 == 1 and m % 2 == 0 and n % 2 == 1) or \
                        (i == 1 and l % 2 == 0 and m % 2 == 1 and n % 2 == 1) or \
                        (i == 2 and l % 2 == 0 and m % 2 == 0 and n % 2 == 0):
-                        ir, irk[5] = tabs_add(tabs, ir, irk[5], i, l, m, n)
+                        tabs[ir] = [i,l,m,n]
+                        ir += 1
+                        irk[5] += 1
     # k == 6
     for i in range(3):
         for l in range(d+1):
@@ -1368,7 +1140,9 @@ def index_relationship(d, r):
                     if (i == 0 and l % 2 == 1 and m % 2 == 1 and n % 2 == 0) or \
                        (i == 1 and l % 2 == 0 and m % 2 == 0 and n % 2 == 0) or \
                        (i == 2 and l % 2 == 0 and m % 2 == 1 and n % 2 == 1):
-                        ir, irk[6] = tabs_add(tabs, ir, irk[6], i, l, m, n)
+                        tabs[ir] = [i,l,m,n]
+                        ir += 1
+                        irk[6] += 1
     # k == 7
     for i in range(3):
         for l in range(d+1):
@@ -1377,7 +1151,9 @@ def index_relationship(d, r):
                     if (i == 0 and l % 2 == 1 and m % 2 == 1 and n % 2 == 1) or \
                        (i == 1 and l % 2 == 0 and m % 2 == 0 and n % 2 == 1) or \
                        (i == 2 and l % 2 == 0 and m % 2 == 1 and n % 2 == 0):
-                        ir, irk[7] = tabs_add(tabs, ir, irk[7], i, l, m, n)
+                        tabs[ir] = [i,l,m,n]
+                        ir += 1
+                        irk[7] += 1
     print("irk[0]=" + str(irk[0]))
     print("irk[1]=" + str(irk[1]))
     print("irk[2]=" + str(irk[2]))
@@ -1388,3 +1164,395 @@ def index_relationship(d, r):
     print("irk[7]=" + str(irk[7]))
 
     return tabs, irk
+
+# --------------------------------------------------
+# ISOTROPIC CALCULATIONS
+# --------------------------------------------------
+def forward_iso(cxx):
+    """
+    Calculate the forward isotropic cm value.
+
+    Uses the cxx dictionary to calculate the 6x6
+    cm array.
+    """
+    cm = numpy.zeros((6,6))
+    try:
+        cm[0][0] = cxx['c11']
+        cm[3][3] = cxx['c44']
+    except KeyError:
+        raise ValueError('Missing cxx value.')
+    else:
+        cm[0][0] = cm[0][0] / 100
+        cm[0][1] = cm[0][1] / 100
+        cm[3][3] = cm[3][3] / 100
+        cm[1][1] = cm[2][2] = cm[0][0]
+        cm[4][4] = cm[5][5] = cm[3][3]
+        cm[0][2] = cm[1][2] = cm[0][1]
+        cm[2][0] = cm[2][1] = cm[1][0] = cm[0][1]
+        return cm
+
+def dstiff_iso_c11():
+    """ Returns the isotropic stiffness for c11. """
+    cm = numpy.zeros((6,6))
+    cm[0][0] = 10.0
+    cm[1][1] = cm[2][2] = cm[0][0]
+    cm[0][1] = cm[0][2] = cm[1][2] = cm[0][0]
+    cm[1][0] = cm[2][0] = cm[2][1] = cm[0][0]
+    return stiffness(cm)
+
+def dstiff_iso_c44():
+    """ Returns the isotropic stiffness for c44. """
+    cm = numpy.zeros((6,6))
+    cm[3][3] = 1.0
+    cm[4][4] = cm[5][5] = cm[3][3]
+    cm[0][1] = cm[0][2] = cm[1][2] = -2.0 * cm[3][3]
+    cm[1][0] = cm[2][0] = cm[2][1] = -2.0 * cm[3][3]
+    return stiffness(cm)
+
+# --------------------------------------------------
+# CUBIC CALCULATIONS
+# --------------------------------------------------
+def forward_cub(cxx):
+    """
+    Calculate the forward cubic cm value.
+
+    Uses the cxx dictionary to calculate the 6x6
+    cm array.
+    """
+    cm = numpy.zeros((6,6))
+    try:
+        cm[0][0] = cxx['c11']
+        cm[0][1] = cxx['c12']
+        cm[3][3] = cxx['c44']
+    except KeyError:
+        raise ValueError('Missing cxx value.')
+    else:
+        cm[0][0] = cm[0][0] / 100
+        cm[0][1] = cm[0][1] / 100
+        cm[3][3] = cm[3][3] / 100
+        cm[1][1] = cm[2][2] = cm[0][0]
+        cm[4][4] = cm[5][5] = cm[3][3]
+        cm[0][2] = cm[1][2] = cm[0][1]
+        cm[2][0] = cm[2][1] = cm[1][0] = cm[0][1]
+        return cm
+
+def dstiff_cub_c11():
+    """ Returns the cubic stiffness for c11. """
+    cm = numpy.zeros((6,6))
+    cm[0][0] = 10.0
+    cm[1][1] = cm[2][2] = cm[0][0]
+    return stiffness(cm)
+
+def dstiff_cub_c12():
+    """ Returns the cubic stiffness for c12. """
+    cm = numpy.zeros((6,6))
+    cm[0][1] = 10.0
+    cm[0][2] = cm[1][2] = cm[0][1]
+    cm[2][0] = cm[2][1] = cm[1][0] = cm[0][1]
+    return stiffness(cm)
+
+def dstiff_cub_c44():
+    """ Returns the cubic stiffness for c44. """
+    cm = numpy.zeros((6,6))
+    cm[3][3] = 1.0
+    cm[4][4] = cm[5][5] = cm[3][3]
+    return stiffness(cm)
+
+# --------------------------------------------------
+# VTI CALCULATIONS
+# --------------------------------------------------
+def forward_vti(cxx):
+    """
+    Calculate the forward VTI cm value.
+
+    Uses the cxx dictionary to calculate the 6x6
+    cm array.
+    """
+    cm = numpy.zeros((6,6))
+    try:
+        cm[2][2] = cxx['c33']
+        cm[1][2] = cxx['c23']
+        cm[0][1] = cxx['c12']
+        cm[3][3] = cxx['c44']
+        cm[5][5] = cxx['c66']
+    except KeyError:
+        raise ValueError('Missing cxx value.')
+    else:
+        cm[2][2] = cm[2][2] / 100
+        cm[1][2] = cm[1][2] / 100
+        cm[0][1] = cm[0][1] / 100
+        cm[3][3] = cm[3][3] / 100
+        cm[5][5] = cm[5][5] / 100
+        cm[0][0] = cm[1][1] = 2.0 * cm[5][5] + cm[0][1]
+        cm[0][2] = cm[2][0] = cm[2][1] = cm[1][2]
+        cm[1][0] = cm[0][1]
+        cm[4][4] = cm[3][3]
+        return cm
+
+def dstiff_vti_c33():
+    """ Returns the VTI stiffness for c33. """
+    cm = numpy.zeros((6,6))
+    cm[2][2] = 10.0
+    return stiffness(cm)
+
+def dstiff_vti_c23():
+    """ Returns the VTI stiffness for c23. """
+    cm = numpy.zeros((6,6))
+    cm[1][2] = 10.0
+    cm[0][2] = cm[2][0] = cm[2][1] = cm[1][2]
+    return stiffness(cm)
+
+def dstiff_vti_c12():
+    """ Returns the VTI stiffness for c12. """
+    cm = numpy.zeros((6,6))
+    cm[0][1] = 10.0
+    cm[0][0] = cm[1][1] = cm[0][1]
+    cm[1][0] = cm[0][1]
+    return stiffness(cm)
+
+def dstiff_vti_c44():
+    """ Returns the VTI stiffness for c44. """
+    cm = numpy.zeros((6,6))
+    cm[3][3] = 1.0
+    cm[4][4] = cm[3][3]
+    return stiffness(cm)
+
+def dstiff_vti_c66():
+    """ Returns the VTI stiffness for c66. """
+    cm = numpy.zeros((6,6))
+    cm[5][5] = 1.0
+    cm[0][0] = cm[1][1] = 2.0 * cm[5][5]
+    return stiffness(cm)
+
+# --------------------------------------------------
+# HTI CALCULATIONS
+# --------------------------------------------------
+def forward_hti(cxx):
+    """
+    Calculate the forward HTI cm value.
+
+    Uses the cxx dictionary to calculate the 6x6
+    cm array.
+    """
+    cm = numpy.zeros((6,6))
+    try:
+        cm[0][0] = cxx['c11']
+        cm[2][2] = cxx['c33']
+        cm[0][1] = cxx['c12']
+        cm[3][3] = cxx['c44']
+        cm[5][5] = cxx['c66']
+    except KeyError:
+        raise ValueError('Missing cxx value.')
+    else:
+        cm[0][0] = cm[0][0] / 100
+        cm[2][2] = cm[2][2] / 100
+        cm[0][1] = cm[0][1] / 100
+        cm[3][3] = cm[3][3] / 100
+        cm[5][5] = cm[5][5] / 100
+        cm[1][2] = cm[2][1] = cm[2][2] - 2.0 * cm[3][3]
+        cm[0][2] = cm[1][0] = cm[2][0] = cm[0][1]
+        cm[1][1] = cm[2][2]
+        cm[4][4] = cm[5][5]
+        return cm
+
+def dstiff_hti_c11():
+    """ Returns the HTI stiffness for c11. """
+    cm = numpy.zeros((6,6))
+    cm[0][0] = 10.0
+    return stiffness(cm)
+
+def dstiff_hti_c33():
+    """ Returns the HTI stiffness for c33. """
+    cm = numpy.zeros((6,6))
+    cm[2][2] = 10.0
+    cm[1][1] = cm[2][2]
+    return stiffness(cm)
+
+def dstiff_hti_c12():
+    """ Returns the HTI stiffness for c12. """
+    cm = numpy.zeros((6,6))
+    cm[0][1] = 10.0
+    cm[0][2] = cm[1][0] = cm[2][0] = cm[0][1]
+    return stiffness(cm)
+
+def dstiff_hti_c44():
+    """ Returns the HTI stiffness for c44. """
+    cm = numpy.zeros((6,6))
+    cm[3][3] = 1.0
+    return stiffness(cm)
+
+def dstiff_hti_c66():
+    """ Returns the HTI stiffness for c66. """
+    cm = numpy.zeros((6,6))
+    cm[5][5] = 1.0
+    cm[4][4] = cm[5][5]
+    return stiffness(cm)
+
+# --------------------------------------------------
+# TETRAGONAL CALCULATIONS
+# --------------------------------------------------
+def forward_tetra(cxx):
+    """
+    Calculate the forward tetragonal cm value.
+
+    Uses the cxx dictionary to calculate the 6x6
+    cm array.
+    """
+    cm = numpy.zeros((6,6))
+    try:
+        cm[0][0] = cxx['c11']
+        cm[2][2] = cxx['c33']
+        cm[1][2] = cxx['c23']
+        cm[0][1] = cxx['c12']
+        cm[3][3] = cxx['c44']
+        cm[5][5] = cxx['c66']
+    except KeyError:
+        raise ValueError('Missing cxx value.')
+    else:
+        cm[0][0] = cm[0][0] / 100
+        cm[2][2] = cm[2][2] / 100
+        cm[1][2] = cm[1][2] / 100
+        cm[3][3] = cm[3][3] / 100
+        cm[0][1] = cm[0][1] / 100
+        cm[5][5] = cm[5][5] / 100
+        cm[1][1] = cm[0][0]
+        cm[0][2] = cm[2][0] = cm[1][2]
+        cm[1][0] = cm[0][1]
+        cm[2][1] = cm[1][2]
+        cm[4][4] = cm[3][3]
+        return cm
+
+def dstiff_tetra_c11():
+    """ Returns the tetragonal stiffness for c11. """
+    cm = numpy.zeros((6,6))
+    cm[1][1] = cm[0][0] = 10.0
+    return stiffness(cm)
+
+def dstiff_tetra_c33():
+    """ Returns the tetragonal stiffness for c33. """
+    cm = numpy.zeros((6,6))
+    cm[2][2] = 10.0
+    return stiffness(cm)
+
+def dstiff_tetra_c23():
+    """ Returns the tetragonal stiffness for c23. """
+    cm = numpy.zeros((6,6))
+    cm[1][2] = 10.0
+    cm[0][2] = cm[2][0] = cm[2][1] = cm[1][2]
+    return stiffness(cm)
+
+def dstiff_tetra_c12():
+    """ Returns the tetragonal stiffness for c12. """
+    cm = numpy.zeros((6,6))
+    cm[0][1] = 10.0
+    cm[1][0] = cm[0][1]
+    return stiffness(cm)
+
+def dstiff_tetra_c44():
+    """ Returns the tetragonal stiffness for c44. """
+    cm = numpy.zeros((6,6))
+    cm[3][3] = 1.0
+    cm[4][4] = cm[3][3]
+    return stiffness(cm)
+
+def dstiff_tetra_c66():
+    """ Returns the tetragonal stiffness for c66. """
+    cm = numpy.zeros((6,6))
+    cm[5][5] = 1.0
+    return stiffness(cm)
+
+# --------------------------------------------------
+# ORTHORHOMBIC CALCULATIONS
+# --------------------------------------------------
+def forward_orth(cxx):
+    """
+    Calculate the forward orthorhombic cm value.
+
+    Uses the cxx dictionary to calculate the 6x6
+    cm array.
+    """
+    cm = numpy.zeros((6,6))
+    try:
+        cm[0][0] = cxx['c11']
+        cm[1][1] = cxx['c22']
+        cm[2][2] = cxx['c33']
+        cm[1][2] = cxx['c23']
+        cm[0][2] = cxx['c13']
+        cm[0][1] = cxx['c12']
+        cm[3][3] = cxx['c44']
+        cm[4][4] = cxx['c55']
+        cm[5][5] = cxx['c66']
+    except KeyError:
+        raise ValueError('Missing cxx value.')
+    else:
+        cm[0][0] = cm[0][0] / 100
+        cm[1][1] = cm[1][1] / 100
+        cm[2][2] = cm[2][2] / 100
+        cm[1][2] = cm[1][2] / 100
+        cm[0][2] = cm[0][2] / 100
+        cm[0][1] = cm[0][1] / 100
+        cm[3][3] = cm[3][3] / 100
+        cm[4][4] = cm[4][4] / 100
+        cm[5][5] = cm[5][5] / 100
+        cm[2][0] = cm[0][2]
+        cm[1][0] = cm[0][1]
+        cm[2][1] = cm[1][2]
+        return cm
+
+def dstiff_orth_c11():
+    """ Returns the orthorhombic stiffness for c11. """
+    cm = numpy.zeros((6,6))
+    cm[0][0] = 10.0
+    return stiffness(cm)
+
+def dstiff_orth_c22():
+    """ Returns the orthorhombic stiffness for c22. """
+    cm = numpy.zeros((6,6))
+    cm[1][1] = 10.0
+    return stiffness(cm)
+
+def dstiff_orth_c33(): 
+    """ Returns the orthorhombic stiffness for c33. """
+    cm = numpy.zeros((6,6))
+    cm[2][2] = 10.0
+    return stiffness(cm)
+
+def dstiff_orth_c23():
+    """ Returns the orthorhombic stiffness for c23. """
+    cm = numpy.zeros((6,6))
+    cm[1][2] = 10.0
+    cm[2][1] = cm[1][2]
+    return stiffness(cm)
+
+def dstiff_orth_c13():
+    """ Returns the orthorhombic stiffness for c13. """
+    cm = numpy.zeros((6,6))
+    cm[0][2] = 10.0
+    cm[2][0] = cm[0][2]
+    return stiffness(cm)
+
+def dstiff_orth_c12():
+    """ Returns the orthorhombic stiffness for c12. """
+    cm = numpy.zeros((6,6))
+    cm[0][1] = 10.0
+    cm[1][0] = cm[0][1]
+    return stiffness(cm)
+
+def dstiff_orth_c44():
+    """ Returns the orthorhombic stiffness for c44. """
+    cm = numpy.zeros((6,6))
+    cm[3][3] = 1.0
+    return stiffness(cm)
+
+def dstiff_orth_c55():
+    """ Returns the orthorhombic stiffness for c55. """
+    cm = numpy.zeros((6,6))
+    cm[4][4] = 1.0
+    return stiffness(cm)
+
+def dstiff_orth_c66():
+    """ Returns the orthorhombic stiffness for c66. """
+    cm = numpy.zeros((6,6))
+    cm[5][5] = 1.0
+    return stiffness(cm)
+
