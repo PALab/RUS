@@ -1,15 +1,16 @@
-# Author: Jerome H.L. Le Rousseau (jerome@dix.mines.edu)
+# Original C implementation by
+# Jerome H.L. Le Rousseau (jerome@dix.mines.edu)
 # Center for Wave Phenomena / Physical Acoustic Laboratory
 # Colorado School of Mines
 # Golden, CO 80401 USA
 
-# Updated 2014
-# By: Leighton Watson (lwat054@aucklanduni.ac.nz)
+# Updated in 2014 by
+# Leighton Watson (lwat054@aucklanduni.ac.nz)
 # Physical Acoustic Laboratory
 # University of Auckland, Auckland, 1010, New Zealand
 
-# Translated to Python 2015
-# By: Paul Freeman (pfre484@aucklanduni.ac.nz)
+# Translated to Python in 2015 by
+# Paul Freeman (pfre484@aucklanduni.ac.nz)
 # Computer Science Department
 # University of Auckland, Auckland, 1010, New Zealand
 
