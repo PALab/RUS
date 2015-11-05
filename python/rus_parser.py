@@ -19,7 +19,7 @@ def create_forward_parser(subparsers):
 
     d_help  = 'order of polynomials used to fit the eigenmodes (Default: 6)'
     n_help  = 'number of stiffness coefficient given (determine the symmetry) (Default: 2)'
-    o_help  = 'file where to put eigenvectors in double format (Default: stdout)'
+    o_help  = 'file where to put eigenvectors in double format (Default: standard output)'
     p_help  = 'number of eigen frequencies to print (Default: 10)'
     r_help  = 'density in grams/cm^3 (Default: 2.713)'
     s_help  = '0=rectangle, 1=ellipsoidal cylinder, 2=spheroid'
@@ -93,15 +93,24 @@ def create_forward_parser(subparsers):
         type=argparse.FileType('w'),
         help = o_help)
 
-    forward_parser.add_argument('--c11', type=float)
-    forward_parser.add_argument('--c12', type=float)
-    forward_parser.add_argument('--c13', type=float)
-    forward_parser.add_argument('--c22', type=float)
-    forward_parser.add_argument('--c23', type=float)
-    forward_parser.add_argument('--c33', type=float)
-    forward_parser.add_argument('--c44', type=float)
-    forward_parser.add_argument('--c55', type=float)
-    forward_parser.add_argument('--c66', type=float)
+    c11_help  = 'c11 measurement in GPa'
+    c12_help  = 'c12 measurement in GPa'
+    c13_help  = 'c13 measurement in GPa'
+    c22_help  = 'c22 measurement in GPa'
+    c23_help  = 'c23 measurement in GPa'
+    c33_help  = 'c33 measurement in GPa'
+    c44_help  = 'c44 measurement in GPa'
+    c55_help  = 'c55 measurement in GPa'
+    c66_help  = 'c66 measurement in GPa'
+    forward_parser.add_argument('--c11', type=float, help=c11_help)
+    forward_parser.add_argument('--c12', type=float, help=c12_help)
+    forward_parser.add_argument('--c13', type=float, help=c13_help)
+    forward_parser.add_argument('--c22', type=float, help=c22_help)
+    forward_parser.add_argument('--c23', type=float, help=c23_help)
+    forward_parser.add_argument('--c33', type=float, help=c33_help)
+    forward_parser.add_argument('--c44', type=float, help=c44_help)
+    forward_parser.add_argument('--c55', type=float, help=c55_help)
+    forward_parser.add_argument('--c66', type=float, help=c66_help)
 
     return forward_parser
 
@@ -198,15 +207,24 @@ def create_inverse_parser(subparsers):
         default = 'sample/default_frequencies',
         help = f_help)
 
-    inverse_parser.add_argument('--c11', type = float)
-    inverse_parser.add_argument('--c12', type = float)
-    inverse_parser.add_argument('--c13', type = float)
-    inverse_parser.add_argument('--c22', type = float)
-    inverse_parser.add_argument('--c23', type = float)
-    inverse_parser.add_argument('--c33', type = float)
-    inverse_parser.add_argument('--c44', type = float)
-    inverse_parser.add_argument('--c55', type = float)
-    inverse_parser.add_argument('--c66', type = float)
+    c11_help  = 'c11 measurement in GPa'
+    c12_help  = 'c12 measurement in GPa'
+    c13_help  = 'c13 measurement in GPa'
+    c22_help  = 'c22 measurement in GPa'
+    c23_help  = 'c23 measurement in GPa'
+    c33_help  = 'c33 measurement in GPa'
+    c44_help  = 'c44 measurement in GPa'
+    c55_help  = 'c55 measurement in GPa'
+    c66_help  = 'c66 measurement in GPa'
+    inverse_parser.add_argument('--c11', type=float, help=c11_help)
+    inverse_parser.add_argument('--c12', type=float, help=c12_help)
+    inverse_parser.add_argument('--c13', type=float, help=c13_help)
+    inverse_parser.add_argument('--c22', type=float, help=c22_help)
+    inverse_parser.add_argument('--c23', type=float, help=c23_help)
+    inverse_parser.add_argument('--c33', type=float, help=c33_help)
+    inverse_parser.add_argument('--c44', type=float, help=c44_help)
+    inverse_parser.add_argument('--c55', type=float, help=c55_help)
+    inverse_parser.add_argument('--c66', type=float, help=c66_help)
 
     return inverse_parser
 
