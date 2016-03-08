@@ -27,9 +27,9 @@ def start(args):
 
     tabs, irk = rus.index_relationship(order,problem_size)
 
-    e = rus.e_fill(tabs,problem_size,dimensions,density,shape,irk)
+    e = rus.e_fill(tabs,dimensions,density,shape,irk)
 
-    gamma = rus.gamma_fill(tabs,problem_size,dimensions,cm,shape,irk)
+    gamma = rus.gamma_fill(tabs,dimensions,cm,shape,irk)
 
     print("done preparing matrices")
 
