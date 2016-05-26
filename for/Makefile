@@ -1,34 +1,30 @@
-# Makefile for ...su/main
+CC = gcc
 
-include $(CWPROOT)/src/Makefile.config
+CFLAGS = -Wall -Werror
 
-B = $(HOME)/bin
+LFLAGS = -lm -llapack
 
-D = $L/libcwp.a $L/libpar.a $L/libsu.a
+TARGET = rus_forward
 
-OPTC = -O0 -Wall -ansi -pedantic  -DHAVE_UNISTD_H
+default: $(TARGET)
 
-#LFLAGS= -lm  -L$L -lsu -lpar -lcwp -lblas -llapack -lg2c -lI77 -lF77
-LFLAGS= -lm  -L$L -lsu -lpar -lcwp -lblas -llapack #-lg2c
+all: install
 
-PROGS =			\
-	$B/formod_aniso
+$(TARGET): rus_alloc.o rus_pars.o
+	$(CC) $(TARGET).c $(CFLAGS) $(LFLAGS) -o $(TARGET) rus_alloc.o rus_pars.o
 
+rus_alloc.o: rus_alloc.c rus_alloc.h
+	$(CC) $(CFLAGS) $(LFLAGS) -c rus_alloc.c
 
+rus_pars.o: rus_pars.c rus_pars.h
+	$(CC) $(CFLAGS) $(LFLAGS) -c rus_pars.c
 
+install: $(TARGET)
+	mkdir -p $(HOME)/bin
+	mv $(TARGET) $(HOME)/bin
 
-INSTALL	:	$(PROGS)
-	touch $@
+uninstall:
+	rm -f $(HOME)/bin/$(TARGET)
 
-
-$(PROGS):	$(CTARGET) $D 
-	-$(CC) $(CFLAGS) $(@F).c $(LFLAGS) -o $@
-	@chmod 755 $@
-	@echo $(@F) installed in $B
-
-remake	:
-	-touch *.c 
-	-rm -f $(PROGS)
-	$(MAKE) 
 clean:
-	rm -f a.out junk* JUNK* core
+	rm -f $(TARGET) *.o

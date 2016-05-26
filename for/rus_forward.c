@@ -1,7 +1,30 @@
-#include "su.h"
-#include "segy.h"
-#include "header.h"
-#include <signal.h> 
+#include <errno.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <float.h>
+#include <stdint.h>
+#include <limits.h>
+#include <stdarg.h>
+#include <math.h>
+#include <string.h>
+#include <ctype.h>
+#include "rus_alloc.h"
+#include "rus_pars.h"
+#include <stddef.h>
+
+#ifndef PI
+#define PI (3.141592653589793)
+#endif
+
+#ifndef MAX
+#define MAX(x,y) ((x) > (y) ? (x) : (y))
+#endif
+
+extern void dsygv_(int*, char*, char*, int*, double*, int*, double*, int*, double*, double*, int*, int*);  
+
+/* define extern variables */
+int xargc;
+char**xargv;
 
 /* Author: Jerome H.L. Le Rousseau (jerome@dix.mines.edu)	        */
 /* Center for Wave Phenomena / Physical Acoustic Laboratory             */
@@ -148,7 +171,6 @@ int main(int argc, char **argv)
   
   /* hook up getpar to handle the parameters */
   initargs(argc,argv);
-  requestdoc(1);
       
   /* get required parameters */
   if (!getparint("d", &d)) err("must specify d!\n");
@@ -1083,3 +1105,18 @@ void index_relationship(int *itab, int *ltab, int *mtab, int *ntab,
   fprintf(stderr, "irk[7]=%d\n", irk[7]);
   
 }
+size_t efread(void *bufptr, size_t size, size_t count, FILE *stream)
+{
+	size_t nread;
+
+	if (!size) err("%s: efread: fread given 0 item size", __FILE__);
+
+	nread = fread(bufptr, size, count, stream);
+
+	if (nread != count && ferror(stream))
+		      err("%s: efread: fread only %d items of %d",
+				__FILE__, nread, count);
+
+	return nread;
+}
+
