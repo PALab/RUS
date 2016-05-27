@@ -1,8 +1,3 @@
-#include "su.h"
-#include "segy.h"
-#include "header.h"
-#include <signal.h>
- 
 /* Author: Jerome H.L. Le Rousseau (jerome@dix.mines.edu)	        */
 /* Center for Wave Phenomena / Physical Acoustic Laboratory             */
 /* Colorado School of Mines	 					*/
@@ -13,12 +8,44 @@
 /* Physical Acoustic Laboratory                         */
 /* University of Auckland, Auckland, 1010, New Zealand  */
 
+#include "rus_pars.h"
+#include "rus_alloc.h"
+#include "xindex.h"
+#include <stdlib.h>
+#include <math.h>
+
+/* This file locations can be changed to another location */
+/* at compilation by changing the strings here, or in the */
+/* Makefile.                                              */
+#ifndef FREQFILE
+#define FREQFILE "/tmp/freq_data"
+#endif
+#ifndef PARAMFILE
+#define PARAMFILE "/tmp/param_data"
+#endif
+#ifndef PREDICTFILE
+#define PREDICTFILE "/tmp/predictedf"
+#endif
+
+#ifndef PI
+#define PI (3.141592653589793)
+#endif
+
+#ifndef MAX
+#define MAX(x,y) ((x) > (y) ? (x) : (y))
+#endif
+
+/* define extern variables */
+int xargc;
+char**xargv;
+
+extern void dsygv_(int*, char*, char*, int*, double*, int*, double*, int*, double*, double*, int*, int*);  
 
 /*------------------------ self documentation --------------------------*/
 char *sdoc[] = {
 "									",
 "									", 
-NULL};                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        
+NULL};
 /*--------------------- end of self documentation ----------------------*/
 
 
@@ -146,7 +173,7 @@ void dqkiinss (double a[], int i[], int p, int q);
 
 void dqkisort (int n, double a[], int i[]);
 
-/* forward model */                                                                                                                                                                                                                                                                                  */
+/* forward model */
 void formod(int d,int r,int *itab,int *ltab,int *mtab,int *ntab, 
 	    int *irk,double d1,double d2,double d3, 
 	    double rho,int shape,float freqmin,int ndata,
@@ -236,8 +263,8 @@ int main(int argc, char **argv)
  
   int shape; /* shape of the body */
   /* matrices of the eigenvalue problem and for the function gradiant*/
-  char measurement[]="/usr/local/CWP/forinv/modeling/al_jacket/freq_data"; /*CHANGE THIS LINE TO APPROPRIATE DIRECTORY*/
-  char parameters[]="/usr/local/CWP/forinv/modeling/al_jacket/param_data"; /*CHANGE THIS LINE TO APPROPRIATE DIRECTORY*/
+  char measurement[]=FREQFILE;
+  char parameters[]=PARAMFILE;
   FILE *parameterfile, *measurementfile;
   /*--------------------- end variables declaration --------------------*/
      
@@ -391,7 +418,7 @@ int info, itype, lda, ldb, lwork, order; /* variables for lapack function */
   double *wsort;
   double *wnosort;
   int *indice;
-  char freqs[]="/usr/local/CWP/forinv/modeling/al_jacket/predictedf"; /*CHANGE THIS LINE TO APPROPRIATE DIRECTORY*/
+  char freqs[]=PREDICTFILE;
   FILE *freqfile;
   
   cm=alloc2double(6,6);

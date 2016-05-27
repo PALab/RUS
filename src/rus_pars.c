@@ -61,6 +61,21 @@ void initargs(int argc, char **argv)
 	return;
 }
 
+size_t efread(void *bufptr, size_t size, size_t count, FILE *stream)
+{
+	size_t nread;
+
+	if (!size) err("%s: efread: fread given 0 item size", __FILE__);
+
+	nread = fread(bufptr, size, count, stream);
+
+	if (nread != count && ferror(stream))
+		      err("%s: efread: fread only %d items of %d",
+				__FILE__, nread, count);
+
+	return nread;
+}
+
 FILE *efopen(const char *file, const char *mode)
 {
 	FILE *stream;

@@ -2,3 +2,4 @@ eigenfunct
 *.swp
 *.pyc
 *~
+*.o
