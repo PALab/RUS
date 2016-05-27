@@ -17,19 +17,19 @@ default: $(FORWARD) $(INVERSE)
 all: install
 
 # forward doesn't require xindex.o
-rus_forward: src/rus_alloc.o src/rus_pars.o
+bin/rus_forward: src/rus_alloc.o src/rus_pars.o
 	mkdir -p bin
-	$(CC) src/rus_forward.c $(FLAGS) -o bin/rus_forward rus_alloc.o rus_pars.o
+	$(CC) src/rus_forward.c $(INCLUDE_PATH) $(FLAGS) -o bin/rus_forward src/rus_alloc.o src/rus_pars.o
 
 # inverse needs all the objects
-inverse: src/rus_alloc.o src/rus_pars.o src/xindex.o
+bin/rus_inverse: src/rus_alloc.o src/rus_pars.o src/xindex.o
 	mkdir -p bin
 	$(CC) src/rus_inverse.c $(INCLUDE_PATH) $(FLAGS) -o bin/rus_inverse src/rus_alloc.o src/rus_pars.o src/xindex.o
 
 $(OBJECTS): src/%.o : src/%.c
 	$(CC) $(INCLUDE_PATH) $(FLAGS) -c $< -o $@
 
-install: $(FORWARD) $(INVERSE)
+install: bin/$(FORWARD) bin/$(INVERSE)
 	mkdir -p $(HOME)/bin
 	cp bin/$(FORWARD) bin/$(INVERSE) $(HOME)/bin
 
@@ -38,7 +38,7 @@ uninstall: clean
 
 clean:
 	rm -f $(SRC)/*.o
-	rm -f $(BIN)/$(FORWARD) $(BIN)/$(INVERSE)
+	rm -f bin/$(FORWARD) bin/$(INVERSE)
 	rmdir bin
 
 forward_example: install

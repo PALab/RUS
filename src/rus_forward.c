@@ -1105,18 +1105,4 @@ void index_relationship(int *itab, int *ltab, int *mtab, int *ntab,
   fprintf(stderr, "irk[7]=%d\n", irk[7]);
   
 }
-size_t efread(void *bufptr, size_t size, size_t count, FILE *stream)
-{
-	size_t nread;
-
-	if (!size) err("%s: efread: fread given 0 item size", __FILE__);
-
-	nread = fread(bufptr, size, count, stream);
-
-	if (nread != count && ferror(stream))
-		      err("%s: efread: fread only %d items of %d",
-				__FILE__, nread, count);
-
-	return nread;
-}
 

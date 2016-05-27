@@ -3,3 +3,4 @@ eigenfunct
 *.pyc
 *~
 *.o
+bin/
