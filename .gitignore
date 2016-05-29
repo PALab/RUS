@@ -4,3 +4,4 @@ eigenfunct
 *~
 *.o
 bin/
+gmon.out

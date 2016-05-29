@@ -10,9 +10,9 @@ INVERSE = rus_inverse
 INCLUDE_PATH = -Iinclude/
 SOURCES=$(wildcard src/*.c)
 OBJECTS=$(patsubst %.c, %.o, $(SOURCES))
-EXECUTABLES = $(FORWARD) $(INVERSE)
+EXECUTABLES = bin/$(FORWARD) bin/$(INVERSE)
 
-default: $(FORWARD) $(INVERSE)
+default: $(EXECUTABLES)
 
 all: install
 
@@ -37,9 +37,8 @@ uninstall: clean
 	rm -f $(HOME)/bin/$(FORWARD) $(HOME)/bin/$(INVERSE)
 
 clean:
-	rm -f $(SRC)/*.o
+	rm -f src/*.o
 	rm -f bin/$(FORWARD) bin/$(INVERSE)
-	rmdir bin
 
 forward_example: install
 	bash example/forward_test.sh
@@ -47,4 +46,7 @@ forward_example: install
 inverse_example: install
 	cp example/* /tmp
 	$(INVERSE)
+
+profile: CFLAGS += -pg
+profile: clean default
 
