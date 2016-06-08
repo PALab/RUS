@@ -27,6 +27,7 @@ def create_forward_parser(subparsers):
     x_help  = 'dimension 1 in centimeters (Default: 3.76)'
     y_help  = 'dimension 2 in centimeters (Default: 3.76)'
     z_help  = 'dimension 3 in centimeters (Default: 3.76)'
+    f_help  = 'run using C implementation (experimental)'
 
     forward_parser.add_argument(
         '-d', '--order',
@@ -92,6 +93,11 @@ def create_forward_parser(subparsers):
         default=sys.stdout,
         type=argparse.FileType('w'),
         help = o_help)
+
+    forward_parser.add_argument(
+        '-f', '--fast',
+        action='store_true',
+        help = f_help)
 
     c11_help  = 'c11 measurement in GPa'
     c12_help  = 'c12 measurement in GPa'
