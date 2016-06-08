@@ -1,11 +1,28 @@
 import rus_parser
 import sys
+import subprocess
 import scipy
 import scipy.linalg.lapack as lapack
 from math import sqrt
 import rus_tools as rus
 
 def start(args):
+    if args.fast and args.ns == 2:
+        subprocess.call(["/usr/local/bin/rus_forward",
+            "d={}".format(args.order),
+            "d1={}".format(args.d1),
+            "d2={}".format(args.d2),
+            "d3={}".format(args.d3),
+            "hextype={}".format(args.hextype),
+            "ns={}".format(args.ns),
+            "nfreq={}".format(args.nfreq),
+            "c11={}".format(args.a['c11']),
+            "c44={}".format(args.a['c44']),
+            "rho={}".format(args.rho),
+            "shape={}".format(args.shape),
+            "outeigen={}".format(0),
+            "eigenfile={}".format("eigenfunct")])
+        sys.exit(0)
 
     order   = args.order
     density = args.rho
