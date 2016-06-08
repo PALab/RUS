@@ -21,7 +21,7 @@ set -x
  
     hextype=1
     
-    $HOME/bin/rus_forward \
+    /usr/local/bin/rus_forward \
       d=$d d1=$d1 d2=$d2 d3=$d3 hextype=$hextype ns=5 nfreq=$nfreq\
         c33=$c33 c23=$c23 c12=$c12 c44=$c44 c66=$c66 rho=$rho shape=$shape outeigen=0 eigenfile=eigenfunct\
 
