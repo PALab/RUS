@@ -31,10 +31,10 @@ $(OBJECTS): src/%.o : src/%.c
 
 install: bin/$(FORWARD) bin/$(INVERSE)
 	mkdir -p $(HOME)/bin
-	cp bin/$(FORWARD) bin/$(INVERSE) $(HOME)/bin
+	cp bin/$(FORWARD) bin/$(INVERSE) /usr/local/bin
 
 uninstall: clean
-	rm -f $(HOME)/bin/$(FORWARD) $(HOME)/bin/$(INVERSE)
+	rm -f /usr/local/bin/$(FORWARD) /usr/local/bin/$(INVERSE)
 
 clean:
 	rm -f src/*.o
