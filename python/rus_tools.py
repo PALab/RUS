@@ -1183,12 +1183,11 @@ def forward_iso(cxx):
         raise ValueError('Missing cxx value.')
     else:
         cm[0][0] = cm[0][0] / 100
-        cm[0][1] = cm[0][1] / 100
         cm[3][3] = cm[3][3] / 100
         cm[1][1] = cm[2][2] = cm[0][0]
         cm[4][4] = cm[5][5] = cm[3][3]
-        cm[0][2] = cm[1][2] = cm[0][1]
-        cm[2][0] = cm[2][1] = cm[1][0] = cm[0][1]
+        cm[0][1] = cm[0][2] = cm[1][2] = cm[0][0] - 2.0 * cm[3][3]
+        cm[1][0] = cm[2][0] = cm[2][1] = cm[0][0] - 2.0 * cm[3][3]
         return cm
 
 def dstiff_iso_c11():
