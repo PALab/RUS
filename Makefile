@@ -1,51 +1,37 @@
 CC = gcc
 
-CFLAGS = -Wall -Werror
 LFLAGS = -lm -llapack
-FLAGS = $(CFLAGS) $(LFLAGS)
 
-FORWARD = rus_forward
-INVERSE = rus_inverse
+.PHONY : default clean install uninstall \
+    forward_example inverse_example objects
 
-INCLUDE_PATH = -Iinclude/
-SOURCES=$(wildcard src/*.c)
-OBJECTS=$(patsubst %.c, %.o, $(SOURCES))
-EXECUTABLES = bin/$(FORWARD) bin/$(INVERSE)
+default: rus_forward rus_inverse
 
-default: $(EXECUTABLES)
+objects:
+	$(MAKE) -C src
 
-all: install
+install: rus_forward rus_inverse
+	cp rus_forward rus_inverse /usr/local/bin
 
-# forward doesn't require xindex.o
-bin/rus_forward: src/rus_alloc.o src/rus_pars.o
-	mkdir -p bin
-	$(CC) src/rus_forward.c $(INCLUDE_PATH) $(FLAGS) -o bin/rus_forward src/rus_alloc.o src/rus_pars.o
+rus_forward: objects
+	$(CC) src/rus_alloc.o src/rus_pars.o src/rus_forward.o $(LFLAGS) -o rus_forward
 
-# inverse needs all the objects
-bin/rus_inverse: src/rus_alloc.o src/rus_pars.o src/xindex.o
-	mkdir -p bin
-	$(CC) src/rus_inverse.c $(INCLUDE_PATH) $(FLAGS) -o bin/rus_inverse src/rus_alloc.o src/rus_pars.o src/xindex.o
-
-$(OBJECTS): src/%.o : src/%.c
-	$(CC) $(INCLUDE_PATH) $(FLAGS) -c $< -o $@
-
-install: bin/$(FORWARD) bin/$(INVERSE)
-	mkdir -p $(HOME)/bin
-	cp bin/$(FORWARD) bin/$(INVERSE) /usr/local/bin
+rus_inverse: objects
+	$(CC) src/rus_alloc.o src/rus_pars.o src/xindex.o src/rus_inverse.o $(LFLAGS) -o rus_inverse
 
 uninstall: clean
-	rm -f /usr/local/bin/$(FORWARD) /usr/local/bin/$(INVERSE)
+	-rm -f /usr/local/bin/rus_forward /usr/local/bin/rus_inverse
 
 clean:
-	rm -f src/*.o
-	rm -f bin/$(FORWARD) bin/$(INVERSE)
+	$(MAKE) clean -C src
+	-rm -f rus_forward rus_inverse
 
 forward_example: install
 	bash example/forward_test.sh
 
 inverse_example: install
 	cp example/* /tmp
-	$(INVERSE)
+	rus_inverse
 
 profile: CFLAGS += -pg
 profile: clean default

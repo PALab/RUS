@@ -5,3 +5,5 @@ eigenfunct
 *.o
 bin/
 gmon.out
+rus_forward
+rus_inverse
