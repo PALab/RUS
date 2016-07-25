@@ -823,15 +823,15 @@ def volintegral(dimensions,l,m,n,shape):
     if small and _memo_volintegral[hl][hm][hn]:
         return _memo_volintegral[hl][hm][hn]
 
+    ds = dimensions[0]**(l+1) * dimensions[1]**(m+1) * dimensions[2]**(n+1)
+
     # ell. cylinder shape
     if shape == 1:
-        ds = dimensions[0]**(l+1) * dimensions[1]**(m+1) * dimensions[2]**(n+1)
         df_lm = doublefact(l-1) * doublefact(m-1)
         result = 4.0 * scipy.pi * ds / (n+1) * df_lm / doublefact(l+m+2)
 
     # spheroid shape
     elif shape == 2:
-        ds = dimensions[0]**(l+1) * dimensions[1]**(m+1) * dimensions[2]**(n+1)
         df_lm = doublefact(l-1) * doublefact(m-1)
         df_all = doublefact(l+m+n+3)
         result = 4.0 * scipy.pi * ds * df_lm * doublefact(n-1) / df_all
