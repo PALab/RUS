@@ -10,7 +10,7 @@ makes = $(sources:.c=.d)
 
 default: $(objects)
 
-include $(makes)
+-include $(makes)
 
 CC=gcc
 
@@ -21,4 +21,4 @@ CC=gcc
          rm -f $@.$$$$
 
 clean:
-	-rm $(objects)
+	-rm $(objects) $(makes)

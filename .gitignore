@@ -3,6 +3,7 @@ eigenfunct
 *.pyc
 *~
 *.o
+*.d
 bin/
 gmon.out
 rus_forward
