@@ -31,7 +31,7 @@ forward_example: install
 
 inverse_example: install
 	cp example/* /tmp
-	rus_inverse
+	/usr/local/bin/rus_inverse
 
 profile: CFLAGS += -pg
 profile: clean default
