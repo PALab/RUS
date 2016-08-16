@@ -823,15 +823,15 @@ def volintegral(dimensions,l,m,n,shape):
     if small and _memo_volintegral[hl][hm][hn]:
         return _memo_volintegral[hl][hm][hn]
 
+    ds = dimensions[0]**(l+1) * dimensions[1]**(m+1) * dimensions[2]**(n+1)
+
     # ell. cylinder shape
     if shape == 1:
-        ds = dimensions[0]**(l+1) * dimensions[1]**(m+1) * dimensions[2]**(n+1)
         df_lm = doublefact(l-1) * doublefact(m-1)
         result = 4.0 * scipy.pi * ds / (n+1) * df_lm / doublefact(l+m+2)
 
     # spheroid shape
     elif shape == 2:
-        ds = dimensions[0]**(l+1) * dimensions[1]**(m+1) * dimensions[2]**(n+1)
         df_lm = doublefact(l-1) * doublefact(m-1)
         df_all = doublefact(l+m+n+3)
         result = 4.0 * scipy.pi * ds * df_lm * doublefact(n-1) / df_all
@@ -866,7 +866,6 @@ def doublefact(n):
 def e_fill(tabs,dimensions,rho,shape,irk):
     """
     Generates and returns the value e.
-
     TODO: What is e?
     """
     e = [scipy.zeros((irk[i],irk[i])) for i in range(8)]
@@ -900,7 +899,6 @@ def e_fill(tabs,dimensions,rho,shape,irk):
 def stiffness(cm):
     """
     Uses cm to compute a value, c, which is returned.
-
     Converts the 6x6 array, cm, into a 3x3x3x3 array,
     c. The new array is returned. The existing array
     is not changed.
@@ -947,10 +945,8 @@ def gamma_fill(tabs,dimensions,cm,shape,irk):
     
     gamma is a set of 8, 2D square arrays,
     based on the values in irk.
-
     The function calls gamma_helper() for much
     of the work.
-
     TODO: What is this function doing?
     """
     gamma = [scipy.zeros((irk[i],irk[i])) for i in range(8)]
@@ -972,7 +968,6 @@ def gamma_fill(tabs,dimensions,cm,shape,irk):
 def xindex(ax, x, index):
     """
     Returns the index position of x in ax. (I think)
-
     TODO: This function finds and returns the index position
     of x in ax. It is possible that this function could
     be replaced by a built-in Python function. However, I
@@ -1054,11 +1049,9 @@ def xindex(ax, x, index):
 def index_relationship(d, problem_size):
     """
     Creates and returns tabs and irk data.
-
     tabs and irk are used in future functions.
     This function populates them based on the
     values of d.
-
     TODO: Improve description of what this
     function is actually doing and why.
     """
@@ -1171,7 +1164,6 @@ def index_relationship(d, problem_size):
 def forward_iso(cxx):
     """
     Calculate the forward isotropic cm value.
-
     Uses the cxx dictionary to calculate the 6x6
     cm array.
     """
@@ -1183,12 +1175,11 @@ def forward_iso(cxx):
         raise ValueError('Missing cxx value.')
     else:
         cm[0][0] = cm[0][0] / 100
-        cm[0][1] = cm[0][1] / 100
         cm[3][3] = cm[3][3] / 100
         cm[1][1] = cm[2][2] = cm[0][0]
         cm[4][4] = cm[5][5] = cm[3][3]
-        cm[0][2] = cm[1][2] = cm[0][1]
-        cm[2][0] = cm[2][1] = cm[1][0] = cm[0][1]
+        cm[0][1] = cm[0][2] = cm[1][2] = cm[0][0] - 2.0 * cm[3][3]
+        cm[1][0] = cm[2][0] = cm[2][1] = cm[0][0] - 2.0 * cm[3][3]
         return cm
 
 def dstiff_iso_c11():
@@ -1215,7 +1206,6 @@ def dstiff_iso_c44():
 def forward_cub(cxx):
     """
     Calculate the forward cubic cm value.
-
     Uses the cxx dictionary to calculate the 6x6
     cm array.
     """
@@ -1264,7 +1254,6 @@ def dstiff_cub_c44():
 def forward_vti(cxx):
     """
     Calculate the forward VTI cm value.
-
     Uses the cxx dictionary to calculate the 6x6
     cm array.
     """
@@ -1330,7 +1319,6 @@ def dstiff_vti_c66():
 def forward_hti(cxx):
     """
     Calculate the forward HTI cm value.
-
     Uses the cxx dictionary to calculate the 6x6
     cm array.
     """
@@ -1394,7 +1382,6 @@ def dstiff_hti_c66():
 def forward_tetra(cxx):
     """
     Calculate the forward tetragonal cm value.
-
     Uses the cxx dictionary to calculate the 6x6
     cm array.
     """
@@ -1467,7 +1454,6 @@ def dstiff_tetra_c66():
 def forward_orth(cxx):
     """
     Calculate the forward orthorhombic cm value.
-
     Uses the cxx dictionary to calculate the 6x6
     cm array.
     """
@@ -1555,4 +1541,3 @@ def dstiff_orth_c66():
     cm = numpy.zeros((6,6))
     cm[5][5] = 1.0
     return stiffness(cm)
-
