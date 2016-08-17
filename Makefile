@@ -1,5 +1,6 @@
 CC = gcc
 
+CFLAGS =
 LFLAGS = -lm -llapack
 
 .PHONY : default clean install uninstall \
@@ -14,10 +15,10 @@ install: rus_forward rus_inverse
 	cp rus_forward rus_inverse /usr/local/bin
 
 rus_forward: objects
-	$(CC) src/rus_alloc.o src/rus_pars.o src/rus_forward.o $(LFLAGS) -o rus_forward
+	$(CC) $(CFLAGS) src/rus_alloc.o src/rus_pars.o src/rus_forward.o $(LFLAGS) -o rus_forward
 
 rus_inverse: objects
-	$(CC) src/rus_alloc.o src/rus_pars.o src/xindex.o src/rus_inverse.o $(LFLAGS) -o rus_inverse
+	$(CC) $(CFLAGS) src/rus_alloc.o src/rus_pars.o src/xindex.o src/rus_inverse.o $(LFLAGS) -o rus_inverse
 
 uninstall: clean
 	-rm -f /usr/local/bin/rus_forward /usr/local/bin/rus_inverse
