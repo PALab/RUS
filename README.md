@@ -1,5 +1,5 @@
 # RUS
-Resonant Ultrasound Spectroscopy
+Resonant Ultrasound Spectroscopy - Test version
 
 This project contains tools used in performing resonant ultrasound spectroscopy on rocks and other materials.
 
