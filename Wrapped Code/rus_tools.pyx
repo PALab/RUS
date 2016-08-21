@@ -42,7 +42,8 @@ _memo_doublefact[1] = 1
 # -------------------------------------------
 # FUNCTIONS
 # -------------------------------------------
-def compute_dyda(ns,hextype,r,tabs,dimensions,shape,ifw,ndata,z,wsort,indice):
+# Wrapping.. a bit confused with this function... COME BACK TO THIS LATER...
+cpdef compute_dyda(int ns, int hextype, int r, tabs, dimensions, int shape, int ifw, int ndata, z, wsort, indice):
     """
     Calculate and return the dyda value.
     
@@ -197,7 +198,7 @@ def compute_dyda(ns,hextype,r,tabs,dimensions,shape,ifw,ndata,z,wsort,indice):
     return dyda
 
 
-
+# Where is this being used/called? 
 def calc_forward_cm(args):
     """ Calls appropriate function based on ns value. """
     # isotropic
@@ -282,13 +283,15 @@ cpdef void gamma_helper(gamma, c, tabs1, tabs2, int ir1, int ir2, dimensions, in
             if st3 != 0 and n2 > 0:
                 gamma[ir1][ir2] += st3 * n1 * n2 * volintegral(dimensions, l, m, n-2, shape)
 
-def dfdp(f, dgammadp, z, ie, n):
+# Wrapped - Speed improvement 0.038 --> 0.028 (needs more work)
+cpdef dfdp(double f, dgammadp, z, int ie, int n):
+    cpdef int i;
     p = []
-    for i in range(n):
+    for i from 0 <= i < n:
         # we use dgammadp's 
         # symmetry here
-        p.append(numpy.dot(dgammadp[i],z[ie])) 
-    return numpy.dot(z[ie],p) / (8.0 * scipy.pi * scipy.pi * f)
+        p.append(numpy.dot(dgammadp[i],z[ie]))    # <---------- find alternative way to implement this
+    return numpy.dot(z[ie],p) / (8.0 * scipy.pi * scipy.pi * f)     # <---------------- this too 
 
 
 
@@ -313,18 +316,19 @@ def dfdp(f, dgammadp, z, ie, n):
 # to the true order of the parameters. Elements associated with fixed
 # parameters will be zero. NCVM is the physical dimension of COVAR
 
-def covsrt(covar, ma, ia, mfit):
-    for i in range(mfit, ma):
-        for j in range(i):
+# Not located in profile output? 
+cpdef covsrt(covar, int ma, ia, int mfit):
+    for i from 0 <= i < (mfit, ma):                     # maybe use: i=mfit; i < ma; ++i
+        for j from 0 <= j < i:
             covar[i][j] = covar[j][i] = 0.0
-    k = mfit - 1
-    for j in range(ma-1, -1, -1):
+    k = mfit - 1;
+    for j from 0 <= j < (ma - 1, -1, -1):
         if ia[j]:
             for i in range(ma):
-                covar[i][k], covar[i][j] = covar[i][j], covar[i][k]
+                covar[i][k], covar[i][j] = covar[i][j], covar[i][k]     #SWAP 
             for i in range(ma):
                 covar[k][i], covar[j][i] = covar[j][i], covar[k][i]
-        k -= 1
+        k -= 1; 
 
 
 
@@ -343,6 +347,8 @@ def covsrt(covar, ma, ia, mfit):
 # * the M right-hand side vectors, stored in an array of physical 
 # * dimensions Np by MP. On output, A is replaced by its matrix inverse,
 # * and B is replaced by the corresponding set of solution vectors. */
+
+# Speed 0 on pure python - don't really need to wrap... 
 def gaussj(a, n, b, m):
     indxc = []
     indxr = []
@@ -402,7 +408,8 @@ def gaussj(a, n, b, m):
 # vector BETA from (14.4.8) 
 
 # called by mrqmin_function each iteration. Computes "chisq"
-def mrqcof(d,r,tabs,irk,dimensions,rho,shape,freqmin,y,ndata,a,ia,ma,alpha,beta,hextype):
+# Wrapping... Pure Python cumtime: 9.869 
+cpdef mrqcof(int d, int r, tabs, irk, dimensions, double rho, int shape, float freqmin, y, int ndata, a, ia, int ma, alpha, beta, int hextype):
 
     mfit = 0
     for j in range(ma):
@@ -804,7 +811,7 @@ def __make_cm_orthorhombic(a):
         cm[2][1] = cm[1][2]
         return cm
 
-
+# Wrapped - Time 0.263 --> 0.060 (check if this is limit)
 cpdef volintegral(dimensions, int l, int m, int n, int shape):
     global _memo_vol_max
     global _memo_volintegral
@@ -831,7 +838,6 @@ cpdef volintegral(dimensions, int l, int m, int n, int shape):
 
         #result = 4.0 * scipy.pi * pow(dimensions[0], l+1) * dimensions[1]**(m + 1) * dimensions[2]**(n+1) / (n + 1.0) * doublefact(l - 1) * doublefact(m - 1)/doublefact(l + m + 2);
 
-        # C code: 
         result = 4.0*scipy.pi*pow(dimensions[0], l+1)*pow(dimensions[1], m+1)*pow(dimensions[2], n+1)/<double>(n+1)*doublefact(l-1)*doublefact(m-1)/doublefact(l+m+2);
 
     # spheroid shape
@@ -841,7 +847,6 @@ cpdef volintegral(dimensions, int l, int m, int n, int shape):
         #df_all = doublefact(l+m+n+3)
         #result = 4.0 * scipy.pi * ds * df_lm * doublefact(n-1) / df_all
 
-        #C code: 
         result = 4.0*scipy.pi*pow(dimensions[0], l+1)*pow(dimensions[1], m+1)*pow(dimensions[2], n+1)*doublefact(l-1)*doublefact(m-1)*doublefact(n-1)/doublefact(l+m+n+3);
 
     # rp shape
@@ -849,7 +854,6 @@ cpdef volintegral(dimensions, int l, int m, int n, int shape):
         #ds = dimensions[0]**(l+1) * dimensions[1]**(m+1) * dimensions[2]**(n+1)
         #result = 8.0 / ((l+1) * (m+1) * (n+1)) * ds
 
-        #C Code:
         result = 8.0/((l+1)*(m+1)*(n+1))*pow(dimensions[0], l+1)*pow(dimensions[1],m+1)*pow(dimensions[2], n+1);
 
     if small:
@@ -857,33 +861,28 @@ cpdef volintegral(dimensions, int l, int m, int n, int shape):
 
     return result
 
+# Wrapped BUT removed "_memo_"
+cpdef doublefact(n):
 
-def doublefact(n):
-    global _memo_doublefact
-    global _memo_max
-
-    if n == -1:
-        return 1
-    if _memo_doublefact[n]:
-        return _memo_doublefact[n]
-    if n < _memo_max:
-        _memo_doublefact[n] = n * doublefact(n-2)
-        return _memo_doublefact[n]
-    else:
-        return n * doublefact(n-2)
+    if (n == -1): return 1;
+    elif (n == 0): return 1;
+    elif (n == 1): return 1;
+    else: return n * doublefact (n - 2); 
 
 
-
-def e_fill(tabs,dimensions,rho,shape,irk):
+# Wrapped Time: 0.248 --> 0.170. Does not work with For loops for some reason... Need to check if this is limit of speed... 
+cpdef e_fill(tabs, dimensions, double rho, int shape, irk):
     """
     Generates and returns the value e.
 
     TODO: What is e?
     """
-    e = [scipy.zeros((irk[i],irk[i])) for i in range(8)]
-    for k in range(8):
+    cpdef int irs, irv, irf, ir1, ir2, irh, i1, i2, l1, l2, m1, m2, n1, n2; 
+
+    e = [scipy.zeros((irk[i],irk[i])) for i from 0 <= i < 8]
+    for k from 0 <= k < 8:
         irs = 0
-        for ik in range(k):
+        for ik from 0 <= ik < k:
             irs += irk[ik]
         irf = irs + irk[k]
 
@@ -893,22 +892,27 @@ def e_fill(tabs,dimensions,rho,shape,irk):
             irh = 0
             ir2 = irs
             while ir2 < irf:
+
                 [i1,l1,m1,n1] = tabs[ir1]
                 [i2,l2,m2,n2] = tabs[ir2]
-                l = l1 + l2
-                m = m1 + m2
-                n = n1 + n2
-                if i1 == i2 and l % 2 == 0 and m % 2 == 0 and n % 2 == 0:
-                    e[k][irv][irh] = rho * volintegral(dimensions,l,m,n,shape);
+
+                l = l1 + l2;
+                m = m1 + m2;
+                n = n1 + n2; 
+
+                if (i1 != i2):
+                    e[k][irv][irh] = 0.0; 
                 else:
-                    e[k][irv][irh] = 0.0
+                    e[k][irv][irh] = rho * volintegral(dimensions, l, m, n, shape);
+
                 ir2 += 1
                 irh += 1
             ir1 += 1
             irv += 1
     return e
 
-def stiffness(cm):
+# Wrapped - Didn't change much... BUT did improve speed 
+cpdef stiffness(cm):
     """
     Uses cm to compute a value, c, which is returned.
 
@@ -921,35 +925,36 @@ def stiffness(cm):
     during initial implementation.
     """
     c = scipy.zeros((3,3,3,3))
-    for i in range(3):
-        for j in range(3):
+
+    for i from 0 <= i < 3:
+        for j from 0 <= j < 3:
             if i == 0 and j == 0:
-                a = 0
+                a = 0;
             elif i == 1 and j == 1:
-                a = 1
+                a = 1;
             elif i == 2 and j == 2:
-                a = 2
+                a = 2;
             elif (i == 1 and j == 2) or (i == 2 and j == 1):
-                a = 3
+                a = 3;
             elif (i == 0 and j == 2) or (i == 2 and j == 0):
-                a = 4
+                a = 4;
             else:
-                a = 5
-            for k in range(3):
-                for l in range(3):
+                a = 5;
+            for k from 0 <= k < 3:
+                for l from 0 <= l < 3:
                     if k == 0 and l == 0:
-                        b = 0
+                        b = 0;
                     elif k == 1 and l == 1:
-                        b = 1
+                        b = 1;
                     elif k == 2 and l == 2:
-                        b = 2
+                        b = 2;
                     elif (k == 1 and l == 2) or (k == 2 and l == 1):
-                        b = 3
+                        b = 3;
                     elif (k == 0 and l == 2) or (k == 2 and l == 0):
-                        b = 4
+                        b = 4;
                     else:
-                        b = 5
-                    c[i][j][k][l] = cm[a][b]
+                        b = 5;
+                    c[i][j][k][l] = cm[a][b];
     return c
 
 def gamma_fill(tabs,dimensions,cm,shape,irk):
@@ -1061,8 +1066,8 @@ def xindex(ax, x, index):
     return lower
 
 
-
-def index_relationship(d, problem_size):
+# Wrapped - Speed: 0.002 --> 0.001 (compare with C code. Speed limit?)
+cpdef index_relationship(int d, int problem_size):
     """
     Creates and returns tabs and irk data.
 
@@ -1073,98 +1078,100 @@ def index_relationship(d, problem_size):
     TODO: Improve description of what this
     function is actually doing and why.
     """
-    tabs = numpy.zeros((int(problem_size),4), dtype=numpy.int64)
-    irk  = [0 for i in range(8)]
+    tabs = numpy.zeros((int(problem_size), 4), dtype=numpy.int64)
+    irk  = [0 for i from 0 <= i < 8]
 
-    ir = 0
+    cpdef int ir = 0
+
     # k == 0
-    for i in range(3):
-        for l in range(d+1):
-            for m in range(d-l+1):
-                for n in range(d-l-m+1):
+    for i from 0 <= i < 3:
+        for l from 0 <= l < (d + 1):
+            for m from 0 <= m < (d - l + 1):
+                for n from 0 <= n < (d - l - m + 1):
                     if (i == 0 and l % 2 == 0 and m % 2 == 0 and n % 2 == 0) or \
                        (i == 1 and l % 2 == 1 and m % 2 == 1 and n % 2 == 0) or \
                        (i == 2 and l % 2 == 1 and m % 2 == 0 and n % 2 == 1):
                         tabs[ir] = [i,l,m,n]
-                        ir += 1
-                        irk[0] += 1
+                        ir += 1;
+                        irk[0] += 1;
     # k == 1
-    for i in range(3):
-        for l in range(d+1):
-            for m in range(d-l+1):
-                for n in range(d-l-m+1):
+    for i from 0 <= i < 3:
+        for l from 0 <= l < (d + 1):
+            for m from 0 <= m < (d - l + 1):
+                for n from 0 <= n < (d - l - m + 1):
                     if (i == 0 and l % 2 == 0 and m % 2 == 0 and n % 2 == 1) or \
                        (i == 1 and l % 2 == 1 and m % 2 == 1 and n % 2 == 1) or \
                        (i == 2 and l % 2 == 1 and m % 2 == 0 and n % 2 == 0):
                         tabs[ir] = [i,l,m,n]
-                        ir += 1
-                        irk[1] += 1
+                        ir += 1;
+                        irk[1] += 1;
     # k == 2
-    for i in range(3):
-        for l in range(d+1):
-            for m in range(d-l+1):
-                for n in range(d-l-m+1):
+    for i from 0 <= i < 3:
+        for l from 0 <= l < (d + 1):
+            for m from 0 <= m < (d - l + 1):
+                for n from 0 <= n < (d - l - m + 1):
                     if (i == 0 and l % 2 == 0 and m % 2 == 1 and n % 2 == 0) or \
                        (i == 1 and l % 2 == 1 and m % 2 == 0 and n % 2 == 0) or \
                        (i == 2 and l % 2 == 1 and m % 2 == 1 and n % 2 == 1):
                         tabs[ir] = [i,l,m,n]
-                        ir += 1
-                        irk[2] += 1
+                        ir += 1;
+                        irk[2] += 1;
     # k == 3
-    for i in range(3):
-        for l in range(d+1):
-            for m in range(d-l+1):
-                for n in range(d-l-m+1):
+    for i from 0 <= i < 3:
+        for l from 0 <= l < (d + 1):
+            for m from 0 <= m < (d - l + 1):
+                for n from 0 <= n < (d - l - m + 1):
                     if (i == 0 and l % 2 == 0 and m % 2 == 1 and n % 2 == 1) or \
                        (i == 1 and l % 2 == 1 and m % 2 == 0 and n % 2 == 1) or \
                        (i == 2 and l % 2 == 1 and m % 2 == 1 and n % 2 == 0):
                         tabs[ir] = [i,l,m,n]
-                        ir += 1
-                        irk[3] += 1
+                        ir += 1;
+                        irk[3] += 1;
     # k == 4
-    for i in range(3):
-        for l in range(d+1):
-            for m in range(d-l+1):
-                for n in range(d-l-m+1):
+    for i from 0 <= i < 3:
+        for l from 0 <= l < (d + 1):
+            for m from 0 <= m < (d - l + 1):
+                for n from 0 <= n < (d - l - m + 1):
                     if (i == 0 and l % 2 == 1 and m % 2 == 0 and n % 2 == 0) or \
                        (i == 1 and l % 2 == 0 and m % 2 == 1 and n % 2 == 0) or \
                        (i == 2 and l % 2 == 0 and m % 2 == 0 and n % 2 == 1):
                         tabs[ir] = [i,l,m,n]
-                        ir += 1
-                        irk[4] += 1
+                        ir += 1;
+                        irk[4] += 1;
     # k == 5
-    for i in range(3):
-        for l in range(d+1):
-            for m in range(d-l+1):
-                for n in range(d-l-m+1):
+    for i from 0 <= i < 3:
+        for l from 0 <= l < (d + 1):
+            for m from 0 <= m < (d - l + 1):
+                for n from 0 <= n < (d - l - m + 1):
                     if (i == 0 and l % 2 == 1 and m % 2 == 0 and n % 2 == 1) or \
                        (i == 1 and l % 2 == 0 and m % 2 == 1 and n % 2 == 1) or \
                        (i == 2 and l % 2 == 0 and m % 2 == 0 and n % 2 == 0):
                         tabs[ir] = [i,l,m,n]
-                        ir += 1
-                        irk[5] += 1
+                        ir += 1;
+                        irk[5] += 1;
     # k == 6
-    for i in range(3):
-        for l in range(d+1):
-            for m in range(d-l+1):
-                for n in range(d-l-m+1):
+    for i from 0 <= i < 3:
+        for l from 0 <= l < (d + 1):
+            for m from 0 <= m < (d - l + 1):
+                for n from 0 <= n < (d - l - m + 1):
                     if (i == 0 and l % 2 == 1 and m % 2 == 1 and n % 2 == 0) or \
                        (i == 1 and l % 2 == 0 and m % 2 == 0 and n % 2 == 0) or \
                        (i == 2 and l % 2 == 0 and m % 2 == 1 and n % 2 == 1):
                         tabs[ir] = [i,l,m,n]
-                        ir += 1
-                        irk[6] += 1
+                        ir += 1;
+                        irk[6] += 1;
     # k == 7
-    for i in range(3):
-        for l in range(d+1):
-            for m in range(d-l+1):
-                for n in range(d-l-m+1):
+    for i from 0 <= i < 3:
+        for l from 0 <= l < (d + 1):
+            for m from 0 <= m < (d - l + 1):
+                for n from 0 <= n < (d - l - m + 1):
                     if (i == 0 and l % 2 == 1 and m % 2 == 1 and n % 2 == 1) or \
                        (i == 1 and l % 2 == 0 and m % 2 == 0 and n % 2 == 1) or \
                        (i == 2 and l % 2 == 0 and m % 2 == 1 and n % 2 == 0):
                         tabs[ir] = [i,l,m,n]
-                        ir += 1
-                        irk[7] += 1
+                        ir += 1;
+                        irk[7] += 1;
+
     print("irk[0]=" + str(irk[0]))
     print("irk[1]=" + str(irk[1]))
     print("irk[2]=" + str(irk[2]))
@@ -1202,23 +1209,50 @@ def forward_iso(cxx):
         cm[2][0] = cm[2][1] = cm[1][0] = cm[0][1]
         return cm
 
-def dstiff_iso_c11():
-    """ Returns the isotropic stiffness for c11. """
-    cm = numpy.zeros((6,6))
-    cm[0][0] = 10.0
-    cm[1][1] = cm[2][2] = cm[0][0]
-    cm[0][1] = cm[0][2] = cm[1][2] = cm[0][0]
-    cm[1][0] = cm[2][0] = cm[2][1] = cm[0][0]
-    return stiffness(cm)
+#cpdef dstiff_iso_c11():
+#    """ Returns the isotropic stiffness for c11. """
+#    cm = numpy.zeros((6,6))
+#    cm[0][0] = 10.0
+#    cm[1][1] = cm[2][2] = cm[0][0]
+#    cm[0][1] = cm[0][2] = cm[1][2] = cm[0][0]
+#    cm[1][0] = cm[2][0] = cm[2][1] = cm[0][0]
+#    return stiffness(cm)
 
-def dstiff_iso_c44():
-    """ Returns the isotropic stiffness for c44. """
-    cm = numpy.zeros((6,6))
-    cm[3][3] = 1.0
-    cm[4][4] = cm[5][5] = cm[3][3]
-    cm[0][1] = cm[0][2] = cm[1][2] = -2.0 * cm[3][3]
-    cm[1][0] = cm[2][0] = cm[2][1] = -2.0 * cm[3][3]
-    return stiffness(cm)
+# Wrapped 
+cpdef dstiff_iso_c11():
+    cpdef int i, j;
+    cpdef double cm[6][6];
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[0][0] = 10.0;
+    cm[1][1] = cm[2][2] = cm[0][0];
+    cm[0][1] = cm[0][2] = cm[1][2] = cm[0][0];
+    cm[1][0] = cm[2][0] = cm[2][1] = cm[0][0];
+    return stiffness(cm);
+
+#cpdef dstiff_iso_c44():
+#    """ Returns the isotropic stiffness for c44. """
+#    cm = numpy.zeros((6,6))
+#    cm[3][3] = 1.0
+#    cm[4][4] = cm[5][5] = cm[3][3]
+#    cm[0][1] = cm[0][2] = cm[1][2] = -2.0 * cm[3][3]
+#    cm[1][0] = cm[2][0] = cm[2][1] = -2.0 * cm[3][3]
+#    return stiffness(cm)
+
+# Wrapped 
+cpdef dstiff_iso_c44():
+    cpdef int i,j;
+    #cm=alloc2double(6,6);
+    cpdef double cm[6][6];
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[3][3] = 1.0;
+    cm[4][4] = cm[5][5] = cm[3][3];   
+    cm[0][1] = cm[0][2] = cm[1][2] = -2.0 * cm[3][3];
+    cm[1][0] = cm[2][0] = cm[2][1] = -2.0 * cm[3][3];
+    return stiffness(cm);   
 
 # --------------------------------------------------
 # CUBIC CALCULATIONS
@@ -1247,27 +1281,65 @@ def forward_cub(cxx):
         cm[2][0] = cm[2][1] = cm[1][0] = cm[0][1]
         return cm
 
-def dstiff_cub_c11():
-    """ Returns the cubic stiffness for c11. """
-    cm = numpy.zeros((6,6))
-    cm[0][0] = 10.0
-    cm[1][1] = cm[2][2] = cm[0][0]
-    return stiffness(cm)
+#def dstiff_cub_c11():
+#    """ Returns the cubic stiffness for c11. """
+#    cm = numpy.zeros((6,6))
+#    cm[0][0] = 10.0
+#    cm[1][1] = cm[2][2] = cm[0][0]
+#    return stiffness(cm)
 
-def dstiff_cub_c12():
-    """ Returns the cubic stiffness for c12. """
-    cm = numpy.zeros((6,6))
-    cm[0][1] = 10.0
-    cm[0][2] = cm[1][2] = cm[0][1]
-    cm[2][0] = cm[2][1] = cm[1][0] = cm[0][1]
-    return stiffness(cm)
+# Wrapped 
+cpdef dstiff_cub_c11():
+    cpdef int i, j;
+    cpdef double cm[6][6];
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j]=0.0;
+    cm[0][0]=10.0;
+    cm[1][1]=cm[2][2]=cm[0][0];   
 
-def dstiff_cub_c44():
-    """ Returns the cubic stiffness for c44. """
-    cm = numpy.zeros((6,6))
-    cm[3][3] = 1.0
-    cm[4][4] = cm[5][5] = cm[3][3]
-    return stiffness(cm)
+    return stiffness(cm);
+
+#def dstiff_cub_c12():
+#    """ Returns the cubic stiffness for c12. """
+#    cm = numpy.zeros((6,6))
+#    cm[0][1] = 10.0
+#    cm[0][2] = cm[1][2] = cm[0][1]
+#    cm[2][0] = cm[2][1] = cm[1][0] = cm[0][1]
+#    return stiffness(cm)
+
+# Wrapped 
+cpdef dstiff_cub_c12():
+    cpdef int i,j;
+    #cm=alloc2double(6,6);
+    cpdef double cm[6][6];
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j]=0.0;
+    cm[0][1] = 10.0;
+    cm[0][2] = cm[1][2] = cm[0][1];
+    cm[2][0] = cm[2][1] = cm[1][0] = cm[0][1];
+
+    return stiffness(cm)  
+
+#def dstiff_cub_c44():
+#    """ Returns the cubic stiffness for c44. """
+#    cm = numpy.zeros((6,6))
+#    cm[3][3] = 1.0
+#    cm[4][4] = cm[5][5] = cm[3][3]
+#    return stiffness(cm)
+
+# Wrapped 
+cpdef dstiff_cub_c44():
+    cpdef int i,j;
+    # cm=alloc2double(6,6);
+    cpdef double cm[6][6];
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j]=0.0;
+    cm[3][3] = 1.0;
+    cm[4][4] = cm[5][5] = cm[3][3];   
+    return stiffness(cm); 
 
 # --------------------------------------------------
 # VTI CALCULATIONS
@@ -1300,40 +1372,106 @@ def forward_vti(cxx):
         cm[4][4] = cm[3][3]
         return cm
 
-def dstiff_vti_c33():
-    """ Returns the VTI stiffness for c33. """
-    cm = numpy.zeros((6,6))
-    cm[2][2] = 10.0
+
+#def dstiff_vti_c33():
+#    """ Returns the VTI stiffness for c33. """
+#    cm = numpy.zeros((6,6))
+#    cm[2][2] = 10.0
+#    return stiffness(cm)
+
+# Wrapped 
+cpdef dstiff_vti_c33():
+
+    cpdef int i,j;
+    cpdef double cm[6][6];
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[2][2] = 10.0;
+    return stiffness(cm); 
+    
+
+#def dstiff_vti_c23():
+#    """ Returns the VTI stiffness for c23. """
+#    cm = numpy.zeros((6,6))
+#    cm[1][2] = 10.0
+#    cm[0][2] = cm[2][0] = cm[2][1] = cm[1][2]
+#    return stiffness(cm)
+
+# Wrapped 
+cpdef dstiff_vti_c23():
+
+    cpdef int i,j;
+    # cm=alloc2double(6,6);
+    cpdef double cm[6][6];
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[1][2] = 10.0;
+    cm[0][2] = cm[2][0] = cm[2][1] = cm[1][2];
     return stiffness(cm)
 
-def dstiff_vti_c23():
-    """ Returns the VTI stiffness for c23. """
-    cm = numpy.zeros((6,6))
-    cm[1][2] = 10.0
-    cm[0][2] = cm[2][0] = cm[2][1] = cm[1][2]
-    return stiffness(cm)
 
-def dstiff_vti_c12():
-    """ Returns the VTI stiffness for c12. """
-    cm = numpy.zeros((6,6))
-    cm[0][1] = 10.0
-    cm[0][0] = cm[1][1] = cm[0][1]
-    cm[1][0] = cm[0][1]
-    return stiffness(cm)
+#def dstiff_vti_c12():
+#    """ Returns the VTI stiffness for c12. """
+#    cm = numpy.zeros((6,6))
+#    cm[0][1] = 10.0
+#    cm[0][0] = cm[1][1] = cm[0][1]
+#    cm[1][0] = cm[0][1]
+#    return stiffness(cm)
 
-def dstiff_vti_c44():
-    """ Returns the VTI stiffness for c44. """
-    cm = numpy.zeros((6,6))
-    cm[3][3] = 1.0
-    cm[4][4] = cm[3][3]
-    return stiffness(cm)
+# Wrapped 
+cpdef dstiff_vti_c12():
 
-def dstiff_vti_c66():
-    """ Returns the VTI stiffness for c66. """
-    cm = numpy.zeros((6,6))
-    cm[5][5] = 1.0
-    cm[0][0] = cm[1][1] = 2.0 * cm[5][5]
-    return stiffness(cm)
+    cpdef int i,j;
+    #cm=alloc2double(6,6);
+    cpdef double cm[6][6];
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[0][1] = 10.0;
+    cm[0][0] = cm[1][1] = cm[0][1];
+    cm[1][0] = cm[0][1];
+    return stiffness(cm);  
+
+#def dstiff_vti_c44():
+#    """ Returns the VTI stiffness for c44. """
+#    cm = numpy.zeros((6,6))
+#    cm[3][3] = 1.0
+#    cm[4][4] = cm[3][3]
+#    return stiffness(cm)
+
+# Wrapped 
+cpdef dstiff_vti_c44():
+
+    cpdef int i, j;
+    cpdef double cm[6][6];
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[3][3] = 1.0;
+    cm[4][4] = cm[3][3];
+    return stiffness(cm);
+
+
+#def dstiff_vti_c66():
+#    """ Returns the VTI stiffness for c66. """
+#    cm = numpy.zeros((6,6))
+#    cm[5][5] = 1.0
+#    cm[0][0] = cm[1][1] = 2.0 * cm[5][5]
+#    return stiffness(cm)
+
+# Wrapped 
+cpdef dstiff_vti_c66():
+
+    cpdef int i,j;
+    cpdef double cm[6][6];
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[5][5] = 1.0;
+    cm[0][0] = cm[1][1] = 2.0 * cm[5][5];
+    return stiffness(cm);
 
 # --------------------------------------------------
 # HTI CALCULATIONS
@@ -1366,38 +1504,97 @@ def forward_hti(cxx):
         cm[4][4] = cm[5][5]
         return cm
 
-def dstiff_hti_c11():
-    """ Returns the HTI stiffness for c11. """
-    cm = numpy.zeros((6,6))
-    cm[0][0] = 10.0
-    return stiffness(cm)
+#def dstiff_hti_c11():
+#    """ Returns the HTI stiffness for c11. """
+#    cm = numpy.zeros((6,6))
+#    cm[0][0] = 10.0
+#    return stiffness(cm)
 
-def dstiff_hti_c33():
-    """ Returns the HTI stiffness for c33. """
-    cm = numpy.zeros((6,6))
-    cm[2][2] = 10.0
-    cm[1][1] = cm[2][2]
-    return stiffness(cm)
+# Wrapped 
+cpdef dstiff_hti_c11():
 
-def dstiff_hti_c12():
-    """ Returns the HTI stiffness for c12. """
-    cm = numpy.zeros((6,6))
-    cm[0][1] = 10.0
-    cm[0][2] = cm[1][0] = cm[2][0] = cm[0][1]
-    return stiffness(cm)
+    cpdef int i, j;
+    cpdef double cm[6][6];
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[0][0] = 10.0;
+    return stiffness(cm); 
 
-def dstiff_hti_c44():
-    """ Returns the HTI stiffness for c44. """
-    cm = numpy.zeros((6,6))
-    cm[3][3] = 1.0
-    return stiffness(cm)
 
-def dstiff_hti_c66():
-    """ Returns the HTI stiffness for c66. """
-    cm = numpy.zeros((6,6))
-    cm[5][5] = 1.0
-    cm[4][4] = cm[5][5]
-    return stiffness(cm)
+#def dstiff_hti_c33():
+#    """ Returns the HTI stiffness for c33. """
+#    cm = numpy.zeros((6,6))
+#    cm[2][2] = 10.0
+#    cm[1][1] = cm[2][2]
+#    return stiffness(cm)
+
+# Wrapped 
+cpdef dstiff_hti_c33():
+
+    cpdef int i, j;
+    cpdef double cm[6][6];
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j]=0.0;
+    cm[2][2] = 10.0;
+    cm[1][1] = cm[2][2];
+    return stiffness(cm);  
+
+#def dstiff_hti_c12():
+#    """ Returns the HTI stiffness for c12. """
+#    cm = numpy.zeros((6,6))
+#    cm[0][1] = 10.0
+#    cm[0][2] = cm[1][0] = cm[2][0] = cm[0][1]
+#    return stiffness(cm)
+
+# Wrapped 
+cpdef dstiff_hti_c12():
+
+    cpdef int i,j;
+    cpdef double cm[6][6];
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[0][1] = 10.0;
+    cm[0][2] = cm[1][0] = cm[2][0] = cm[0][1];
+    return stiffness(cm);
+
+
+#def dstiff_hti_c44():
+#    """ Returns the HTI stiffness for c44. """
+#    cm = numpy.zeros((6,6))
+#    cm[3][3] = 1.0
+#    return stiffness(cm)
+
+# Wrapped 
+cpdef dstiff_hti_c44():
+
+    cpdef int i, j;
+    cpdef double cm[6][6];
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[3][3] = 1.0;
+    return stiffness(cm); 
+
+#def dstiff_hti_c66():
+#    """ Returns the HTI stiffness for c66. """
+#    cm = numpy.zeros((6,6))
+#    cm[5][5] = 1.0
+#    cm[4][4] = cm[5][5]
+#    return stiffness(cm)
+
+cpdef dstiff_hti_c66():
+
+    cpdef int i, j;
+    cpdef double cm[6][6];
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[5][5] = 1.0;
+    cm[4][4] = cm[5][5];
+    return stiffness(cm);
 
 # --------------------------------------------------
 # TETRAGONAL CALCULATIONS
@@ -1433,44 +1630,121 @@ def forward_tetra(cxx):
         cm[4][4] = cm[3][3]
         return cm
 
-def dstiff_tetra_c11():
-    """ Returns the tetragonal stiffness for c11. """
-    cm = numpy.zeros((6,6))
-    cm[1][1] = cm[0][0] = 10.0
-    return stiffness(cm)
+#def dstiff_tetra_c11():
+#    """ Returns the tetragonal stiffness for c11. """
+#    cm = numpy.zeros((6,6))
+#    cm[1][1] = cm[0][0] = 10.0
+#    return stiffness(cm)
 
-def dstiff_tetra_c33():
-    """ Returns the tetragonal stiffness for c33. """
-    cm = numpy.zeros((6,6))
-    cm[2][2] = 10.0
-    return stiffness(cm)
+# Wrapped 
+cpdef dstiff_tetra_c11():
 
-def dstiff_tetra_c23():
-    """ Returns the tetragonal stiffness for c23. """
-    cm = numpy.zeros((6,6))
-    cm[1][2] = 10.0
-    cm[0][2] = cm[2][0] = cm[2][1] = cm[1][2]
-    return stiffness(cm)
+    cpdef int i, j;
+    cpdef double cm[6][6];
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[1][1] = cm[0][0] = 10.0;
+    return stiffness(cm); 
 
-def dstiff_tetra_c12():
-    """ Returns the tetragonal stiffness for c12. """
-    cm = numpy.zeros((6,6))
-    cm[0][1] = 10.0
-    cm[1][0] = cm[0][1]
-    return stiffness(cm)
 
-def dstiff_tetra_c44():
-    """ Returns the tetragonal stiffness for c44. """
-    cm = numpy.zeros((6,6))
-    cm[3][3] = 1.0
-    cm[4][4] = cm[3][3]
-    return stiffness(cm)
+#def dstiff_tetra_c33():
+#    """ Returns the tetragonal stiffness for c33. """
+#    cm = numpy.zeros((6,6))
+#    cm[2][2] = 10.0
+#    return stiffness(cm)
 
-def dstiff_tetra_c66():
-    """ Returns the tetragonal stiffness for c66. """
-    cm = numpy.zeros((6,6))
-    cm[5][5] = 1.0
-    return stiffness(cm)
+# Wrapped 
+cpdef dstiff_tetra_c33():
+    cpdef int i,j;
+    cpdef double cm[6][6];
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[2][2] = 10.0;
+    return stiffness(cm); 
+
+
+#def dstiff_tetra_c23():
+#    """ Returns the tetragonal stiffness for c23. """
+#    cm = numpy.zeros((6,6))
+#    cm[1][2] = 10.0
+#    cm[0][2] = cm[2][0] = cm[2][1] = cm[1][2]
+#    return stiffness(cm)
+
+# Wrapped
+cpdef dstiff_tetra_c23():
+
+    cpdef int i,j;
+    cpdef double cm[6][6];
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[1][2] = 10.0;
+    cm[0][2] = cm[2][0] = cm[2][1] = cm[1][2];
+    return stiffness(cm); 
+
+
+#def dstiff_tetra_c12():
+#    """ Returns the tetragonal stiffness for c12. """
+#    cm = numpy.zeros((6,6))
+#    cm[0][1] = 10.0
+#    cm[1][0] = cm[0][1]
+#    return stiffness(cm)
+
+
+# Wrapped 
+cpdef dstiff_tetra_c12():
+
+    cpdef int i, j;
+    cpdef double cm[6][6];
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[0][1] = 10.0;
+    cm[1][0] = cm[0][1];
+    return stiffness(cm); 
+
+
+
+#def dstiff_tetra_c44():
+#    """ Returns the tetragonal stiffness for c44. """
+#    cm = numpy.zeros((6,6))
+#    cm[3][3] = 1.0
+#    cm[4][4] = cm[3][3]
+#    return stiffness(cm)
+
+# Wrapped 
+cpdef dstiff_tetra_c44():
+
+    cpdef int i,j;
+    cpdef double cm[6][6];
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[3][3] = 1.0;
+    cm[4][4] = cm[3][3];
+    return stiffness(cm); 
+
+
+#def dstiff_tetra_c66():
+#    """ Returns the tetragonal stiffness for c66. """
+#    cm = numpy.zeros((6,6))
+#    cm[5][5] = 1.0
+#    return stiffness(cm)
+
+
+# Wrapped 
+cpdef dstiff_tetra_c66():
+
+    cpdef int i,j;
+    cpdef double cm[6][6];
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[5][5] = 1.0;
+    return stiffness(cm); 
+
 
 # --------------------------------------------------
 # ORTHORHOMBIC CALCULATIONS
@@ -1510,60 +1784,163 @@ def forward_orth(cxx):
         cm[2][1] = cm[1][2]
         return cm
 
-def dstiff_orth_c11():
-    """ Returns the orthorhombic stiffness for c11. """
-    cm = numpy.zeros((6,6))
-    cm[0][0] = 10.0
-    return stiffness(cm)
+#def dstiff_orth_c11():
+#    """ Returns the orthorhombic stiffness for c11. """
+#    cm = numpy.zeros((6,6))
+#    cm[0][0] = 10.0
+#    return stiffness(cm)
 
-def dstiff_orth_c22():
-    """ Returns the orthorhombic stiffness for c22. """
-    cm = numpy.zeros((6,6))
-    cm[1][1] = 10.0
-    return stiffness(cm)
+# Wrapped 
+cpdef dstiff_orth_c11():
+    cpdef int i, j;
+    cpdef double cm[6][6]; 
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[0][0] = 10.0;
+    return stiffness(cm); 
 
-def dstiff_orth_c33(): 
-    """ Returns the orthorhombic stiffness for c33. """
-    cm = numpy.zeros((6,6))
-    cm[2][2] = 10.0
-    return stiffness(cm)
+#def dstiff_orth_c22():
+#    """ Returns the orthorhombic stiffness for c22. """
+#    cm = numpy.zeros((6,6))
+#    cm[1][1] = 10.0
+#    return stiffness(cm)
 
-def dstiff_orth_c23():
-    """ Returns the orthorhombic stiffness for c23. """
-    cm = numpy.zeros((6,6))
-    cm[1][2] = 10.0
-    cm[2][1] = cm[1][2]
-    return stiffness(cm)
+# Wrapped 
+cpdef dstiff_orth_c22():
+    cpdef int i,j;
+    cpdef double cm[6][6]; 
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[1][1] = 10.0;
+    return stiffness (cm);
 
-def dstiff_orth_c13():
-    """ Returns the orthorhombic stiffness for c13. """
-    cm = numpy.zeros((6,6))
-    cm[0][2] = 10.0
-    cm[2][0] = cm[0][2]
-    return stiffness(cm)
 
-def dstiff_orth_c12():
-    """ Returns the orthorhombic stiffness for c12. """
-    cm = numpy.zeros((6,6))
-    cm[0][1] = 10.0
-    cm[1][0] = cm[0][1]
-    return stiffness(cm)
+#def dstiff_orth_c33(): 
+#    """ Returns the orthorhombic stiffness for c33. """
+#    cm = numpy.zeros((6,6))
+#    cm[2][2] = 10.0
+#    return stiffness(cm)
 
-def dstiff_orth_c44():
-    """ Returns the orthorhombic stiffness for c44. """
-    cm = numpy.zeros((6,6))
-    cm[3][3] = 1.0
-    return stiffness(cm)
+# Wrapped
+cpdef dstiff_orth_c33(): 
+    cpdef int i, j;
+    cpdef double cm[6][6]; 
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[2][2] = 10.0;
+    return stiffness (cm);
 
-def dstiff_orth_c55():
-    """ Returns the orthorhombic stiffness for c55. """
-    cm = numpy.zeros((6,6))
-    cm[4][4] = 1.0
-    return stiffness(cm)
 
-def dstiff_orth_c66():
-    """ Returns the orthorhombic stiffness for c66. """
-    cm = numpy.zeros((6,6))
-    cm[5][5] = 1.0
-    return stiffness(cm)
+#def dstiff_orth_c23():
+#    """ Returns the orthorhombic stiffness for c23. """
+#    cm = numpy.zeros((6,6))
+#    cm[1][2] = 10.0
+#    cm[2][1] = cm[1][2]
+#    return stiffness(cm)
+
+# Wrapped
+cpdef dstiff_orth_c23():
+    cpdef int i, j;
+    cpdef double cm[6][6]; 
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[1][2] = 10.0;
+    cm[2][1] = cm[1][2];
+    return stiffness (cm);
+
+
+#def dstiff_orth_c13():
+#    """ Returns the orthorhombic stiffness for c13. """
+#    cm = numpy.zeros((6,6))
+#    cm[0][2] = 10.0
+#    cm[2][0] = cm[0][2]
+#    return stiffness(cm)
+
+# Wrapped 
+cpdef dstiff_orth_c13():
+    cpdef int i, j;
+    cpdef double cm[6][6]; 
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[0][2] = 10.0;
+    cm[2][0] = cm[0][2];
+    return stiffness (cm);
+
+
+
+#def dstiff_orth_c12():
+#    """ Returns the orthorhombic stiffness for c12. """
+#    cm = numpy.zeros((6,6))
+#    cm[0][1] = 10.0
+#    cm[1][0] = cm[0][1]
+#    return stiffness(cm)
+
+
+# Wrapped
+cpdef dstiff_orth_c12():
+    cpdef int i, j;
+    cpdef double cm[6][6]; 
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[0][1] = 10.0;
+    cm[1][0] = cm[0][1];
+    return stiffness (cm);
+
+
+#def dstiff_orth_c44():
+#    """ Returns the orthorhombic stiffness for c44. """
+#    cm = numpy.zeros((6,6))
+#    cm[3][3] = 1.0
+#    return stiffness(cm)
+
+# Wrapped
+cpdef dstiff_orth_c44():
+    cpdef int i, j;
+    cpdef double cm[6][6]; 
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[3][3] = 1.0;
+    return stiffness (cm);
+
+
+#def dstiff_orth_c55():
+#    """ Returns the orthorhombic stiffness for c55. """
+#    cm = numpy.zeros((6,6))
+#    cm[4][4] = 1.0
+#    return stiffness(cm)
+
+# Wrapped 
+cpdef dstiff_orth_c55():
+    cpdef int i, j;
+    cpdef double cm[6][6]; 
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[4][4] = 1.0;
+    return stiffness (cm);
+
+
+#def dstiff_orth_c66():
+#    """ Returns the orthorhombic stiffness for c66. """
+#    cm = numpy.zeros((6,6))
+#    cm[5][5] = 1.0
+#    return stiffness(cm)
+
+# Wrapped 
+cpdef dstiff_orth_c66():
+    cpdef int i, j;
+    cpdef double cm[6][6]; 
+    for i from 0 <= i < 6:
+        for j from 0 <= j < 6:
+            cm[i][j] = 0.0;
+    cm[5][5] = 1.0;
+    return stiffness (cm);
+
 
