@@ -936,3 +936,179 @@ class SmoothLinePlot(Plot):
         for x, y in self.iterate_points():
             points += [x, y]
         self._gline.points = points
+        
+class MeshLinePlot(Plot):
+    '''MeshLinePlot class which displays a set of points similar to a mesh.
+    '''
+
+    def create_drawings(self):
+        self._color = Color(*self.color)
+        self._mesh = Mesh(mode='line_strip')
+        self.bind(color=lambda instr, value: setattr(self._color, "rgba", value))
+        return [self._color, self._mesh]
+
+    def draw(self, *args):
+        super(MeshLinePlot, self).draw(*args)
+        points = self.points
+        mesh = self._mesh
+        vert = mesh.vertices
+        ind = mesh.indices
+        params = self._params
+        funcx = log10 if params['xlog'] else lambda x: x
+        funcy = log10 if params['ylog'] else lambda x: x
+        xmin = funcx(params['xmin'])
+        ymin = funcy(params['ymin'])
+        diff = len(points) - len(vert) // 4
+        size = params['size']
+        ratiox = (size[2] - size[0]) / float(funcx(params['xmax']) - xmin)
+        ratioy = (size[3] - size[1]) / float(funcy(params['ymax']) - ymin)
+        if diff < 0:
+            del vert[4 * len(points):]
+            del ind[len(points):]
+        elif diff > 0:
+            ind.extend(range(len(ind), len(ind) + diff))
+            vert.extend([0] * (diff * 4))
+        for k in range(len(points)):
+            vert[k * 4] = (funcx(points[k][0]) - xmin) * ratiox + size[0]
+            vert[k * 4 + 1] = (funcy(points[k][1]) - ymin) * ratioy + size[1]
+        mesh.vertices = vert
+
+    def _set_mode(self, value):
+        if hasattr(self, '_mesh'):
+            self._mesh.mode = value
+    mode = AliasProperty(lambda self: self._mesh.mode, _set_mode)
+    '''VBO Mode used for drawing the points. Can be one of: 'points',
+    'line_strip', 'line_loop', 'lines', 'triangle_strip', 'triangle_fan'.
+    See :class:`~kivy.graphics.Mesh` for more details.
+    Defaults to 'line_strip'.
+    '''
+
+
+class MeshStemPlot(MeshLinePlot):
+    '''MeshStemPlot uses the MeshLinePlot class to draw a stem plot. The data
+    provided is graphed from origin to the data point.
+    '''
+
+    def draw(self, *args):
+        super(MeshStemPlot, self).draw(*args)
+        points = self.points
+        mesh = self._mesh
+        self._mesh.mode = 'lines'
+        vert = mesh.vertices
+        ind = mesh.indices
+        params = self._params
+        funcx = log10 if params['xlog'] else lambda x: x
+        funcy = log10 if params['ylog'] else lambda x: x
+        xmin = funcx(params['xmin'])
+        ymin = funcy(params['ymin'])
+        diff = len(points) * 2 - len(vert) // 4
+        size = params['size']
+        ratiox = (size[2] - size[0]) / float(funcx(params['xmax']) - xmin)
+        ratioy = (size[3] - size[1]) / float(funcy(params['ymax']) - ymin)
+        if diff < 0:
+            del vert[4 * len(points):]
+            del ind[len(points):]
+        elif diff > 0:
+            ind.extend(range(len(ind), len(ind) + diff))
+            vert.extend([0] * (diff * 4))
+        for k in range(len(points)):
+            vert[k * 8] = (funcx(points[k][0]) - xmin) * ratiox + size[0]
+            vert[k * 8 + 1] = (0 - ymin) * ratioy + size[1]
+            vert[k * 8 + 4] = (funcx(points[k][0]) - xmin) * ratiox + size[0]
+            vert[k * 8 + 5] = (funcy(points[k][1]) - ymin) * ratioy + size[1]
+        mesh.vertices = vert
+
+
+class LinePlot(Plot):
+    '''LinePlot draws using a standard Line object.
+    '''
+    
+    '''Args:
+    line_width (float) - the width of the graph line
+    '''
+    def __init__(self, **kwargs):
+        self._line_width = kwargs.get('line_width', 1)
+        super(LinePlot, self).__init__(**kwargs)
+    
+    def create_drawings(self):
+        from kivy.graphics import Line, RenderContext
+
+        self._grc = RenderContext(
+                use_parent_modelview=True,
+                use_parent_projection=True)
+        with self._grc:
+            self._gcolor = Color(*self.color)
+            self._gline = Line(points=[], cap='none', width=self._line_width, joint='round')
+
+        return [self._grc]
+    
+    def draw(self, *args):
+        super(LinePlot, self).draw(*args)
+        # flatten the list
+        points = []
+        for x, y in self.iterate_points():
+            points += [x, y]
+        self._gline.points = points
+        
+class ContourPlot(Plot):
+    """
+    ContourPlot visualizes 3 dimensional data as an intensity map image.
+    The user must first specify 'xrange' and 'yrange' (tuples of min,max) and then 'data', the intensity values.
+    X and Y values are assumed to be linearly spaced values from xrange/yrange and the dimensions of 'data'.
+    The color values are automatically scaled to the min and max z range of the data set.
+    """
+    _image = ObjectProperty(None)
+    data = ObjectProperty(None)
+    xrange = ListProperty([0, 100])
+    yrange = ListProperty([0, 100])
+
+    def __init__(self, **kwargs):
+        super(ContourPlot, self).__init__(**kwargs)
+        self.bind(data=self.ask_draw, xrange=self.ask_draw, yrange=self.ask_draw)
+
+    def create_drawings(self):
+        self._image = Rectangle()
+        self._color = Color([1, 1, 1, 1])
+        self.bind(color=lambda instr, value: setattr(self._color, 'rgba', value))
+        return [self._color, self._image]
+
+    def draw(self, *args):
+        super(ContourPlot, self).draw(*args)
+        data = self.data
+        xdim, ydim = data.shape
+
+        # Find the minimum and maximum z values
+        zmax = data.max()
+        zmin = data.min()
+        rgb_scale_factor = 1.0 / (zmax - zmin) * 255
+        # Scale the z values into RGB data
+        buf = np.array(data, dtype=float, copy=True)
+        np.subtract(buf, zmin, out=buf)
+        np.multiply(buf, rgb_scale_factor, out=buf)
+        # Duplicate into 3 dimensions (RGB) and convert to byte array
+        buf = np.asarray(buf, dtype=np.uint8)
+        buf = np.expand_dims(buf, axis=2)
+        buf = np.concatenate((buf, buf, buf), axis=2)
+        buf = np.reshape(buf, (xdim, ydim, 3))
+
+        charbuf = bytearray(np.reshape(buf, (buf.size)))
+        self._texture = Texture.create(size=(xdim, ydim), colorfmt='rgb')
+        self._texture.blit_buffer(charbuf, colorfmt='rgb', bufferfmt='ubyte')
+        image = self._image
+        image.texture = self._texture
+
+        params = self._params
+        funcx = log10 if params['xlog'] else lambda x: x
+        funcy = log10 if params['ylog'] else lambda x: x
+        xmin = funcx(params['xmin'])
+        ymin = funcy(params['ymin'])
+        size = params['size']
+        ratiox = (size[2] - size[0]) / float(funcx(params['xmax']) - xmin)
+        ratioy = (size[3] - size[1]) / float(funcy(params['ymax']) - ymin)
+
+        bl = (funcx(self.xrange[0]) - xmin) * ratiox + size[0], (funcy(self.yrange[0]) - ymin) * ratioy + size[1]
+        tr = (funcx(self.xrange[1]) - xmin) * ratiox + size[0], (funcy(self.yrange[1]) - ymin) * ratioy + size[1]
+        image.pos = bl
+        w = tr[0] - bl[0]
+        h = tr[1] - bl[1]
+        image.size = (w, h)

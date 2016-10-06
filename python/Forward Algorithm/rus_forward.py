@@ -58,14 +58,14 @@ def start(args):
 
     i = 0
     ir1 = 0
-   
+  
     while ir1 < args.nfreq:
         if ((wsort[i]>0) and ((sqrt(wsort[i])/(2.0*scipy.pi))>0.00001)):
             ir1 += 1
             result = ((1000000*sqrt(wsort[i])/(2.0*scipy.pi)))
             
             print(result)
-        
+      
         i += 1
     
     
