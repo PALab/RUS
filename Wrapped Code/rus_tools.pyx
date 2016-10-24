@@ -42,7 +42,6 @@ _memo_doublefact[1] = 1
 # -------------------------------------------
 # FUNCTIONS
 # -------------------------------------------
-# Wrapping.. a bit confused with this function... COME BACK TO THIS LATER...
 cpdef compute_dyda(int ns, int hextype, int r, tabs, dimensions, int shape, int ifw, int ndata, z, wsort, indice):
     """
     Calculate and return the dyda value.
@@ -198,7 +197,6 @@ cpdef compute_dyda(int ns, int hextype, int r, tabs, dimensions, int shape, int 
     return dyda
 
 
-# Where is this being used/called? 
 def calc_forward_cm(args):
     """ Calls appropriate function based on ns value. """
     # isotropic
@@ -231,19 +229,20 @@ def calc_forward_cm(args):
 
 
 
-def dgamma_fill(tabs,r,dimensions,dc,shape):
+cpdef dgamma_fill(tabs, int r, dimensions, dc, int shape):
     dgamma = numpy.zeros((r,r))
-    for ir1 in range(r):
+    cpdef int ir1, ir2; 
+    for ir1 from 0 <= ir1 < r:
         tabs1 = tabs[ir1]
-        for ir2 in range(r):
+        for ir2 from 0 <= ir2 < r:
             tabs2 = tabs[ir2]
-            gamma_helper(dgamma,dc,tabs1,tabs2,ir1,ir2,dimensions,shape)
+            gamma_helper(dgamma, dc, tabs1, tabs2, ir1, ir2, dimensions, shape)
     return dgamma
 
 
 
 cpdef void gamma_helper(gamma, c, tabs1, tabs2, int ir1, int ir2, dimensions, int shape):
-    cdef int i1, i2, l1, l2, m1, m2, n1, n2, l, m, n;
+    cpdef int i1, i2, l1, l2, m1, m2, n1, n2, l, m, n;
     [i1,l1,m1,n1] = tabs1
     [i2,l2,m2,n2] = tabs2
     l = l1 + l2
@@ -283,15 +282,15 @@ cpdef void gamma_helper(gamma, c, tabs1, tabs2, int ir1, int ir2, dimensions, in
             if st3 != 0 and n2 > 0:
                 gamma[ir1][ir2] += st3 * n1 * n2 * volintegral(dimensions, l, m, n-2, shape)
 
-# Wrapped - Speed improvement 0.038 --> 0.028 (needs more work)
+
 cpdef dfdp(double f, dgammadp, z, int ie, int n):
     cpdef int i;
     p = []
     for i from 0 <= i < n:
         # we use dgammadp's 
         # symmetry here
-        p.append(numpy.dot(dgammadp[i],z[ie]))    # <---------- find alternative way to implement this
-    return numpy.dot(z[ie],p) / (8.0 * scipy.pi * scipy.pi * f)     # <---------------- this too 
+        p.append(numpy.dot(dgammadp[i],z[ie]))  
+    return numpy.dot(z[ie],p) / (8.0 * scipy.pi * scipy.pi * f) 
 
 
 
@@ -316,16 +315,15 @@ cpdef dfdp(double f, dgammadp, z, int ie, int n):
 # to the true order of the parameters. Elements associated with fixed
 # parameters will be zero. NCVM is the physical dimension of COVAR
 
-# Not located in profile output? 
 cpdef covsrt(covar, int ma, ia, int mfit):
-    for i from 0 <= i < (mfit, ma):                     # maybe use: i=mfit; i < ma; ++i
+    for i from 0 <= i < (mfit, ma):
         for j from 0 <= j < i:
             covar[i][j] = covar[j][i] = 0.0
     k = mfit - 1;
     for j from 0 <= j < (ma - 1, -1, -1):
         if ia[j]:
             for i in range(ma):
-                covar[i][k], covar[i][j] = covar[i][j], covar[i][k]     #SWAP 
+                covar[i][k], covar[i][j] = covar[i][j], covar[i][k]   
             for i in range(ma):
                 covar[k][i], covar[j][i] = covar[j][i], covar[k][i]
         k -= 1; 
@@ -348,7 +346,6 @@ cpdef covsrt(covar, int ma, ia, int mfit):
 # * dimensions Np by MP. On output, A is replaced by its matrix inverse,
 # * and B is replaced by the corresponding set of solution vectors. */
 
-# Speed 0 on pure python - don't really need to wrap... 
 def gaussj(a, n, b, m):
     indxc = []
     indxr = []
@@ -407,9 +404,9 @@ def gaussj(a, n, b, m):
 # Used by MRQMIN to evaluate the linearized fitting matrix ALPHA, and 
 # vector BETA from (14.4.8) 
 
-# called by mrqmin_function each iteration. Computes "chisq"
-# Wrapping... Pure Python cumtime: 9.869 
 cpdef mrqcof(int d, int r, tabs, irk, dimensions, double rho, int shape, float freqmin, y, int ndata, a, ia, int ma, alpha, beta, int hextype):
+    cpdef int mfit, j, k, i, l;
+    cpdef double chisq;
 
     mfit = 0
     for j in range(ma):
@@ -421,7 +418,7 @@ cpdef mrqcof(int d, int r, tabs, irk, dimensions, double rho, int shape, float f
         beta[j] = 0.0
 
     chisq = 0.0
-    ymod, dyda = formod(d,r,tabs,irk,dimensions,rho,shape,freqmin,ndata,a,ma,hextype)
+    ymod, dyda = formod(d, r, tabs, irk, dimensions, rho, shape, freqmin, ndata, a, ma, hextype)
     for i in range(ndata):
         freq, sig = y[i]
         sig2i = sig * sig
@@ -449,8 +446,9 @@ cpdef mrqcof(int d, int r, tabs, irk, dimensions, double rho, int shape, float f
     return chisq
 
 
-def formod(d,r,tabs,irk,dimensions,rho,shape,freqmin,ndata,a,ns,hextype):
-
+cpdef formod(int d, int r, tabs, irk, dimensions, double rho, int shape, float freqmin, int ndata, a, int ns, int hextype):
+    cpdef int irf, i, ifw, iw, k, ir1, ir2;
+    cpdef double x; 
     freqs = 'predictedf' # CHANGE THIS LINE TO APPROPRIATE DIRECTORY
 
     cm = make_cm(a,hextype)
@@ -464,7 +462,7 @@ def formod(d,r,tabs,irk,dimensions,rho,shape,freqmin,ndata,a,ns,hextype):
     #-------------------------------------------------------------
     eigvals = []
     eigvect = []
-    for k in range(8):
+    for k from 0 <= k < 8:
         # lapack routine
         w, v = la.eigh(gamma[k], e[k], lower=False, eigvals_only=False, turbo=False, type=1, overwrite_a=True, overwrite_b=True, check_finite=False)
         eigvals.append(w)
@@ -476,7 +474,7 @@ def formod(d,r,tabs,irk,dimensions,rho,shape,freqmin,ndata,a,ns,hextype):
     # eigen vectors
     z = numpy.zeros((r,r))
     irf = 0
-    for k in range(8):
+    for k from 0 <= k < 8:
         for ir1 in range(irf,irf+irk[k]):
             for ir2 in range(irf,irf+irk[k]):
                 z[ir2][ir1] = eigvect[k][ir2-irf][ir1-irf]
@@ -488,14 +486,14 @@ def formod(d,r,tabs,irk,dimensions,rho,shape,freqmin,ndata,a,ns,hextype):
     #/* sort eigenfrequencies */
     wsort = scipy.zeros(r)
     i = 0
-    for k in range(8):
+    for k from 0 <= k < 8:
         for ir1 in range(irk[k]):
             wsort[i] = eigvals[k][ir1]
             i += 1
     indice = numpy.argsort(wsort)
     wsort.sort()
 
-    for i in range(len(wsort)):
+    for i from 0 <= i < len(wsort):
         if wsort[i] > 0:
             x = math.sqrt(wsort[i]) / (2.0 * scipy.pi)
             if x > 0.00001:
@@ -511,7 +509,7 @@ def formod(d,r,tabs,irk,dimensions,rho,shape,freqmin,ndata,a,ns,hextype):
     ifw = xindex(wsort, freqmin, 0)
     ifw += 1
     iw = ifw
-    for i in range(ndata):
+    for i from 0 <= i < ndata:
         try:
             y.append(wsort[iw])
         except IndexError:
@@ -598,7 +596,8 @@ def formod(d,r,tabs,irk,dimensions,rho,shape,freqmin,ndata,a,ns,hextype):
 #/* hextype = differentiates between VTI and HTI symmetry in the hexagonal case */
 #/* alamda = parameter from conjugate-gradient method. Starts as <0 to initialise the routine and is changed in subsequent iterations */
 #
-def mrqmin(d,r,tabs,irk,dimensions,rho,shape,freqmin,y,ndata,cxx_values,ia,ma,covar,alpha,hextype,alamda):
+cpdef mrqmin(int d, int r,tabs, irk, dimensions, double rho, int shape, float freqmin, y, int ndata, cxx_values, ia, int ma, covar, alpha, int hextype, alamda):
+    cpdef int mfit, j, l; 
     # Loop is called if almada <0.
     # This initializes the routine.
     # Sets almada = -1.0 in main before calling MRQMIN.
@@ -811,7 +810,6 @@ def __make_cm_orthorhombic(a):
         cm[2][1] = cm[1][2]
         return cm
 
-# Wrapped - Time 0.263 --> 0.060 (check if this is limit)
 cpdef volintegral(dimensions, int l, int m, int n, int shape):
     global _memo_vol_max
     global _memo_volintegral
@@ -821,7 +819,7 @@ cpdef volintegral(dimensions, int l, int m, int n, int shape):
 
 #    if l % 2 == 1 or m % 2 == 1 or n % 2 == 1:
 #        return 0.0
-    #cdef int result
+
     hl = l//2
     hm = m//2
     hn = n//2
@@ -832,28 +830,14 @@ cpdef volintegral(dimensions, int l, int m, int n, int shape):
 
     # ell. cylinder shape
     if shape == 1:
-        #ds = dimensions[0]**(l+1) * dimensions[1]**(m+1) * dimensions[2]**(n+1)
-        #df_lm = doublefact(l-1) * doublefact(m-1)
-        #result = 4.0 * scipy.pi * ds / (n+1) * df_lm / doublefact(l+m+2)
-
-        #result = 4.0 * scipy.pi * pow(dimensions[0], l+1) * dimensions[1]**(m + 1) * dimensions[2]**(n+1) / (n + 1.0) * doublefact(l - 1) * doublefact(m - 1)/doublefact(l + m + 2);
-
         result = 4.0*scipy.pi*pow(dimensions[0], l+1)*pow(dimensions[1], m+1)*pow(dimensions[2], n+1)/<double>(n+1)*doublefact(l-1)*doublefact(m-1)/doublefact(l+m+2);
 
     # spheroid shape
     elif shape == 2:
-        #ds = dimensions[0]**(l+1) * dimensions[1]**(m+1) * dimensions[2]**(n+1)
-        #df_lm = doublefact(l-1) * doublefact(m-1)
-        #df_all = doublefact(l+m+n+3)
-        #result = 4.0 * scipy.pi * ds * df_lm * doublefact(n-1) / df_all
-
         result = 4.0*scipy.pi*pow(dimensions[0], l+1)*pow(dimensions[1], m+1)*pow(dimensions[2], n+1)*doublefact(l-1)*doublefact(m-1)*doublefact(n-1)/doublefact(l+m+n+3);
 
     # rp shape
     else:
-        #ds = dimensions[0]**(l+1) * dimensions[1]**(m+1) * dimensions[2]**(n+1)
-        #result = 8.0 / ((l+1) * (m+1) * (n+1)) * ds
-
         result = 8.0/((l+1)*(m+1)*(n+1))*pow(dimensions[0], l+1)*pow(dimensions[1],m+1)*pow(dimensions[2], n+1);
 
     if small:
@@ -861,8 +845,7 @@ cpdef volintegral(dimensions, int l, int m, int n, int shape):
 
     return result
 
-# Wrapped BUT removed "_memo_"
-cpdef doublefact(n):
+cpdef doublefact(int n):
 
     if (n == -1): return 1;
     elif (n == 0): return 1;
@@ -870,7 +853,6 @@ cpdef doublefact(n):
     else: return n * doublefact (n - 2); 
 
 
-# Wrapped Time: 0.248 --> 0.170. Does not work with For loops for some reason... Need to check if this is limit of speed... 
 cpdef e_fill(tabs, dimensions, double rho, int shape, irk):
     """
     Generates and returns the value e.
@@ -878,6 +860,7 @@ cpdef e_fill(tabs, dimensions, double rho, int shape, irk):
     TODO: What is e?
     """
     cpdef int irs, irv, irf, ir1, ir2, irh, i1, i2, l1, l2, m1, m2, n1, n2; 
+    cpdef int k, ik; # for the for loops
 
     e = [scipy.zeros((irk[i],irk[i])) for i from 0 <= i < 8]
     for k from 0 <= k < 8:
@@ -911,7 +894,7 @@ cpdef e_fill(tabs, dimensions, double rho, int shape, irk):
             irv += 1
     return e
 
-# Wrapped - Didn't change much... BUT did improve speed 
+
 cpdef stiffness(cm):
     """
     Uses cm to compute a value, c, which is returned.
@@ -924,6 +907,9 @@ cpdef stiffness(cm):
     of what values they represent, but I was unsure
     during initial implementation.
     """
+    cpdef int a, b; 
+    cpdef int i, j, k, l;
+
     c = scipy.zeros((3,3,3,3))
 
     for i from 0 <= i < 3:
@@ -957,7 +943,7 @@ cpdef stiffness(cm):
                     c[i][j][k][l] = cm[a][b];
     return c
 
-def gamma_fill(tabs,dimensions,cm,shape,irk):
+cpdef gamma_fill(tabs, dimensions, cm, int shape, irk):
     """
     Calculate a value, gamma, and return it.
     
@@ -969,18 +955,19 @@ def gamma_fill(tabs,dimensions,cm,shape,irk):
 
     TODO: What is this function doing?
     """
+    cpdef int k, ir1, irs, irf, irv, irh, ir2; 
     gamma = [scipy.zeros((irk[i],irk[i])) for i in range(8)]
     c = stiffness(cm)
     for k in range(8):
         irs = sum(irk[0:k])
         irf = irs + irk[k]
         irv = 0
-        for ir1 in range(irs,irf):
+        for ir1 in range(irs, irf):
             irh = 0
             tabs1 = tabs[ir1]
-            for ir2 in range(irs,irf):
+            for ir2 in range(irs, irf):
                 tabs2 = tabs[ir2]
-                gamma_helper(gamma[k],c,tabs1,tabs2,irv,irh,dimensions,shape)
+                gamma_helper(gamma[k], c, tabs1, tabs2, irv, irh, dimensions, shape)
                 irh += 1
             irv += 1
     return gamma
@@ -1065,8 +1052,6 @@ def xindex(ax, x, index):
 
     return lower
 
-
-# Wrapped - Speed: 0.002 --> 0.001 (compare with C code. Speed limit?)
 cpdef index_relationship(int d, int problem_size):
     """
     Creates and returns tabs and irk data.
@@ -1081,7 +1066,9 @@ cpdef index_relationship(int d, int problem_size):
     tabs = numpy.zeros((int(problem_size), 4), dtype=numpy.int64)
     irk  = [0 for i from 0 <= i < 8]
 
-    cpdef int ir = 0
+    cpdef int ir, i, l, m, n; 
+
+    ir = 0
 
     # k == 0
     for i from 0 <= i < 3:
@@ -1209,16 +1196,6 @@ def forward_iso(cxx):
         cm[2][0] = cm[2][1] = cm[1][0] = cm[0][1]
         return cm
 
-#cpdef dstiff_iso_c11():
-#    """ Returns the isotropic stiffness for c11. """
-#    cm = numpy.zeros((6,6))
-#    cm[0][0] = 10.0
-#    cm[1][1] = cm[2][2] = cm[0][0]
-#    cm[0][1] = cm[0][2] = cm[1][2] = cm[0][0]
-#    cm[1][0] = cm[2][0] = cm[2][1] = cm[0][0]
-#    return stiffness(cm)
-
-# Wrapped 
 cpdef dstiff_iso_c11():
     cpdef int i, j;
     cpdef double cm[6][6];
@@ -1231,16 +1208,7 @@ cpdef dstiff_iso_c11():
     cm[1][0] = cm[2][0] = cm[2][1] = cm[0][0];
     return stiffness(cm);
 
-#cpdef dstiff_iso_c44():
-#    """ Returns the isotropic stiffness for c44. """
-#    cm = numpy.zeros((6,6))
-#    cm[3][3] = 1.0
-#    cm[4][4] = cm[5][5] = cm[3][3]
-#    cm[0][1] = cm[0][2] = cm[1][2] = -2.0 * cm[3][3]
-#    cm[1][0] = cm[2][0] = cm[2][1] = -2.0 * cm[3][3]
-#    return stiffness(cm)
 
-# Wrapped 
 cpdef dstiff_iso_c44():
     cpdef int i,j;
     #cm=alloc2double(6,6);
@@ -1281,14 +1249,7 @@ def forward_cub(cxx):
         cm[2][0] = cm[2][1] = cm[1][0] = cm[0][1]
         return cm
 
-#def dstiff_cub_c11():
-#    """ Returns the cubic stiffness for c11. """
-#    cm = numpy.zeros((6,6))
-#    cm[0][0] = 10.0
-#    cm[1][1] = cm[2][2] = cm[0][0]
-#    return stiffness(cm)
 
-# Wrapped 
 cpdef dstiff_cub_c11():
     cpdef int i, j;
     cpdef double cm[6][6];
@@ -1300,15 +1261,7 @@ cpdef dstiff_cub_c11():
 
     return stiffness(cm);
 
-#def dstiff_cub_c12():
-#    """ Returns the cubic stiffness for c12. """
-#    cm = numpy.zeros((6,6))
-#    cm[0][1] = 10.0
-#    cm[0][2] = cm[1][2] = cm[0][1]
-#    cm[2][0] = cm[2][1] = cm[1][0] = cm[0][1]
-#    return stiffness(cm)
 
-# Wrapped 
 cpdef dstiff_cub_c12():
     cpdef int i,j;
     #cm=alloc2double(6,6);
@@ -1322,14 +1275,7 @@ cpdef dstiff_cub_c12():
 
     return stiffness(cm)  
 
-#def dstiff_cub_c44():
-#    """ Returns the cubic stiffness for c44. """
-#    cm = numpy.zeros((6,6))
-#    cm[3][3] = 1.0
-#    cm[4][4] = cm[5][5] = cm[3][3]
-#    return stiffness(cm)
 
-# Wrapped 
 cpdef dstiff_cub_c44():
     cpdef int i,j;
     # cm=alloc2double(6,6);
@@ -1373,13 +1319,6 @@ def forward_vti(cxx):
         return cm
 
 
-#def dstiff_vti_c33():
-#    """ Returns the VTI stiffness for c33. """
-#    cm = numpy.zeros((6,6))
-#    cm[2][2] = 10.0
-#    return stiffness(cm)
-
-# Wrapped 
 cpdef dstiff_vti_c33():
 
     cpdef int i,j;
@@ -1391,14 +1330,6 @@ cpdef dstiff_vti_c33():
     return stiffness(cm); 
     
 
-#def dstiff_vti_c23():
-#    """ Returns the VTI stiffness for c23. """
-#    cm = numpy.zeros((6,6))
-#    cm[1][2] = 10.0
-#    cm[0][2] = cm[2][0] = cm[2][1] = cm[1][2]
-#    return stiffness(cm)
-
-# Wrapped 
 cpdef dstiff_vti_c23():
 
     cpdef int i,j;
@@ -1412,15 +1343,6 @@ cpdef dstiff_vti_c23():
     return stiffness(cm)
 
 
-#def dstiff_vti_c12():
-#    """ Returns the VTI stiffness for c12. """
-#    cm = numpy.zeros((6,6))
-#    cm[0][1] = 10.0
-#    cm[0][0] = cm[1][1] = cm[0][1]
-#    cm[1][0] = cm[0][1]
-#    return stiffness(cm)
-
-# Wrapped 
 cpdef dstiff_vti_c12():
 
     cpdef int i,j;
@@ -1434,14 +1356,7 @@ cpdef dstiff_vti_c12():
     cm[1][0] = cm[0][1];
     return stiffness(cm);  
 
-#def dstiff_vti_c44():
-#    """ Returns the VTI stiffness for c44. """
-#    cm = numpy.zeros((6,6))
-#    cm[3][3] = 1.0
-#    cm[4][4] = cm[3][3]
-#    return stiffness(cm)
 
-# Wrapped 
 cpdef dstiff_vti_c44():
 
     cpdef int i, j;
@@ -1454,14 +1369,6 @@ cpdef dstiff_vti_c44():
     return stiffness(cm);
 
 
-#def dstiff_vti_c66():
-#    """ Returns the VTI stiffness for c66. """
-#    cm = numpy.zeros((6,6))
-#    cm[5][5] = 1.0
-#    cm[0][0] = cm[1][1] = 2.0 * cm[5][5]
-#    return stiffness(cm)
-
-# Wrapped 
 cpdef dstiff_vti_c66():
 
     cpdef int i,j;
@@ -1504,13 +1411,7 @@ def forward_hti(cxx):
         cm[4][4] = cm[5][5]
         return cm
 
-#def dstiff_hti_c11():
-#    """ Returns the HTI stiffness for c11. """
-#    cm = numpy.zeros((6,6))
-#    cm[0][0] = 10.0
-#    return stiffness(cm)
 
-# Wrapped 
 cpdef dstiff_hti_c11():
 
     cpdef int i, j;
@@ -1522,14 +1423,6 @@ cpdef dstiff_hti_c11():
     return stiffness(cm); 
 
 
-#def dstiff_hti_c33():
-#    """ Returns the HTI stiffness for c33. """
-#    cm = numpy.zeros((6,6))
-#    cm[2][2] = 10.0
-#    cm[1][1] = cm[2][2]
-#    return stiffness(cm)
-
-# Wrapped 
 cpdef dstiff_hti_c33():
 
     cpdef int i, j;
@@ -1541,14 +1434,7 @@ cpdef dstiff_hti_c33():
     cm[1][1] = cm[2][2];
     return stiffness(cm);  
 
-#def dstiff_hti_c12():
-#    """ Returns the HTI stiffness for c12. """
-#    cm = numpy.zeros((6,6))
-#    cm[0][1] = 10.0
-#    cm[0][2] = cm[1][0] = cm[2][0] = cm[0][1]
-#    return stiffness(cm)
 
-# Wrapped 
 cpdef dstiff_hti_c12():
 
     cpdef int i,j;
@@ -1561,13 +1447,6 @@ cpdef dstiff_hti_c12():
     return stiffness(cm);
 
 
-#def dstiff_hti_c44():
-#    """ Returns the HTI stiffness for c44. """
-#    cm = numpy.zeros((6,6))
-#    cm[3][3] = 1.0
-#    return stiffness(cm)
-
-# Wrapped 
 cpdef dstiff_hti_c44():
 
     cpdef int i, j;
@@ -1578,12 +1457,6 @@ cpdef dstiff_hti_c44():
     cm[3][3] = 1.0;
     return stiffness(cm); 
 
-#def dstiff_hti_c66():
-#    """ Returns the HTI stiffness for c66. """
-#    cm = numpy.zeros((6,6))
-#    cm[5][5] = 1.0
-#    cm[4][4] = cm[5][5]
-#    return stiffness(cm)
 
 cpdef dstiff_hti_c66():
 
@@ -1630,13 +1503,7 @@ def forward_tetra(cxx):
         cm[4][4] = cm[3][3]
         return cm
 
-#def dstiff_tetra_c11():
-#    """ Returns the tetragonal stiffness for c11. """
-#    cm = numpy.zeros((6,6))
-#    cm[1][1] = cm[0][0] = 10.0
-#    return stiffness(cm)
 
-# Wrapped 
 cpdef dstiff_tetra_c11():
 
     cpdef int i, j;
@@ -1648,13 +1515,6 @@ cpdef dstiff_tetra_c11():
     return stiffness(cm); 
 
 
-#def dstiff_tetra_c33():
-#    """ Returns the tetragonal stiffness for c33. """
-#    cm = numpy.zeros((6,6))
-#    cm[2][2] = 10.0
-#    return stiffness(cm)
-
-# Wrapped 
 cpdef dstiff_tetra_c33():
     cpdef int i,j;
     cpdef double cm[6][6];
@@ -1665,14 +1525,6 @@ cpdef dstiff_tetra_c33():
     return stiffness(cm); 
 
 
-#def dstiff_tetra_c23():
-#    """ Returns the tetragonal stiffness for c23. """
-#    cm = numpy.zeros((6,6))
-#    cm[1][2] = 10.0
-#    cm[0][2] = cm[2][0] = cm[2][1] = cm[1][2]
-#    return stiffness(cm)
-
-# Wrapped
 cpdef dstiff_tetra_c23():
 
     cpdef int i,j;
@@ -1685,15 +1537,6 @@ cpdef dstiff_tetra_c23():
     return stiffness(cm); 
 
 
-#def dstiff_tetra_c12():
-#    """ Returns the tetragonal stiffness for c12. """
-#    cm = numpy.zeros((6,6))
-#    cm[0][1] = 10.0
-#    cm[1][0] = cm[0][1]
-#    return stiffness(cm)
-
-
-# Wrapped 
 cpdef dstiff_tetra_c12():
 
     cpdef int i, j;
@@ -1706,15 +1549,6 @@ cpdef dstiff_tetra_c12():
     return stiffness(cm); 
 
 
-
-#def dstiff_tetra_c44():
-#    """ Returns the tetragonal stiffness for c44. """
-#    cm = numpy.zeros((6,6))
-#    cm[3][3] = 1.0
-#    cm[4][4] = cm[3][3]
-#    return stiffness(cm)
-
-# Wrapped 
 cpdef dstiff_tetra_c44():
 
     cpdef int i,j;
@@ -1727,14 +1561,6 @@ cpdef dstiff_tetra_c44():
     return stiffness(cm); 
 
 
-#def dstiff_tetra_c66():
-#    """ Returns the tetragonal stiffness for c66. """
-#    cm = numpy.zeros((6,6))
-#    cm[5][5] = 1.0
-#    return stiffness(cm)
-
-
-# Wrapped 
 cpdef dstiff_tetra_c66():
 
     cpdef int i,j;
@@ -1784,13 +1610,6 @@ def forward_orth(cxx):
         cm[2][1] = cm[1][2]
         return cm
 
-#def dstiff_orth_c11():
-#    """ Returns the orthorhombic stiffness for c11. """
-#    cm = numpy.zeros((6,6))
-#    cm[0][0] = 10.0
-#    return stiffness(cm)
-
-# Wrapped 
 cpdef dstiff_orth_c11():
     cpdef int i, j;
     cpdef double cm[6][6]; 
@@ -1800,13 +1619,7 @@ cpdef dstiff_orth_c11():
     cm[0][0] = 10.0;
     return stiffness(cm); 
 
-#def dstiff_orth_c22():
-#    """ Returns the orthorhombic stiffness for c22. """
-#    cm = numpy.zeros((6,6))
-#    cm[1][1] = 10.0
-#    return stiffness(cm)
 
-# Wrapped 
 cpdef dstiff_orth_c22():
     cpdef int i,j;
     cpdef double cm[6][6]; 
@@ -1817,13 +1630,6 @@ cpdef dstiff_orth_c22():
     return stiffness (cm);
 
 
-#def dstiff_orth_c33(): 
-#    """ Returns the orthorhombic stiffness for c33. """
-#    cm = numpy.zeros((6,6))
-#    cm[2][2] = 10.0
-#    return stiffness(cm)
-
-# Wrapped
 cpdef dstiff_orth_c33(): 
     cpdef int i, j;
     cpdef double cm[6][6]; 
@@ -1834,14 +1640,6 @@ cpdef dstiff_orth_c33():
     return stiffness (cm);
 
 
-#def dstiff_orth_c23():
-#    """ Returns the orthorhombic stiffness for c23. """
-#    cm = numpy.zeros((6,6))
-#    cm[1][2] = 10.0
-#    cm[2][1] = cm[1][2]
-#    return stiffness(cm)
-
-# Wrapped
 cpdef dstiff_orth_c23():
     cpdef int i, j;
     cpdef double cm[6][6]; 
@@ -1853,14 +1651,6 @@ cpdef dstiff_orth_c23():
     return stiffness (cm);
 
 
-#def dstiff_orth_c13():
-#    """ Returns the orthorhombic stiffness for c13. """
-#    cm = numpy.zeros((6,6))
-#    cm[0][2] = 10.0
-#    cm[2][0] = cm[0][2]
-#    return stiffness(cm)
-
-# Wrapped 
 cpdef dstiff_orth_c13():
     cpdef int i, j;
     cpdef double cm[6][6]; 
@@ -1872,16 +1662,6 @@ cpdef dstiff_orth_c13():
     return stiffness (cm);
 
 
-
-#def dstiff_orth_c12():
-#    """ Returns the orthorhombic stiffness for c12. """
-#    cm = numpy.zeros((6,6))
-#    cm[0][1] = 10.0
-#    cm[1][0] = cm[0][1]
-#    return stiffness(cm)
-
-
-# Wrapped
 cpdef dstiff_orth_c12():
     cpdef int i, j;
     cpdef double cm[6][6]; 
@@ -1893,13 +1673,6 @@ cpdef dstiff_orth_c12():
     return stiffness (cm);
 
 
-#def dstiff_orth_c44():
-#    """ Returns the orthorhombic stiffness for c44. """
-#    cm = numpy.zeros((6,6))
-#    cm[3][3] = 1.0
-#    return stiffness(cm)
-
-# Wrapped
 cpdef dstiff_orth_c44():
     cpdef int i, j;
     cpdef double cm[6][6]; 
@@ -1910,13 +1683,6 @@ cpdef dstiff_orth_c44():
     return stiffness (cm);
 
 
-#def dstiff_orth_c55():
-#    """ Returns the orthorhombic stiffness for c55. """
-#    cm = numpy.zeros((6,6))
-#    cm[4][4] = 1.0
-#    return stiffness(cm)
-
-# Wrapped 
 cpdef dstiff_orth_c55():
     cpdef int i, j;
     cpdef double cm[6][6]; 
@@ -1927,13 +1693,6 @@ cpdef dstiff_orth_c55():
     return stiffness (cm);
 
 
-#def dstiff_orth_c66():
-#    """ Returns the orthorhombic stiffness for c66. """
-#    cm = numpy.zeros((6,6))
-#    cm[5][5] = 1.0
-#    return stiffness(cm)
-
-# Wrapped 
 cpdef dstiff_orth_c66():
     cpdef int i, j;
     cpdef double cm[6][6]; 
@@ -1942,5 +1701,3 @@ cpdef dstiff_orth_c66():
             cm[i][j] = 0.0;
     cm[5][5] = 1.0;
     return stiffness (cm);
-
-

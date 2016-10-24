@@ -1,0 +1,46 @@
+8
+1
+2
+
+0
+ 
+4.420
+4.420
+6.414
+
+2.713
+
+0.020
+0.110
+
+110.0
+26.0
+
+
+#################
+This file contains the parameters which define
+both the material being measured and the 
+parameters for the inversion process.
+
+Line #::
+1 - order of the polynomial to use to estimate eigenvectors
+2 - shape (0=sphere, 1=cylinder, 2=parallelepiped)
+3 - number of cijs
+
+4 - hextype - 1=VTI, 2=HTI. Type of hexagonal symmetry (Only matters for ns=5) 
+
+5 - dimension 1 in cm (diameter for cyl. or sphere)
+6 - dimension 2 in cm (diameter for cyl. or sphere)
+7 - dimension 3 in cm (height for cyl. diameter for sphere)
+
+8 - density in grams/cm^3
+
+9 - lower frequency bound for inversion in MHz (set >1 KHz lower	than your lowest measured value)
+10 - upper frequency bound for inversion in MHz (set >5 or 10KHz higher than your highest value used for THIS particular fit as defined by Line 1 of freq_data)
+
+The order of cij depends on the symmetry type.
+- Isotropic: c11, c44
+- Cubic: c11, c12, c44
+- Hexagonal - VTI: c33, c23, c12, c44, c66
+- Hexagonal - HTI: c11, c33, c12, c44, c66
+- Orthorhombic: c11, c22, c33, c23, c13, c12, c44, c55, c66
