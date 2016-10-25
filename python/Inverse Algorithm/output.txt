@@ -60,35 +60,6 @@ chisq=0.125118
 iter #0
 109.971901
 23.241821
-starting eigenvalues calculation
-f1=0.045914
-f2=0.045914
-f3=0.061961
-f4=0.061961
-f5=0.061961
-f6=0.062892
-f7=0.062892
-f8=0.062892
-f9=0.071247
-f10=0.071247
-chisq=0.125118
-
-starting eigenvalues calculation
-f1=0.045178
-f2=0.045178
-f3=0.060987
-f4=0.060987
-f5=0.060987
-f6=0.061888
-f7=0.061888
-f8=0.061888
-f9=0.070105
-f10=0.070105
-chisq=0.114336
-
-iter #1
-109.946959
-22.502564
 
 This calculation can be executed again with the following command:
-python rus.py inverse --order 6 --shape 0 --ns 2 --hextype 1 --d1 3.67 --d2 3.67 --d3 3.67 --rho 1.7 --freqmin 0.02 --freqmax 0.11 --iterations 2 --c44 24.0 --c11 110.0
+python rus.py inverse --order 6 --shape 0 --ns 2 --hextype 1 --d1 3.67 --d2 3.67 --d3 3.67 --rho 1.7 --freqmin 0.02 --freqmax 0.11 --iterations 1 --c44 24.0 --c11 110.0

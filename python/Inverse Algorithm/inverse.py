@@ -73,7 +73,7 @@ c33 = TextInput(text='', multiline=False, size_hint_x=None,width=150, hint_text 
 c44 = TextInput(text='', multiline=False, size_hint_x=None,width=150, hint_text ='c44')
 c55 = TextInput(text='', multiline=False, size_hint_x=None,width=150, hint_text ='c55')
 c66 = TextInput(text='', multiline=False, size_hint_x=None,width=150, hint_text ='c66')
-shape = '0'
+shape = '4'
 sc = '0'
 hextype = '0'
 outputArray = []
@@ -120,12 +120,12 @@ class RUS(App):
         layout.add_widget(Label(text='Minimum frequency  :', size_hint_x=None, width=400,))
         self.minfreq = TextInput(text='0.02', multiline=False,size_hint_x=None, width=150)
         layout.add_widget(self.minfreq)
-        layout.add_widget(Label(text='(set >1 KHz )', size_hint_x=None, width=150))
+        layout.add_widget(Label(text='MHz (set >1 KHz )', size_hint_x=None, width=150))
 		
         layout.add_widget(Label(text='Maximum frequency  :', size_hint_x=None, width=400,))
         self.maxfreq = TextInput(text='0.11', multiline=False,size_hint_x=None, width=150)
         layout.add_widget(self.maxfreq)
-        layout.add_widget(Label(text='(set >5 or 10KHz)', size_hint_x=None, width=150))
+        layout.add_widget(Label(text='      MHz (set >5 or 10KHz)', size_hint_x=None, width=150))
 		
         layout.add_widget(Label(text='Iterations  :', size_hint_x=None, width=400,))
         self.iterations = TextInput(text='1', multiline=False,size_hint_x=None, width=150)
@@ -466,7 +466,7 @@ class RUS(App):
             y_grid=True,
             #assume that freq_data start in the lowest freq
             xmin=int(math.fsum([float(freq[1])] * 1000)) -5,
-            xmax=int(math.fsum([float(freq[len(freq)-14])] * 1000)),
+            xmax=int(math.fsum([float(freq[len(freq)-14])] * 1000)+5),
             ymin=0,
             ymax=1,
             draw_border = True,

@@ -70,7 +70,7 @@ c33 = TextInput(text='', multiline=False, size_hint_x=None,width=150, hint_text 
 c44 = TextInput(text='', multiline=False, size_hint_x=None,width=150, hint_text ='c44')
 c55 = TextInput(text='', multiline=False, size_hint_x=None,width=150, hint_text ='c55')
 c66 = TextInput(text='', multiline=False, size_hint_x=None,width=150, hint_text ='c66')
-shape = '0'
+shape = '4'
 sc = '0'
 hextype = '0'
 outputArray = []
@@ -478,34 +478,19 @@ class RUS(App):
 
 	
 # button click function      
-    def spClicked(self,btn):
-	
-        if shape == '2':
-            if sc == '2':	
-                command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 1' + ' --d3 1' + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c44 ' + c44.text			
-            elif sc == '3':
-                command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 1' + ' --d3 1' + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c12 ' + c12.text + ' --c44 ' + c44.text
-            elif sc == '5' and hextype == '1':
-                command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 1' +  ' --d3 1' + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c33 ' + c33.text +  ' --c23 ' + c23.text + ' --c12 ' + c12.text + ' --c44 ' + c44.text + ' --c66 ' + c66.text + ' --hextype ' + hextype
-            elif sc == '5' and hextype == '2':
-                command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 1' +  ' --d3 1' + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c33.text +  ' --c33 ' + c23.text + ' --c12 ' + c12.text + ' --c44 ' + c44.text + ' --c66 ' + c66.text + ' --hextype ' + hextype
-            elif sc == '6':
-                command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 1' +  ' --d3 1' + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c33 ' + c33.text + ' --c23 ' + c23.text + ' --c12 ' + c12.text +  ' --c44 ' + c44.text + ' --c66 ' + c66.text
-            elif sc == '9':
-                command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 1' +  ' --d3 1' +  ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c22 ' + c22.text + ' --c33 ' + c33.text + ' --c23 ' + c23.text +  ' --c13 ' + c13.text + ' --c12 ' + c12.text + ' --c44 ' + c44.text +  ' --c55 ' + c55.text + ' --c66 ' + c66.text
-        else:
-            if sc == '2':	
-                command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c44 ' + c44.text			
-            elif sc == '3':
-                command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c12 ' + c12.text + ' --c44 ' + c44.text
-            elif sc == '5' and hextype == '1':
-                command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c33 ' + c33.text +  ' --c23 ' + c23.text + ' --c12 ' + c12.text + ' --c44 ' + c44.text + ' --c66 ' + c66.text + ' --hextype ' + hextype
-            elif sc == '5' and hextype == '2':
-                command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c33.text +  ' --c33 ' + c23.text + ' --c12 ' + c12.text + ' --c44 ' + c44.text + ' --c66 ' + c66.text + ' --hextype ' + hextype
-            elif sc == '6':
-                command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c33 ' + c33.text + ' --c23 ' + c23.text + ' --c12 ' + c12.text +  ' --c44 ' + c44.text + ' --c66 ' + c66.text
-            elif sc == '9':
-                command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c22 ' + c22.text + ' --c33 ' + c33.text + ' --c23 ' + c23.text +  ' --c13 ' + c13.text + ' --c12 ' + c12.text + ' --c44 ' + c44.text +  ' --c55 ' + c55.text + ' --c66 ' + c66.text
+    def spClicked(self,btn): 
+        if sc == '2':	             
+            command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c44 ' + c44.text			
+        elif sc == '3':
+            command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c12 ' + c12.text + ' --c44 ' + c44.text
+        elif sc == '5' and hextype == '1':
+            command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c33 ' + c33.text +  ' --c23 ' + c23.text + ' --c12 ' + c12.text + ' --c44 ' + c44.text + ' --c66 ' + c66.text + ' --hextype ' + hextype
+        elif sc == '5' and hextype == '2':
+            command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c33.text +  ' --c33 ' + c23.text + ' --c12 ' + c12.text + ' --c44 ' + c44.text + ' --c66 ' + c66.text + ' --hextype ' + hextype
+        elif sc == '6':
+            command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c33 ' + c33.text + ' --c23 ' + c23.text + ' --c12 ' + c12.text +  ' --c44 ' + c44.text + ' --c66 ' + c66.text
+        elif sc == '9':
+            command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c22 ' + c22.text + ' --c33 ' + c33.text + ' --c23 ' + c23.text +  ' --c13 ' + c13.text + ' --c12 ' + c12.text + ' --c44 ' + c44.text +  ' --c55 ' + c55.text + ' --c66 ' + c66.text
        
         print (command)
         layout.clear_widgets()
