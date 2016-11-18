@@ -58,7 +58,7 @@ def start(args):
 def read_input(infile):
 
     if infile == 'sample/default_frequencies':
-        print('!! no frequency file specified - sample file will be used !!')
+        print('')#!! no frequency file specified - sample file will be used !!
 
     # get measured frequencies from file
     try:

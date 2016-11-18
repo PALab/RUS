@@ -1,0 +1,65 @@
+irk[0]=40
+irk[1]=24
+irk[2]=24
+irk[3]=30
+irk[4]=30
+irk[5]=40
+irk[6]=40
+irk[7]=24
+
+nfreq=10
+ freq=0.024000
+ freq=0.028863
+ freq=0.028863
+ freq=0.038497
+ freq=0.041716
+ freq=0.041716
+ freq=0.046000
+ freq=0.046000
+ freq=0.048000
+ freq=0.050000
+d=6
+shape=0
+ns=2
+hextype=1
+d1=3.670000
+d2=3.670000
+d3=3.670000
+rho=1.700000
+freqmin=0.020000
+freqmax=0.110000
+24.000000
+110.000000
+ndata=10
+starting eigenvalues calculation
+f1=0.046657
+f2=0.046657
+f3=0.062943
+f4=0.062943
+f5=0.062943
+f6=0.063905
+f7=0.063905
+f8=0.063905
+f9=0.072400
+f10=0.072400
+chisq=0.136481
+
+starting eigenvalues calculation
+f1=0.045914
+f2=0.045914
+f3=0.061961
+f4=0.061961
+f5=0.061961
+f6=0.062892
+f7=0.062892
+f8=0.062892
+f9=0.071247
+f10=0.071247
+chisq=0.125118
+
+iter #0
+109.971901
+23.241821
+
+This calculation can be executed again with the following command:
+python rus.py inverse --order 6 --shape 0 --ns 2 --hextype 1 --d1 3.67 --d2 3.67 --d3 3.67 --rho 1.7 --freqmin 0.02 --freqmax 0.11 --iterations 1 --c44 24.0 --c11 110.0
