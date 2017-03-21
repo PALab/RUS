@@ -9,9 +9,9 @@
 # ------------------------------------------------
 
 import sys
-import scipy
-import numpy
 import math
+import numpy
+import scipy
 import scipy.linalg as la
 
 # -------------------------------------------

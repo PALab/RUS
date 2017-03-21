@@ -1,3 +1,4 @@
+'''RUS parser'''
 import argparse
 import sys
 

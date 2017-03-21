@@ -11,7 +11,11 @@ objects:
 	$(MAKE) -C src
 
 install: rus_forward rus_inverse
-	cp rus_forward rus_inverse /usr/local/bin
+	sudo cp rus_forward rus_inverse /usr/local/bin
+	-sudo -k
+
+conda: rus_forward rus_inverse
+	cp rus_forward rus_inverse $(PREFIX)/bin
 
 rus_forward: objects
 	$(CC) src/rus_alloc.o src/rus_pars.o src/rus_forward.o $(LFLAGS) -o rus_forward
@@ -20,7 +24,8 @@ rus_inverse: objects
 	$(CC) src/rus_alloc.o src/rus_pars.o src/xindex.o src/rus_inverse.o $(LFLAGS) -o rus_inverse
 
 uninstall: clean
-	-rm -f /usr/local/bin/rus_forward /usr/local/bin/rus_inverse
+	-sudo rm -f /usr/local/bin/rus_forward /usr/local/bin/rus_inverse
+	-sudo -k
 
 clean:
 	$(MAKE) clean -C src

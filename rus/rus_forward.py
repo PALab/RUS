@@ -1,14 +1,16 @@
-import rus_parser
+'''RUS forward code'''
 import sys
 import subprocess
-import scipy
-import scipy.linalg.lapack as lapack
 from math import sqrt
-import rus_tools as rus
+import scipy
+from scipy.linalg import lapack
+import rus.rus_parser
+import rus.rus_tools as rus
 
 def start(args):
     if args.fast and args.ns == 2:
-        subprocess.call(["/usr/local/bin/rus_forward",
+        subprocess.call([
+            "rus_forward",
             "d={}".format(args.order),
             "d1={}".format(args.d1),
             "d2={}".format(args.d2),
@@ -24,7 +26,8 @@ def start(args):
             "eigenfile={}".format("eigenfunct")])
         sys.exit(0)
     if args.fast and args.ns == 3:
-        subprocess.call(["/usr/local/bin/rus_forward",
+        subprocess.call([
+            "rus_forward",
             "d={}".format(args.order),
             "d1={}".format(args.d1),
             "d2={}".format(args.d2),
@@ -41,9 +44,9 @@ def start(args):
             "eigenfile={}".format("eigenfunct")])
         sys.exit(0)
 
-    order   = args.order
+    order = args.order
     density = args.rho
-    shape   = args.shape
+    shape = args.shape
 
     # half sample dimensions are used in calculations
     dimension1 = args.d1 / 2.0
