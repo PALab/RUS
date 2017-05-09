@@ -1052,9 +1052,8 @@ def index_relationship(d, problem_size):
     tabs and irk are used in future functions.
     This function populates them based on the
     values of d.
-    TODO: Improve description of what this
-    function is actually doing and why.
     """
+    # TODO: Improve description of what this function is actually doing and why.
     tabs = numpy.zeros((int(problem_size),4), dtype=numpy.int64)
     irk  = [0 for i in range(8)]
 
@@ -1147,15 +1146,6 @@ def index_relationship(d, problem_size):
                         tabs[ir] = [i,l,m,n]
                         ir += 1
                         irk[7] += 1
-    print("irk[0]=" + str(irk[0]))
-    print("irk[1]=" + str(irk[1]))
-    print("irk[2]=" + str(irk[2]))
-    print("irk[3]=" + str(irk[3]))
-    print("irk[4]=" + str(irk[4]))
-    print("irk[5]=" + str(irk[5]))
-    print("irk[6]=" + str(irk[6]))
-    print("irk[7]=" + str(irk[7]))
-
     return tabs, irk
 
 # --------------------------------------------------

@@ -35,8 +35,6 @@ def start(args):
 
     gamma = rus.gamma_fill(tabs,dimensions,cm,shape,irk)
 
-    print("done preparing matrices")
-
     if args.outeigen == None:
         jobz = 'N'
     else:
@@ -64,7 +62,8 @@ def start(args):
             ir1 += 1
             result = ((1000000*sqrt(wsort[i])/(2.0*scipy.pi)))
             
-            print(result)
+            rounded = int(result+0.5)
+            print(rounded)
       
         i += 1
     
