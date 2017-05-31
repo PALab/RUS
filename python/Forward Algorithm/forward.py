@@ -7,6 +7,9 @@ import rus_parser as parser
 import rus_forward as forward
 import itertools
 import graph1
+import os
+import matplotlib.pyplot as plt
+
 from kivy.uix.scrollview import ScrollView
 from kivy.core.window import Window
 from kivy.utils import get_color_from_hex as rgb
@@ -18,6 +21,12 @@ from kivy.uix.dropdown import DropDown
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.spinner import Spinner
+
+from kivy.core.window import Window
+
+
+from matplotlib.pyplot import figure, show
+from matplotlib.ticker import MaxNLocator
 
 
 shapeSpinner = Spinner(
@@ -79,6 +88,7 @@ outputArray = []
 class RUS(App):
 # layout
     def build(self):
+	self.title = "Forward Algorithm"
         sp.bind(on_press=self.spClicked)
         layout.add_widget(Label(text='Number of eigen frequencies to print :', size_hint_x=None, width=400))
         self.freq = TextInput(text='10', multiline=False,size_hint_x=None, width=150)
@@ -400,17 +410,17 @@ class RUS(App):
         for i in range(0, len(lines)):
             line = lines[i]    
                 
-        for i in range(0,len(lines) - 9):
-            outputArray.append(lines[i+9])
+        for i in range(0,len(lines) - 8):
+            outputArray.append(lines[i+8][:12])
                    
-        for i in range(0,len(lines) - 9):
-            outputArray[i] = (outputArray[i])[:12]
+        '''for i in range(0,len(lines) - 8):
+            outputArray[i] = (outputArray[i])'''
         
         differentcount = 1
         similarcount = 1	
         freq = []		
         yaxis = []		
-        for i in range(0,len(lines) - 10):
+        for i in range(0,len(lines) - 9):
             if outputArray[i] == outputArray[i+1]:
                 similarcount += 1
                 
@@ -423,13 +433,12 @@ class RUS(App):
         yaxis.append(similarcount)
         freq.append(outputArray[len(outputArray) - 1]) 
         
-            			 
-                    				
+           				
         outputArray = map(float, outputArray)
        
         
         colors = itertools.cycle([
-            rgb('7dac9f'), rgb('dc7062'), rgb('66a8d4'), rgb('e5b060')])
+            rgb('000000'), rgb('000000'), rgb('000000'), rgb('000000')])
         graph_theme = {
             'label_options': {
                 'color': rgb('444444'),  # color of tick labels and titles
@@ -438,9 +447,9 @@ class RUS(App):
             'tick_color': rgb('808080'),  # ticks and grid
             'border_color': rgb('808080')}  # border drawn around each graph
 
-        graph = graph1.Graph(
+        graph = graph1.Graph(	
             xlabel='Frequency (Hz)',
-            ylabel='Unit',
+            ylabel='No.Count',
             x_ticks_major=1000,
             y_ticks_major=1,
             y_grid_label=True,
@@ -474,7 +483,25 @@ class RUS(App):
                 count = count + 1
                 y = y + 1
         layout.add_widget(graph)
-		
+
+	yaxis = map(int, yaxis)
+	ay = figure().gca()
+
+	ay.yaxis.set_major_locator(MaxNLocator(integer=True))
+	for i in range(0,len(freq)):
+		plt.plot([freq[i],freq[i]], [0,yaxis[i]])
+
+	plt.xlabel('Frequency')
+	plt.ylabel('No. of count')
+	plt.title('Forward Algorithm')
+	plt.ylim([0,max(yaxis)+1])
+	plt.xlim([float(min(freq))*0.8,float(max(freq))*1.2])
+
+	
+	plt.pause(0.5)
+
+	
+			
 
 	
 # button click function      
@@ -497,9 +524,45 @@ class RUS(App):
         f = open("output.txt", "w")
         subprocess.call(command, shell=True , stdout=f)
         output = open("output.txt", "r") 
-        label = Label(text = output.read(), size_hint_x=None, width=200)
+	labelText = output.read()
+	labelTextArray = labelText.split("\n")
+	newList = []
+	for line in labelTextArray:
+		if "irk" not in line:
+			newList.append(line)			
+	labelText = "\n".join(newList)
+	
+	inputValues = ""
+	inputValues += "Shape: " + shapeSpinner.values[int(shape)] + "\n"
+	inputValues += "Density: " + self.density.text + "\n"
+	inputValues += "Dimention1: " + self.dimension1.text + "\n"
+	inputValues += "Dimention2: " + self.dimension2.text + "\n"
+	inputValues += "Dimention3: " + self.dimension3.text + "\n"
+	if sc == '2':	             
+            inputValues +=' c11:' + c11.text + "\n" + ' c44:' + c44.text + "\n"			
+        elif sc == '3':
+            inputValues +=' c11:' + c11.text + "\n" +  ' c12:' + c12.text + "\n" + ' c44:' + c44.text + "\n"
+        elif sc == '5' and hextype == '1':
+            inputValues +=' c33:' + c33.text + "\n" +  ' c23:' + c23.text + "\n" + ' c12:' + c12.text + "\n" + ' c44:' + c44.text + "\n" + ' c66:' + c66.text + "\n" + ' hextype:' + hextype + "\n"
+        elif sc == '5' and hextype == '2':
+            inputValues +=' c11:' + c33.text + "\n" +  ' c33:' + c23.text + "\n" + ' c12:' + c12.text + "\n" + ' c44:' + c44.text + "\n" + ' c66:' + c66.text + "\n" + ' hextype:' + hextype + "\n"
+        elif sc == '6':
+            inputValues +=' c11:' + c11.text + "\n" +  ' c33:' + c33.text + "\n" + ' c23:' + c23.text + "\n" + ' c12:' + c12.text + "\n" +  ' c44:' + c44.text + "\n" + ' c66:' + c66.text + "\n"
+        elif sc == '9':
+            inputValues +=' c11:' + c11.text + "\n" +  ' c22:' + c22.text + "\n"+ ' c33:' + c33.text + "\n" + ' c23:' + c23.text + "\n" +  ' c13:' + c13.text + "\n" + ' c12:' + c12.text + "\n" + ' c44:' + c44.text + "\n" +  ' c55:' + c55.text + "\n" + ' c66:' + c66.text + "\n"
+	
+
+	labelText = inputValues + labelText
+
+        label = Label(text = labelText, size_hint_x=None, width=200)
         layout.add_widget(label)
+	
         RUS.graphOutput()
+	Window.size = (1366, 768)
+	
+	
+
+ 
        
         
 # run app
