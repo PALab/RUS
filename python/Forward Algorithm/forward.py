@@ -9,7 +9,7 @@ import itertools
 import graph1
 import os
 import matplotlib.pyplot as plt
-
+import numpy as np
 from kivy.uix.scrollview import ScrollView
 from kivy.core.window import Window
 from kivy.utils import get_color_from_hex as rgb
@@ -413,8 +413,8 @@ class RUS(App):
         for i in range(0,len(lines) - 8):
             outputArray.append(lines[i+8][:12])
                    
-        '''for i in range(0,len(lines) - 8):
-            outputArray[i] = (outputArray[i])'''
+        for i in range(0,len(lines) - 8):
+            outputArray[i] = (outputArray[i])
         
         differentcount = 1
         similarcount = 1	
@@ -482,23 +482,37 @@ class RUS(App):
                 graph.add_plot(plot)
                 count = count + 1
                 y = y + 1
-        layout.add_widget(graph)
-
+        '''layout.add_widget(graph)'''
+	
+	'''fig, ay = plt.subplots()'''
+	'''ax.scatter(freq ,yaxis)'''
+	
 	yaxis = map(int, yaxis)
+
 	ay = figure().gca()
-
+	
+	'''ay.scatter(freq ,yaxis)'''
 	ay.yaxis.set_major_locator(MaxNLocator(integer=True))
+	
+	
 	for i in range(0,len(freq)):
-		plt.plot([freq[i],freq[i]], [0,yaxis[i]])
-
-	plt.xlabel('Frequency')
+		plt.plot([freq[i],freq[i]], [0,yaxis[i]],label = str(freq[i]))
+	for i in range(0,len(freq)):	
+		ay.annotate(freq[i],(freq[i],yaxis[i]))
+		
+	
+	
+	plt.xlabel('Frequency(Hz)')
 	plt.ylabel('No. of count')
 	plt.title('Forward Algorithm')
 	plt.ylim([0,max(yaxis)+1])
-	plt.xlim([float(min(freq))*0.8,float(max(freq))*1.2])
-
+	plt.xlim([(int(float(freq[0])))*0.8,(int(float(freq[(len(freq)) - 1])))*1.2])
+	plt.grid()
+	plt.legend(bbox_to_anchor=(1.05,1),loc=1,borderaxespad=0.)
+	plt.show()
 	
-	plt.pause(0.5)
+	
+	
 
 	
 			
@@ -558,7 +572,7 @@ class RUS(App):
         layout.add_widget(label)
 	
         RUS.graphOutput()
-	Window.size = (1366, 768)
+	'''Window.size = (1366, 768)'''
 	
 	
 
