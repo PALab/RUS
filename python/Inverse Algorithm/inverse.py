@@ -8,6 +8,9 @@ import rus_parser as parser
 import rus_forward as forward
 import itertools
 import graph1
+import os
+import matplotlib.pyplot as plt
+import numpy as np
 from kivy.utils import get_color_from_hex as rgb
 
 
@@ -20,6 +23,9 @@ from kivy.uix.dropdown import DropDown
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.spinner import Spinner
+
+from matplotlib.pyplot import figure, show
+from matplotlib.ticker import MaxNLocator
 
 
 shapeSpinner = Spinner(
@@ -432,16 +438,18 @@ class RUS(App):
         predictedFreq = open("predictedf", "r")
         predictedLines = predictedFreq.readlines()
         
-        
+        split = open("predictedf", "w") # split predictedf by adding lines
+	split.truncate()
         while (predictedCount < int(yaxis[0])):
             firstP = ''.join(predictedLines)[splitFirst:splitSecond]
             if firstP[-1:] == '.' :
                 firstP = ''.join(predictedLines)[splitFirst:splitSecond-1 ] # predictedFreq file doesn't always have 13 d.p (sometimes only 12 d.p)
             predicted.append(firstP)
+	    split.write(str(firstP)+"\n") # change lines
             predictedCount = predictedCount + 1
             splitFirst = splitFirst + 15
             splitSecond = splitSecond + 15
-        
+        split.close
         colors = itertools.cycle([
             rgb('7dac9f'), rgb('dc7062'), rgb('66a8d4'), rgb('e5b060')])
         graph_theme = {
@@ -475,22 +483,135 @@ class RUS(App):
         count = 0
         y = 1
         
+
+	n = int(yaxis[0])
+	
+	
         # Display the number of freq_data (stated in line 1)
+	
         while(count < int(yaxis[0])):
             if(count == 0):
-                plot = graph1.SmoothLinePlot(color=rgb('7dac9f'))
+                plot = graph1.SmoothLinePlot(color=rgb('ff0000'))
                 plot.points = [(count, x) for x in range(0, 0)]
                 graph.add_plot(plot)
                 count = count + 1
             else:		
-                freqx100 = math.fsum([float(freq[y])] * 1000)
-                yaxisToInt = math.fsum([float(yaxis[y])] )
-                plot = graph1.SmoothLinePlot(color=rgb('7dac9f'))
-                plot.points = [(int(freqx100), x) for x in range(0,int(yaxisToInt)+1)]
-                graph.add_plot(plot)
-                count = count + 1
-                y = y + 1
-            
+		freqx100 = float(freq[y])* 1000
+		yaxisToInt = float(yaxis[y])
+		plot = graph1.SmoothLinePlot(color=rgb('7dac9f'))
+		plot.points = [(int(freqx100), x) for x in range(0,int(yaxisToInt)+1)]
+		graph.add_plot(plot)
+		count = count + 1
+		y = y + 1
+        
+	#Convert float list to int list
+
+	# read the freq_data file (Using matplotlib)(new)
+	fdata = np.load("george_data.npy")
+	xdata, ydata = zip(*fdata)
+	
+
+	# Display the number of freq_data (stated in line 1) (Using matplotlib)
+	firstNyaxis = yaxis[1:n+2]
+	firstNyaxis = map(float, firstNyaxis)
+	firstNyaxis = map(int, firstNyaxis)
+	
+	
+
+	firstNfreq = freq[1:n+2]
+	firstNfreq = map(float, firstNfreq)
+	firstNfreq = [x*1000 for x in firstNfreq]
+	
+	
+	ay = figure(figsize=(15,10)).gca()
+	
+	'''ay.scatter(freq ,yaxis)'''
+	ay.yaxis.set_major_locator(MaxNLocator(integer=True))
+	
+	
+	for i in range(0,len(firstNfreq)):
+		if firstNyaxis[i] == 1:
+			starting = plt.plot([firstNfreq[i],firstNfreq[i]], [min(ydata),max(ydata)])
+			plt.setp(starting, color='b', linewidth=1.0)
+	for i in range(0,len(firstNfreq)):
+		if firstNyaxis[i] == 1:	
+			ay.annotate(round(firstNfreq[i],3),(firstNfreq[i],max(ydata)))
+	starting_legend = plt.plot([],[], color='b', label = "starting lines")	
+	
+	# Display the freq_data file (Using matplotlib)(new)
+	freq_data = plt.plot(xdata,ydata)
+	plt.setp(freq_data, color='r', linewidth=1.0)
+	freq_legend = plt.plot([],[], color='r', label = "freq_data")	
+	# Display the freq_data file (Using matplotlib)
+	
+	restYaxis = yaxis[n+2:len(freq)-12]
+        restYaxis = map(float, restYaxis)
+        restYaxis = map(int, restYaxis)
+
+
+
+        restFreq = freq[n+2:len(freq)-12]
+        restFreq = map(float, restFreq)
+        restFreq = [x*1000 for x in restFreq]
+
+
+
+
+        '''for i in range(0,len(restFreq)):
+                if restYaxis[i] == 1:
+                        freq_data = plt.plot([restFreq[i],restFreq[i]], [0,restYaxis[i]])
+			plt.setp(freq_data, color='r', linewidth=1.0)
+        for i in range(0,len(restFreq)):
+                if restYaxis[i] == 1:  
+                        ay.annotate(round(restFreq[i],3),(restFreq[i],restYaxis[i]))
+
+	freq_legend = plt.plot([],[], color='r', label = "freq_data")'''
+	
+	# Display the predictedFreq file (Using matplotlib)
+
+        newpredicted = map(float, predicted)
+        newpredicted = [x*1000 for x in newpredicted]
+
+
+        for i in range(0,len(newpredicted)):    
+                ending = plt.plot([newpredicted[i],newpredicted[i]], [min(ydata),max(ydata)])
+		plt.setp(ending, color='orange', linewidth=1.0)
+        for i in range(0,len(newpredicted)):
+                 
+                ay.annotate(round(newpredicted[i],3),(newpredicted[i],max(ydata)))
+                              
+	predicted_legend = plt.plot([],[], color='orange', label = "ending lines")
+	
+	
+        if sc == '2':
+            plt.text(2,0.5, str(readOutput[len(readOutput)-8])+('C11 = '+str(readOutput[len(readOutput)-5]))+('C44 = ' + str(readOutput[len(readOutput)-4])))
+
+        if sc == '3':
+            plt.text(2,0.5, str(readOutput[len(readOutput)-9])+('C11 = '+str(readOutput[len(readOutput)-6]))+('C12 = ' + str(readOutput[len(readOutput)-5]))+('C44 = ' + str(readOutput[len(readOutput)-4])))
+     
+        if sc == '5':
+            plt.text(2,0.5, str(readOutput[len(readOutput)-11])+('C12 = '+str(readOutput[len(readOutput)-8]))+('C23 = ' + str(readOutput[len(readOutput)-7]))+('C33 = ' + str(readOutput[len(readOutput)-6]))+('C44 = ' + str(readOutput[len(readOutput)-5]))+('C66 = ' + str(readOutput[len(readOutput)-4])))
+                                
+        if sc == '6':
+            plt.text(2,0.5, str(readOutput[len(readOutput)-12])+('C11 = '+str(readOutput[len(readOutput)-9]))+('C12 = ' + str(readOutput[len(readOutput)-8]))+('C23 = ' + str(readOutput[len(readOutput)-7]))+('C33 = ' + str(readOutput[len(readOutput)-6]))+('C44 = ' + str(readOutput[len(readOutput)-5]))+('C66 = ' + str(readOutput[len(readOutput)-4])))
+                
+        if sc == '9':
+            plt.text(2,0.5, str(readOutput[len(readOutput)-15])+('C11 = '+str(readOutput[len(readOutput)-12]))+('C12 = ' + str(readOutput[len(readOutput)-11]))+('C13 = ' + str(readOutput[len(readOutput)-10]))+('C22 = ' + str(readOutput[len(readOutput)-9]))+('C23= ' + str(readOutput[len(readOutput)-8]))+('C33 = ' + str(readOutput[len(readOutput)-7]))+('C44 = ' + str(readOutput[len(readOutput)-6]))+('C55 = ' + str(readOutput[len(readOutput)-5]))+('C66 = ' + str(readOutput[len(readOutput)-4])))
+                       
+	plt.xlabel('Frequency(Hz) x 0.001')
+	plt.ylabel('No. of count')
+	plt.title('Inverse Algorithm',y = 1.06)
+	'''plt.xlim([(int(float(firstNfreq[0])))*0.8,(int(float(restFreq[(len(restFreq)) - 1])))*1.2])'''
+	xlength = abs(max(xdata)-min(xdata))
+	ylength = abs(max(ydata)-min(ydata))
+	plt.xlim(min(xdata)-0.05*xlength,max(xdata)+0.05*xlength)
+	plt.ylim(min(ydata)-0.5*ylength,max(ydata)+0.5*ylength)
+	'''plt.xticks(np.arange(min(int(float(firstNfreq)), max(int(float(firstNfreq))+1, 1.0))'''
+	plt.grid()
+	plt.legend(bbox_to_anchor=(1.05,1),loc=1,borderaxespad=0.)
+	plt.show()    
+
+
         
         # Display the freq_data file
         while(count < len(freq)-14):
@@ -528,12 +649,18 @@ class RUS(App):
         
         
         layout.add_widget(graph)
-		
+	
+
+                              
+	
+	
+
+
     
 
 # button click function
     def spClicked(self,btn):
-	
+	global readOutput
         if shape == '2':
 			if sc == '2':	
 				command = 'python rus.py inverse --order ' + self.vectors.text + ' --freqmin ' + self.minfreq.text + ' --freqmax ' + self.maxfreq.text + ' --iteration ' + self.iterations.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 1' + ' --d3 1' +  ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text + ' --c44 ' + c44.text
@@ -583,8 +710,10 @@ class RUS(App):
         if sc == '9':
             label = Label(text = 'Red lines = Freq_Data\n' + 'Blue lines = Starting\n' + 'Orange lines = Ending\n\n'+
                                 readOutput[len(readOutput)-15] + ('C11 = ' + readOutput[len(readOutput)-12]) + ('C12 = ' + readOutput[len(readOutput)-11])+ ('C13 = ' + readOutput[len(readOutput)-10]) + ('C22 = ' + readOutput[len(readOutput)-9]) + ('C23 = ' + readOutput[len(readOutput)-8]) + ('C33 = ' + readOutput[len(readOutput)-7]) + ('C44 = ' + readOutput[len(readOutput)-6]) + ('C55 = ' + readOutput[len(readOutput)-5]) + ('C66 = ' + readOutput[len(readOutput)-4]),size_hint_x=None, width=200)
-        layout.add_widget(label)  
+        layout.add_widget(label)
         RUS.graphOutput()
+	#close kivy after closing matplotlib
+	App.get_running_app().stop()
         
 # run app
 if __name__ == "__main__":
