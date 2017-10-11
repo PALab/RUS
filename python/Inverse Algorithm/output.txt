@@ -19,47 +19,47 @@ nfreq=10
  freq=0.048000
  freq=0.050000
 d=6
-shape=0
+shape=1
 ns=2
 hextype=1
-d1=3.670000
-d2=3.670000
-d3=3.670000
-rho=1.700000
+d1=4.420000
+d2=4.420000
+d3=6.414000
+rho=2.560000
 freqmin=0.020000
 freqmax=0.110000
 26.000000
 110.000000
 ndata=10
 starting eigenvalues calculation
-f1=0.048562
-f2=0.048562
-f3=0.065452
-f4=0.065452
-f5=0.065452
-f6=0.066501
-f7=0.066501
-f8=0.066501
-f9=0.075356
-f10=0.075356
-chisq=0.167802
+f1=0.024843
+f2=0.028654
+f3=0.028654
+f4=0.039110
+f5=0.041715
+f6=0.041715
+f7=0.048257
+f8=0.048257
+f9=0.049866
+f10=0.050320
+chisq=0.000042
 
 starting eigenvalues calculation
-f1=0.047805
-f2=0.047805
-f3=0.064455
-f4=0.064455
-f5=0.064455
-f6=0.065469
-f7=0.065469
-f8=0.065469
-f9=0.074180
-f10=0.074180
-chisq=0.154967
+f1=0.024842
+f2=0.028652
+f3=0.028652
+f4=0.039107
+f5=0.041712
+f6=0.041712
+f7=0.048254
+f8=0.048254
+f9=0.049863
+f10=0.050317
+chisq=0.000042
 
 iter #0
-109.961980
-25.194967
+109.999548
+25.996752
 
 This calculation can be executed again with the following command:
-python rus.py inverse --order 6 --shape 0 --ns 2 --hextype 1 --d1 3.67 --d2 3.67 --d3 3.67 --rho 1.7 --freqmin 0.02 --freqmax 0.11 --iterations 1 --c44 26.0 --c11 110.0
+python rus.py inverse --order 6 --shape 1 --ns 2 --hextype 1 --d1 4.42 --d2 4.42 --d3 6.414 --rho 2.56 --freqmin 0.02 --freqmax 0.11 --iterations 1 --c44 26.0 --c11 110.0

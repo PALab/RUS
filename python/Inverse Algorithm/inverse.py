@@ -32,7 +32,7 @@ shapeSpinner = Spinner(
     # default value shown
             text='Choose the Shape',
     # available values
-            values=('Rectangle', 'Ellipsoidal Cylinder', 'Spheroid'),
+            values=('Rectanglar', 'Ellipsoidal Cylinder', 'Spheroid'),
     # just for positioning in our example
             width=150
             )
@@ -100,22 +100,22 @@ class RUS(App):
         layout.add_widget(Label(text='', size_hint_x=None, width=150))
 
         layout.add_widget(Label(text='Dimension 1  :', size_hint_x=None, width=400,))
-        self.dimension1 = TextInput(text='3.67', multiline=False,size_hint_x=None, width=150)
+        self.dimension1 = TextInput(text='4.42', multiline=False,size_hint_x=None, width=150)#3.67
         layout.add_widget(self.dimension1)
         layout.add_widget(Label(text='cm', size_hint_x=None, width=150,))
 
         layout.add_widget(Label(text='Dimension 2 :', size_hint_x=None, width=400,))
-        self.dimension2 = TextInput(text='3.67', multiline=False,size_hint_x=None, width=150)
+        self.dimension2 = TextInput(text='4.42', multiline=False,size_hint_x=None, width=150)#3.67
         layout.add_widget(self.dimension2)
         layout.add_widget(Label(text='cm', size_hint_x=None, width=150))
 
         layout.add_widget(Label(text='Dimension 3 :', size_hint_x=None, width=400))
-        self.dimension3 = TextInput(text='3.67', multiline=False,size_hint_x=None, width=150)
+        self.dimension3 = TextInput(text='6.414', multiline=False,size_hint_x=None, width=150)#3.67
         layout.add_widget(self.dimension3)
         layout.add_widget(Label(text='cm', size_hint_x=None, width=150))
 
         layout.add_widget(Label(text='Density :', size_hint_x=None, width=400))
-        self.density = TextInput(text='1.7', multiline=False,size_hint_x=None, width=150)
+        self.density = TextInput(text='2.56', multiline=False,size_hint_x=None, width=150)
         layout.add_widget(self.density)
         layout.add_widget(Label(text='grams/cm^3', size_hint_x=None, width=150))
 		
@@ -195,7 +195,7 @@ class RUS(App):
         global shape
         global sc
         global hextype
-        if text == 'Rectangle':
+        if text == 'Rectanglar':
             shape = '0'
         if text == 'Ellipsoidal Cylinder':
             shape = '1'
@@ -532,11 +532,11 @@ class RUS(App):
 	for i in range(0,len(firstNfreq)):
 		if firstNyaxis[i] == 1:
 			starting = plt.plot([firstNfreq[i],firstNfreq[i]], [min(ydata),max(ydata)])
-			plt.setp(starting, color='b', linewidth=1.0)
+			plt.setp(starting, color='orange', linewidth=1.0)
 	for i in range(0,len(firstNfreq)):
 		if firstNyaxis[i] == 1:	
-			ay.annotate(round(firstNfreq[i],3),(firstNfreq[i],max(ydata)))
-	starting_legend = plt.plot([],[], color='b', label = "starting lines")	
+			ay.annotate(int(round(firstNfreq[i]*1000)),(firstNfreq[i],max(ydata)))
+	starting_legend = plt.plot([],[], color='orange', label = "ending lines")	#swapped, used to be "starting lines"
 	
 	# Display the freq_data file (Using matplotlib)(new)
 	freq_data = plt.plot(xdata,ydata)
@@ -575,16 +575,16 @@ class RUS(App):
 
         for i in range(0,len(newpredicted)):    
                 ending = plt.plot([newpredicted[i],newpredicted[i]], [min(ydata),max(ydata)])
-		plt.setp(ending, color='orange', linewidth=1.0)
+		plt.setp(ending, color='b', linewidth=1.0)
         for i in range(0,len(newpredicted)):
                  
-                ay.annotate(round(newpredicted[i],3),(newpredicted[i],max(ydata)))
+                ay.annotate(int(round(newpredicted[i]*1000)),(newpredicted[i],max(ydata)))
                               
-	predicted_legend = plt.plot([],[], color='orange', label = "ending lines")
+	predicted_legend = plt.plot([],[], color='b', label = "starting lines")
 	
 	
         if sc == '2':
-            plt.text(2,0.5, str(readOutput[len(readOutput)-8])+('C11 = '+str(readOutput[len(readOutput)-5]))+('C44 = ' + str(readOutput[len(readOutput)-4])))
+            plt.text(3,0.5, str(readOutput[len(readOutput)-8])+('C11 = '+str(readOutput[len(readOutput)-5]))+('C44 = ' + str(readOutput[len(readOutput)-4])))
 
         if sc == '3':
             plt.text(2,0.5, str(readOutput[len(readOutput)-9])+('C11 = '+str(readOutput[len(readOutput)-6]))+('C12 = ' + str(readOutput[len(readOutput)-5]))+('C44 = ' + str(readOutput[len(readOutput)-4])))
@@ -598,13 +598,15 @@ class RUS(App):
         if sc == '9':
             plt.text(2,0.5, str(readOutput[len(readOutput)-15])+('C11 = '+str(readOutput[len(readOutput)-12]))+('C12 = ' + str(readOutput[len(readOutput)-11]))+('C13 = ' + str(readOutput[len(readOutput)-10]))+('C22 = ' + str(readOutput[len(readOutput)-9]))+('C23= ' + str(readOutput[len(readOutput)-8]))+('C33 = ' + str(readOutput[len(readOutput)-7]))+('C44 = ' + str(readOutput[len(readOutput)-6]))+('C55 = ' + str(readOutput[len(readOutput)-5]))+('C66 = ' + str(readOutput[len(readOutput)-4])))
                        
-	plt.xlabel('Frequency(Hz) x 0.001')
-	plt.ylabel('No. of count')
+	plt.xlabel('Frequency(kHz)')
+	plt.ylabel('Amplitude')
 	plt.title('Inverse Algorithm',y = 1.06)
-	'''plt.xlim([(int(float(firstNfreq[0])))*0.8,(int(float(restFreq[(len(restFreq)) - 1])))*1.2])'''
-	xlength = abs(max(xdata)-min(xdata))
+	xlength = abs(max(restFreq)-min(firstNfreq))
+	plt.xlim([(int(float(firstNfreq[0])))*0.6,(int(float(max(newpredicted) + 0.2*xlength)))])
+	
+	'''xlength = abs(max(xdata)-min(xdata))'''
 	ylength = abs(max(ydata)-min(ydata))
-	plt.xlim(min(xdata)-0.05*xlength,max(xdata)+0.05*xlength)
+	''''plt.xlim(min(xdata)-0.05*xlength,max(xdata)+0.05*xlength)'''
 	plt.ylim(min(ydata)-0.5*ylength,max(ydata)+0.5*ylength)
 	'''plt.xticks(np.arange(min(int(float(firstNfreq)), max(int(float(firstNfreq))+1, 1.0))'''
 	plt.grid()
