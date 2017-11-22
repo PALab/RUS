@@ -11,6 +11,8 @@ import graph1
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+import csv
+import re
 from kivy.utils import get_color_from_hex as rgb
 
 
@@ -27,12 +29,21 @@ from kivy.uix.spinner import Spinner
 from matplotlib.pyplot import figure, show
 from matplotlib.ticker import MaxNLocator
 
-
+class FloatInput(TextInput):
+    pat = re.compile('[^0-9]')
+    def insert_text(self, substring, from_undo=False):
+        pat = self.pat
+        if '.' in self.text:
+            s = re.sub(pat, '', substring)
+        else:
+            s = '.'.join([re.sub(pat, '', s) for s in substring.split('.', 1)])
+        return super(FloatInput, self).insert_text(s, from_undo=from_undo)
+TextInput = FloatInput
 shapeSpinner = Spinner(
     # default value shown
             text='Choose the Shape',
     # available values
-            values=('Rectangle', 'Ellipsoidal Cylinder', 'Spheroid'),
+            values=('Rectanglar', 'Ellipsoidal Cylinder', 'Spheroid'),
     # just for positioning in our example
             width=150
             )
@@ -100,22 +111,22 @@ class RUS(App):
         layout.add_widget(Label(text='', size_hint_x=None, width=150))
 
         layout.add_widget(Label(text='Dimension 1  :', size_hint_x=None, width=400,))
-        self.dimension1 = TextInput(text='3.67', multiline=False,size_hint_x=None, width=150)
+        self.dimension1 = TextInput(text='4.42', multiline=False,size_hint_x=None, width=150)#3.67
         layout.add_widget(self.dimension1)
         layout.add_widget(Label(text='cm', size_hint_x=None, width=150,))
 
         layout.add_widget(Label(text='Dimension 2 :', size_hint_x=None, width=400,))
-        self.dimension2 = TextInput(text='3.67', multiline=False,size_hint_x=None, width=150)
+        self.dimension2 = TextInput(text='4.42', multiline=False,size_hint_x=None, width=150)#3.67
         layout.add_widget(self.dimension2)
         layout.add_widget(Label(text='cm', size_hint_x=None, width=150))
 
         layout.add_widget(Label(text='Dimension 3 :', size_hint_x=None, width=400))
-        self.dimension3 = TextInput(text='3.67', multiline=False,size_hint_x=None, width=150)
+        self.dimension3 = TextInput(text='6.414', multiline=False,size_hint_x=None, width=150)#3.67
         layout.add_widget(self.dimension3)
         layout.add_widget(Label(text='cm', size_hint_x=None, width=150))
 
         layout.add_widget(Label(text='Density :', size_hint_x=None, width=400))
-        self.density = TextInput(text='1.7', multiline=False,size_hint_x=None, width=150)
+        self.density = TextInput(text='2.56', multiline=False,size_hint_x=None, width=150)
         layout.add_widget(self.density)
         layout.add_widget(Label(text='grams/cm^3', size_hint_x=None, width=150))
 		
@@ -195,7 +206,7 @@ class RUS(App):
         global shape
         global sc
         global hextype
-        if text == 'Rectangle':
+        if text == 'Rectanglar':
             shape = '0'
         if text == 'Ellipsoidal Cylinder':
             shape = '1'
@@ -412,16 +423,15 @@ class RUS(App):
     @staticmethod
     def graphOutput():
         global outputArray
-        output = open("freq_data", "r")
+	output = open("freq_data", "r")
         lines = output.readlines()
-        
         freq = []		
         yaxis = [] 
         predicted = []
         predictedCount = 0
         splitFirst = 0
-        splitSecond = 15
-        
+        splitSecond = 15        
+
         for i in range(0,len(lines)):
             outputArray.append(lines[i])
                    
@@ -433,8 +443,7 @@ class RUS(App):
             xValue = splitData.split("\t",1)[0]
             yValue = splitData.split("\t")[-1]
             yaxis.append(yValue)
-            freq.append(xValue) 
-            
+            freq.append(xValue)    
         predictedFreq = open("predictedf", "r")
         predictedLines = predictedFreq.readlines()
         
@@ -485,7 +494,7 @@ class RUS(App):
         
 
 	n = int(yaxis[0])
-	
+
 	
         # Display the number of freq_data (stated in line 1)
 	
@@ -503,12 +512,35 @@ class RUS(App):
 		graph.add_plot(plot)
 		count = count + 1
 		y = y + 1
-        
+
+
+	#get hte freq0
+	output = open("output.txt", "r")
+        readOutput = output.readlines()
+	freq0 = []
+	for i in range(0,len(readOutput)):
+		for j in range(1,count+1):
+			if "f"+str(j)+"=" in readOutput[i]:
+				freq0.append(float(readOutput[i][3:]))
+		if len(freq0) == count:
+			break;
+
+
 	#Convert float list to int list
 
-	# read the freq_data file (Using matplotlib)(new)
-	fdata = np.load("george_data.npy")
-	xdata, ydata = zip(*fdata)
+	
+	with open("80-90.CSV") as csvfile:
+	    	readCSV = csv.reader(csvfile, delimiter=',')
+		X_DATA = []
+		Y_DATA = []
+		Trigger_Point = 0
+	    	for row in readCSV:
+			X_DATA.append(float(row[3]))
+			Y_DATA.append(float(row[4]))
+			if row[0] == "Trigger Point":
+				Trigger_Point = float(row[1])
+		xdata = np.asarray(X_DATA)
+		ydata = np.asarray(Y_DATA)
 	
 
 	# Display the number of freq_data (stated in line 1) (Using matplotlib)
@@ -532,11 +564,11 @@ class RUS(App):
 	for i in range(0,len(firstNfreq)):
 		if firstNyaxis[i] == 1:
 			starting = plt.plot([firstNfreq[i],firstNfreq[i]], [min(ydata),max(ydata)])
-			plt.setp(starting, color='b', linewidth=1.0)
+			plt.setp(starting, color='orange', linewidth=1.0)
 	for i in range(0,len(firstNfreq)):
 		if firstNyaxis[i] == 1:	
-			ay.annotate(round(firstNfreq[i],3),(firstNfreq[i],max(ydata)))
-	starting_legend = plt.plot([],[], color='b', label = "starting lines")	
+			ay.annotate(int(round(firstNfreq[i]*1000)),(firstNfreq[i],max(ydata)))
+	starting_legend = plt.plot([],[], color='orange', label = "observed peaks")	#swapped, used to be "starting lines"
 	
 	# Display the freq_data file (Using matplotlib)(new)
 	freq_data = plt.plot(xdata,ydata)
@@ -554,7 +586,20 @@ class RUS(App):
         restFreq = map(float, restFreq)
         restFreq = [x*1000 for x in restFreq]
 
+	#Display freq0 (startinglines)
+	
+        
+        freq0 = [x*1000 for x in freq0]
 
+
+        for i in range(0,len(freq0)):    
+                pred0 = plt.plot([freq0[i],freq0[i]], [min(ydata),max(ydata)])
+		plt.setp(pred0, color='b', linewidth=1.0)
+        for i in range(0,len(freq0)):
+                 
+                ay.annotate(int(round(freq0[i]*1000)),(freq0[i],max(ydata)))
+                              
+	predicted_legend = plt.plot([],[], color='b', label = "starting lines")	
 
 
         '''for i in range(0,len(restFreq)):
@@ -575,36 +620,39 @@ class RUS(App):
 
         for i in range(0,len(newpredicted)):    
                 ending = plt.plot([newpredicted[i],newpredicted[i]], [min(ydata),max(ydata)])
-		plt.setp(ending, color='orange', linewidth=1.0)
+		plt.setp(ending, color='y', linewidth=1.0)
         for i in range(0,len(newpredicted)):
                  
-                ay.annotate(round(newpredicted[i],3),(newpredicted[i],max(ydata)))
+                ay.annotate(int(round(newpredicted[i]*1000)),(newpredicted[i],max(ydata)))
                               
-	predicted_legend = plt.plot([],[], color='orange', label = "ending lines")
+	predicted_legend = plt.plot([],[], color='y', label = "ending lines")
 	
 	
         if sc == '2':
-            plt.text(2,0.5, str(readOutput[len(readOutput)-8])+('C11 = '+str(readOutput[len(readOutput)-5]))+('C44 = ' + str(readOutput[len(readOutput)-4])))
+            plt.figtext(0.01,0.7, str(readOutput[len(readOutput)-8])+('C11 = '+str(readOutput[len(readOutput)-5]))+('C44 = ' + str(readOutput[len(readOutput)-4])))
+	    
 
         if sc == '3':
-            plt.text(2,0.5, str(readOutput[len(readOutput)-9])+('C11 = '+str(readOutput[len(readOutput)-6]))+('C12 = ' + str(readOutput[len(readOutput)-5]))+('C44 = ' + str(readOutput[len(readOutput)-4])))
+            plt.figtext(0.01,0.7, str(readOutput[len(readOutput)-9])+('C11 = '+str(readOutput[len(readOutput)-6]))+('C12 = ' + str(readOutput[len(readOutput)-5]))+('C44 = ' + str(readOutput[len(readOutput)-4])))
      
         if sc == '5':
-            plt.text(2,0.5, str(readOutput[len(readOutput)-11])+('C12 = '+str(readOutput[len(readOutput)-8]))+('C23 = ' + str(readOutput[len(readOutput)-7]))+('C33 = ' + str(readOutput[len(readOutput)-6]))+('C44 = ' + str(readOutput[len(readOutput)-5]))+('C66 = ' + str(readOutput[len(readOutput)-4])))
+            plt.figtext(0.01,0.7, str(readOutput[len(readOutput)-11])+('C12 = '+str(readOutput[len(readOutput)-8]))+('C23 = ' + str(readOutput[len(readOutput)-7]))+('C33 = ' + str(readOutput[len(readOutput)-6]))+('C44 = ' + str(readOutput[len(readOutput)-5]))+('C66 = ' + str(readOutput[len(readOutput)-4])))
                                 
         if sc == '6':
-            plt.text(2,0.5, str(readOutput[len(readOutput)-12])+('C11 = '+str(readOutput[len(readOutput)-9]))+('C12 = ' + str(readOutput[len(readOutput)-8]))+('C23 = ' + str(readOutput[len(readOutput)-7]))+('C33 = ' + str(readOutput[len(readOutput)-6]))+('C44 = ' + str(readOutput[len(readOutput)-5]))+('C66 = ' + str(readOutput[len(readOutput)-4])))
+            plt.figtext(0.01,0.7, str(readOutput[len(readOutput)-12])+('C11 = '+str(readOutput[len(readOutput)-9]))+('C12 = ' + str(readOutput[len(readOutput)-8]))+('C23 = ' + str(readOutput[len(readOutput)-7]))+('C33 = ' + str(readOutput[len(readOutput)-6]))+('C44 = ' + str(readOutput[len(readOutput)-5]))+('C66 = ' + str(readOutput[len(readOutput)-4])))
                 
         if sc == '9':
-            plt.text(2,0.5, str(readOutput[len(readOutput)-15])+('C11 = '+str(readOutput[len(readOutput)-12]))+('C12 = ' + str(readOutput[len(readOutput)-11]))+('C13 = ' + str(readOutput[len(readOutput)-10]))+('C22 = ' + str(readOutput[len(readOutput)-9]))+('C23= ' + str(readOutput[len(readOutput)-8]))+('C33 = ' + str(readOutput[len(readOutput)-7]))+('C44 = ' + str(readOutput[len(readOutput)-6]))+('C55 = ' + str(readOutput[len(readOutput)-5]))+('C66 = ' + str(readOutput[len(readOutput)-4])))
+            plt.figtext(0.01,0.7, str(readOutput[len(readOutput)-15])+('C11 = '+str(readOutput[len(readOutput)-12]))+('C12 = ' + str(readOutput[len(readOutput)-11]))+('C13 = ' + str(readOutput[len(readOutput)-10]))+('C22 = ' + str(readOutput[len(readOutput)-9]))+('C23= ' + str(readOutput[len(readOutput)-8]))+('C33 = ' + str(readOutput[len(readOutput)-7]))+('C44 = ' + str(readOutput[len(readOutput)-6]))+('C55 = ' + str(readOutput[len(readOutput)-5]))+('C66 = ' + str(readOutput[len(readOutput)-4])))
                        
-	plt.xlabel('Frequency(Hz) x 0.001')
-	plt.ylabel('No. of count')
+	plt.xlabel('Frequency(kHz)')
+	plt.ylabel('Amplitude')
 	plt.title('Inverse Algorithm',y = 1.06)
-	'''plt.xlim([(int(float(firstNfreq[0])))*0.8,(int(float(restFreq[(len(restFreq)) - 1])))*1.2])'''
-	xlength = abs(max(xdata)-min(xdata))
+	xlength = abs(max(restFreq)-min(firstNfreq))
+	plt.xlim([(int(float(firstNfreq[0])))*0.6,(int(float(max(newpredicted) + 0.2*xlength)))])
+	
+	'''xlength = abs(max(xdata)-min(xdata))'''
 	ylength = abs(max(ydata)-min(ydata))
-	plt.xlim(min(xdata)-0.05*xlength,max(xdata)+0.05*xlength)
+	''''plt.xlim(min(xdata)-0.05*xlength,max(xdata)+0.05*xlength)'''
 	plt.ylim(min(ydata)-0.5*ylength,max(ydata)+0.5*ylength)
 	'''plt.xticks(np.arange(min(int(float(firstNfreq)), max(int(float(firstNfreq))+1, 1.0))'''
 	plt.grid()
@@ -661,31 +709,57 @@ class RUS(App):
 # button click function
     def spClicked(self,btn):
 	global readOutput
+	if self.vectors.text == '' or self.dimension1.text == '' or self.dimension2.text == '' or self.dimension3.text == '' or self.density.text == '' or shape == '4' or self.minfreq.text == '' or self.maxfreq.text == '':
+		return
         if shape == '2':
-			if sc == '2':	
+			if sc == '2':
+				if c11.text == '' or c44.text == '':
+					return	
 				command = 'python rus.py inverse --order ' + self.vectors.text + ' --freqmin ' + self.minfreq.text + ' --freqmax ' + self.maxfreq.text + ' --iteration ' + self.iterations.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 1' + ' --d3 1' +  ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text + ' --c44 ' + c44.text
 			elif sc == '3':
+				if c11.text == '' or c12.text == '':
+					return
 				command = 'python rus.py inverse --order ' + self.vectors.text + ' --freqmin ' + self.minfreq.text + ' --freqmax ' + self.maxfreq.text + ' --iteration ' + self.iterations.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 1' +  ' --d3 1' +  ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c12 ' + c12.text + ' --c44 ' + c44.text
 			elif sc == '5' and hextype == '1':
+				if c33.text == '' or c23.text == '' or c12.text == '' or c44.text == '' or c66.text == '':
+					return
 				command = 'python rus.py inverse --order ' + self.vectors.text + ' --freqmin ' + self.minfreq.text + ' --freqmax ' + self.maxfreq.text + ' --iteration ' + self.iterations.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 1' + ' --d3 1' +  ' --rho ' + self.density.text + ' --ns ' + sc + ' --c33 ' + c33.text +  ' --c23 ' + c23.text + ' --c12 ' + c12.text + ' --c44 ' + c44.text + ' --c66 ' + c66.text + ' --hextype ' + hextype
 			elif sc == '5' and hextype == '2':
+				if c11.text == '' or c33.text == '' or c12.text == '' or c44.text == '' or c66.text == '':
+					return
 				command = 'python rus.py inverse --order ' + self.vectors.text + ' --freqmin ' + self.minfreq.text + ' --freqmax ' + self.maxfreq.text + ' --iteration ' + self.iterations.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 1' + ' --d3 1' +  ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c33.text +  ' --c33 ' + c23.text + ' --c12 ' + c12.text + ' --c44 ' + c44.text + ' --c66 ' + c66.text + ' --hextype ' + hextype
 			elif sc == '6':
+				if c11.text == '' or c33.text == '' or c22.text == '' or c12.text == '' or c44.text == '' or c66.text == '':
+					return
 				command = 'python rus.py inverse --order ' + self.vectors.text + ' --freqmin ' + self.minfreq.text + ' --freqmax ' + self.maxfreq.text + ' --iteration ' + self.iterations.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 1' +  ' --d3 1' +  ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c33 ' + c33.text + ' --c23 ' + c23.text + ' --c12 ' + c12.text +  ' --c44 ' + c44.text + ' --c66 ' + c66.text
 			elif sc == '9':
+				if c11.text == '' or c22.text == '' or c33.text == '' or c23.text == '' or c13.text == '' or c12.text == '' or c44.text == '' or c55.text == '' or c66.text == '':
+					return
 				command = 'python rus.py inverse --order ' + self.vectors.text + ' --freqmin ' + self.minfreq.text + ' --freqmax ' + self.maxfreq.text + ' --iteration ' + self.iterations.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 1' +  ' --d3 1' +  ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c22 ' + c22.text + ' --c33 ' + c33.text + ' --c23 ' + c23.text +  ' --c13 ' + c13.text + ' --c12 ' + c12.text + ' --c44 ' + c44.text +  ' --c55 ' + c55.text + ' --c66 ' + c66.text
         else:
-			if sc == '2':	
+			if sc == '2':
+				if c11.text == '' or c44.text == '':
+					return	
 				command = 'python rus.py inverse --order ' + self.vectors.text + ' --freqmin ' + self.minfreq.text + ' --freqmax ' + self.maxfreq.text + ' --iteration ' + self.iterations.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text + ' --c44 ' + c44.text
 			elif sc == '3':
+				if c11.text == '' or c12.text == '' or c44.text == '':
+					return	
 				command = 'python rus.py inverse --order ' + self.vectors.text + ' --freqmin ' + self.minfreq.text + ' --freqmax ' + self.maxfreq.text + ' --iteration ' + self.iterations.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c12 ' + c12.text + ' --c44 ' + c44.text
 			elif sc == '5' and hextype == '1':
+				if c33.text == '' or c23.text == '' or c12.text == '' or c44.text == '' or c66.text == '':
+					return
 				command = 'python rus.py inverse --order ' + self.vectors.text + ' --freqmin ' + self.minfreq.text + ' --freqmax ' + self.maxfreq.text + ' --iteration ' + self.iterations.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c33 ' + c33.text +  ' --c23 ' + c23.text + ' --c12 ' + c12.text + ' --c44 ' + c44.text + ' --c66 ' + c66.text + ' --hextype ' + hextype
 			elif sc == '5' and hextype == '2':
+				if c33.text == '' or c23.text == '' or c12.text == '' or c44.text == '' or c66.text == '':
+					return
 				command = 'python rus.py inverse --order ' + self.vectors.text + ' --freqmin ' + self.minfreq.text + ' --freqmax ' + self.maxfreq.text + ' --iteration ' + self.iterations.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c33.text +  ' --c33 ' + c23.text + ' --c12 ' + c12.text + ' --c44 ' + c44.text + ' --c66 ' + c66.text + ' --hextype ' + hextype
 			elif sc == '6':
+				if c11.text == '' or c33.text == '' or c22.text == '' or c12.text == '' or c44.text == '' or c66.text == '':
+					return
 				command = 'python rus.py inverse --order ' + self.vectors.text + ' --freqmin ' + self.minfreq.text + ' --freqmax ' + self.maxfreq.text + ' --iteration ' + self.iterations.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c33 ' + c33.text + ' --c23 ' + c23.text + ' --c12 ' + c12.text +  ' --c44 ' + c44.text + ' --c66 ' + c66.text
 			elif sc == '9':
+				if c11.text == '' or c22.text == '' or c33.text == '' or c23.text == '' or c13.text == '' or c12.text == '' or c44.text == '' or c55.text == '' or c66.text == '':
+					return
 				command = 'python rus.py inverse --order ' + self.vectors.text + ' --freqmin ' + self.minfreq.text + ' --freqmax ' + self.maxfreq.text + ' --iteration ' + self.iterations.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c22 ' + c22.text + ' --c33 ' + c33.text + ' --c23 ' + c23.text +  ' --c13 ' + c13.text + ' --c12 ' + c12.text + ' --c44 ' + c44.text +  ' --c55 ' + c55.text + ' --c66 ' + c66.text
         
         print (command)
@@ -694,7 +768,7 @@ class RUS(App):
         subprocess.call(command, shell=True , stdout=f)
         output = open("output.txt", "r")
         readOutput = output.readlines()
-        
+
         if sc == '2':
             label = Label(text = 'Red lines = Freq_Data\n' + 'Blue lines = Starting\n' + 'Orange lines = Ending\n\n'+
                                 readOutput[len(readOutput)-8] + ('C11 = ' + readOutput[len(readOutput)-5]) + ('C44 = ' + readOutput[len(readOutput)-4]), size_hint_x=None, width=200)
