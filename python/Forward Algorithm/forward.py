@@ -10,6 +10,7 @@ import graph1
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+import re
 from kivy.uix.scrollview import ScrollView
 from kivy.core.window import Window
 from kivy.utils import get_color_from_hex as rgb
@@ -28,7 +29,17 @@ from kivy.core.window import Window
 from matplotlib.pyplot import figure, show
 from matplotlib.ticker import MaxNLocator
 
+class FloatInput(TextInput):
 
+    pat = re.compile('[^0-9]')
+    def insert_text(self, substring, from_undo=False):
+        pat = self.pat
+        if '.' in self.text:
+            s = re.sub(pat, '', substring)
+        else:
+            s = '.'.join([re.sub(pat, '', s) for s in substring.split('.', 1)])
+        return super(FloatInput, self).insert_text(s, from_undo=from_undo)
+TextInput = FloatInput
 shapeSpinner = Spinner(
     # default value shown
             text='Choose the Shape',
@@ -520,17 +531,37 @@ class RUS(App):
 	
 # button click function      
     def spClicked(self,btn): 
-        if sc == '2':	             
-            command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c44 ' + c44.text			
+	if self.freq.text == '' or self.vectors.text == '' or self.dimension1.text == '' or self.dimension2.text == '' or self.dimension3.text == '' or self.density.text == '' or shape == '4':
+		return
+        if sc == '2':
+	    if c11.text == '' or c44.text == '':
+		return
+	             
+            command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c44 ' + c44.text
+			
         elif sc == '3':
+            if c11.text == '' or c12.text == '':
+		return
             command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c12 ' + c12.text + ' --c44 ' + c44.text
+
         elif sc == '5' and hextype == '1':
+	    if c33.text == '' or c23.text == '' or c12.text == '' or c44.text == '' or c66.text == '':
+		return
             command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c33 ' + c33.text +  ' --c23 ' + c23.text + ' --c12 ' + c12.text + ' --c44 ' + c44.text + ' --c66 ' + c66.text + ' --hextype ' + hextype
+
         elif sc == '5' and hextype == '2':
-            command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c33.text +  ' --c33 ' + c23.text + ' --c12 ' + c12.text + ' --c44 ' + c44.text + ' --c66 ' + c66.text + ' --hextype ' + hextype
+	    if c11.text == '' or c33.text == '' or c12.text == '' or c44.text == '' or c66.text == '':
+		return
+            command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c33 ' + c33.text + ' --c12 ' + c12.text + ' --c44 ' + c44.text + ' --c66 ' + c66.text + ' --hextype ' + hextype
+
         elif sc == '6':
+	    if c11.text == '' or c33.text == '' or c22.text == '' or c12.text == '' or c44.text == '' or c66.text == '':
+		return
             command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c33 ' + c33.text + ' --c23 ' + c23.text + ' --c12 ' + c12.text +  ' --c44 ' + c44.text + ' --c66 ' + c66.text
+
         elif sc == '9':
+            if c11.text == '' or c22.text == '' or c33.text == '' or c23.text == '' or c13.text == '' or c12.text == '' or c44.text == '' or c55.text == '' or c66.text == '':
+		return
             command = 'python rus.py forward --nfreq ' + self.freq.text	+ ' --order ' + self.vectors.text + ' --shape ' + shape + ' --d1 ' + self.dimension1.text + ' --d2 ' + self.dimension2.text + ' --d3 ' + self.dimension3.text + ' --rho ' + self.density.text + ' --ns ' + sc + ' --c11 ' + c11.text +  ' --c22 ' + c22.text + ' --c33 ' + c33.text + ' --c23 ' + c23.text +  ' --c13 ' + c13.text + ' --c12 ' + c12.text + ' --c44 ' + c44.text +  ' --c55 ' + c55.text + ' --c66 ' + c66.text
        
         print (command)

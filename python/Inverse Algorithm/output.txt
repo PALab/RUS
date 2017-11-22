@@ -19,47 +19,102 @@ nfreq=10
  freq=0.048000
  freq=0.050000
 d=6
-shape=0
+shape=1
 ns=2
 hextype=1
-d1=3.670000
-d2=3.670000
-d3=3.670000
-rho=1.700000
-freqmin=0.020000
-freqmax=0.110000
-26.000000
-110.000000
-ndata=10
+d1=4.440000
+d2=4.440000
+d3=6.440000
+rho=2.720000
+freqmin=0.030000
+freqmax=0.050000
+27.100000
+113.400000
+ndata=6
 starting eigenvalues calculation
-f1=0.048562
-f2=0.048562
-f3=0.065452
-f4=0.065452
-f5=0.065452
-f6=0.066501
-f7=0.066501
-f8=0.066501
-f9=0.075356
-f10=0.075356
-chisq=0.167802
+f1=0.038563
+f2=0.041133
+f3=0.041133
+f4=0.047577
+f5=0.047577
+f6=0.049191
+chisq=0.000034
 
 starting eigenvalues calculation
-f1=0.047805
-f2=0.047805
-f3=0.064455
-f4=0.064455
-f5=0.064455
-f6=0.065469
-f7=0.065469
-f8=0.065469
-f9=0.074180
-f10=0.074180
-chisq=0.154967
+f1=0.038565
+f2=0.041136
+f3=0.041136
+f4=0.047581
+f5=0.047581
+f6=0.049194
+chisq=0.000034
 
 iter #0
-109.961980
-25.194967
+113.400243
+27.103847
+starting eigenvalues calculation
+f1=0.038565
+f2=0.041136
+f3=0.041136
+f4=0.047581
+f5=0.047581
+f6=0.049194
+chisq=0.000034
+
+starting eigenvalues calculation
+f1=0.038568
+f2=0.041139
+f3=0.041139
+f4=0.047584
+f5=0.047584
+f6=0.049198
+chisq=0.000034
+
+iter #1
+113.400482
+27.107659
+starting eigenvalues calculation
+f1=0.038568
+f2=0.041139
+f3=0.041139
+f4=0.047584
+f5=0.047584
+f6=0.049198
+chisq=0.000034
+
+starting eigenvalues calculation
+f1=0.038570
+f2=0.041142
+f3=0.041142
+f4=0.047587
+f5=0.047587
+f6=0.049201
+chisq=0.000034
+
+iter #2
+113.400715
+27.111431
+starting eigenvalues calculation
+f1=0.038570
+f2=0.041142
+f3=0.041142
+f4=0.047587
+f5=0.047587
+f6=0.049201
+chisq=0.000034
+
+starting eigenvalues calculation
+f1=0.038573
+f2=0.041145
+f3=0.041145
+f4=0.047590
+f5=0.047590
+f6=0.049205
+chisq=0.000033
+
+iter #3
+113.400945
+27.115169
 
 This calculation can be executed again with the following command:
-python rus.py inverse --order 6 --shape 0 --ns 2 --hextype 1 --d1 3.67 --d2 3.67 --d3 3.67 --rho 1.7 --freqmin 0.02 --freqmax 0.11 --iterations 1 --c44 26.0 --c11 110.0
+python rus.py inverse --order 6 --shape 1 --ns 2 --hextype 1 --d1 4.44 --d2 4.44 --d3 6.44 --rho 2.72 --freqmin 0.03 --freqmax 0.05 --iterations 4 --c44 27.1 --c11 113.4
