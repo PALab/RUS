@@ -1,8 +1,7 @@
-'''RUS inverse code'''
+"""RUS inverse code"""
 import sys
 import numpy
-import rus.rus_parser
-import rus.rus_tools as rus
+import rus_tools as rus
 
 def start(args):
 
@@ -60,7 +59,6 @@ def read_input(infile):
 
     if infile == 'sample/default_frequencies':
         print('!! no frequency file specified - sample file will be used !!')
-        infile = sys.exec_prefix + '/' + infile
         print('testing: ' + infile)
 
     # get measured frequencies from file

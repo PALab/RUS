@@ -385,10 +385,10 @@ int main(int argc, char **argv)
 
   niter=100; /* set number of iterations */
   for (iter=0;iter<niter;++iter){
+    fprintf(stderr,"\niter #%i\n",iter); /* print iteration number */
     mrqmin(d,r,itab,ltab,mtab,ntab,
 	   irk,d1,d2,d3,rho,shape,freqmin,
 	   y,sig,ndata,guess,ia,ns,covar,alpha,&chisq, hextype, formod,&alamda);
-    fprintf(stderr,"iter #%i\n",iter); /* print iteration number */
     for (is=0; is<ns;++is) /* ns = dimension of symmetry */
       /*fprintf(stderr,"guess=%f\n",100*guess[is]); */
       fprintf(stderr,"%f\n",100*guess[is]); /* print estimated cij values*/
@@ -547,8 +547,6 @@ int info, itype, lda, ldb, lwork, order; /* variables for lapack function */
     gamma_fill(gamma[k], itab, ltab, mtab, 
 	       ntab, r, d1, d2, d3, c, shape, k, irk);
       
-  
-  fprintf(stderr, "starting eigenvalues calculation\n"); 
   /*-------------------------------------------------------------*/
   /*--------- solve the generalized eigenvalue problem ----------*/
   /*-------------------------------------------------------------*/  
@@ -2851,7 +2849,7 @@ void mrqcof(int d,int r,int *itab,int *ltab,int *mtab,int *ntab,
   }
   
   /* chisq prints from here */
-  fprintf(stderr,"chisq=%f\n\n",100.0*(*chisq));
+  fprintf(stderr,"chisq=%g\n",100.0*(*chisq));
   for (j=1;j<mfit; ++j)
     for (k=0; k<(j-1); ++k) alpha[k][j]=alpha[j][k];
   free2double(dyda);

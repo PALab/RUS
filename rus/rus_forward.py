@@ -1,11 +1,11 @@
-'''RUS forward code'''
+"""RUS forward code"""
 import sys
 import subprocess
 from math import sqrt
 import scipy
 from scipy.linalg import lapack
-import rus.rus_parser
-import rus.rus_tools as rus
+import rus_parser
+import rus_tools as rus
 
 def start(args):
     if args.fast and args.ns == 2:
