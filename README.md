@@ -48,7 +48,7 @@ Colorado School of Mines
 Golden, CO 80401 USA
 
 ### Updated in 2014 by
-Leighton Watson (lwat054@aucklanduni.ac.nz)  
+Leighton Watson (lwat054@stanford.edu)  
 Physical Acoustic Laboratory  
 University of Auckland, Auckland, 1010, New Zealand
 
