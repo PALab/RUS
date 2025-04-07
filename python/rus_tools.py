@@ -286,7 +286,7 @@ def dfdp(f, dgammadp, z, ie, n):
         # we use dgammadp's 
         # symmetry here
         p.append(numpy.dot(dgammadp[i],z[ie])) 
-    return numpy.dot(z[ie],p) / (8.0 * scipy.pi * scipy.pi * f)
+    return numpy.dot(z[ie],p) / (8.0 *numpy.pi * numpy.pi * f)
 
 
 
@@ -457,7 +457,8 @@ def formod(d,r,tabs,irk,dimensions,rho,shape,freqmin,ndata,a,ns,hextype):
     eigvect = []
     for k in range(8):
         # lapack routine
-        w, v = la.eigh(gamma[k], e[k], lower=False, eigvals_only=False, turbo=False, type=1, overwrite_a=True, overwrite_b=True, check_finite=False)
+        #w, v = la.eigh(gamma[k], e[k], lower=False, eigvals_only=False, turbo=False, type=1, overwrite_a=True, overwrite_b=True, check_finite=False)
+        w, v = la.eigh(gamma[k], e[k], lower=False, eigvals_only=False, type=1, overwrite_a=True, overwrite_b=True, check_finite=False)
         eigvals.append(w)
         eigvect.append(numpy.transpose(v))
 
@@ -477,7 +478,7 @@ def formod(d,r,tabs,irk,dimensions,rho,shape,freqmin,ndata,a,ns,hextype):
         irf += irk[k]
 
     #/* sort eigenfrequencies */
-    wsort = scipy.zeros(r)
+    wsort = numpy.zeros(r)
     i = 0
     for k in range(8):
         for ir1 in range(irk[k]):
@@ -488,7 +489,7 @@ def formod(d,r,tabs,irk,dimensions,rho,shape,freqmin,ndata,a,ns,hextype):
 
     for i in range(len(wsort)):
         if wsort[i] > 0:
-            x = math.sqrt(wsort[i]) / (2.0 * scipy.pi)
+            x = math.sqrt(wsort[i]) / (2.0 * numpy.pi)
             if x > 0.00001:
                 wsort[i] = x
             else:
@@ -828,15 +829,22 @@ def volintegral(dimensions,l,m,n,shape):
     # ell. cylinder shape
     if shape == 1:
         df_lm = doublefact(l-1) * doublefact(m-1)
-        result = 4.0 * scipy.pi * ds / (n+1) * df_lm / doublefact(l+m+2)
+        result = 4.0 * numpy.pi * ds / (n+1) * df_lm / doublefact(l+m+2)
 
     # spheroid shape
     elif shape == 2:
         df_lm = doublefact(l-1) * doublefact(m-1)
         df_all = doublefact(l+m+n+3)
-        result = 4.0 * scipy.pi * ds * df_lm * doublefact(n-1) / df_all
+        #result = 4.0 * numpy.pi * ds * df_lm * doublefact(n-1) / df_all # Typo
+        result = 0.5 * numpy.pi * ds * df_lm * doublefact(n-1) / df_all # Corrected
 
-    # rp shape
+    # Corner prism (Evert)
+    elif shape == 3:
+        df_lm = doublefact(l)*doublefact(m)*doublefact(n)
+        df_all = doublefact(l + m + n + 3)
+        result = ds * df_lm / df_all        
+        
+    # rectangular parallelepiped shape
     else:
         result = 8.0 / ((l+1) * (m+1) * (n+1)) * ds
 
@@ -869,7 +877,7 @@ def e_fill(tabs,dimensions,rho,shape,irk):
 
     TODO: What is e?
     """
-    e = [scipy.zeros((irk[i],irk[i])) for i in range(8)]
+    e = [numpy.zeros((irk[i],irk[i])) for i in range(8)]
     for k in range(8):
         irs = 0
         for ik in range(k):
@@ -887,7 +895,7 @@ def e_fill(tabs,dimensions,rho,shape,irk):
                 l = l1 + l2
                 m = m1 + m2
                 n = n1 + n2
-                if i1 == i2 and l % 2 == 0 and m % 2 == 0 and n % 2 == 0:
+                if i1 == i2 and l % 2 == 0 and m % 2 == 0 and n % 2 == 0: # Evert's modification
                     e[k][irv][irh] = rho * volintegral(dimensions,l,m,n,shape);
                 else:
                     e[k][irv][irh] = 0.0
@@ -909,7 +917,7 @@ def stiffness(cm):
     of what values they represent, but I was unsure
     during initial implementation.
     """
-    c = scipy.zeros((3,3,3,3))
+    c = numpy.zeros((3,3,3,3))
     for i in range(3):
         for j in range(3):
             if i == 0 and j == 0:
@@ -953,7 +961,7 @@ def gamma_fill(tabs,dimensions,cm,shape,irk):
 
     TODO: What is this function doing?
     """
-    gamma = [scipy.zeros((irk[i],irk[i])) for i in range(8)]
+    gamma = [numpy.zeros((irk[i],irk[i])) for i in range(8)]
     c = stiffness(cm)
     for k in range(8):
         irs = sum(irk[0:k])
